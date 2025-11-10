@@ -1,7 +1,8 @@
 import { Request, Response } from 'express'
+import { Subscription } from '../types/controller.types'
 
 // Mock subscriptions data - in production, this would come from Prisma
-let mockSubscriptions: any[] = [
+let mockSubscriptions: Subscription[] = [
   {
     id: 'sub-1',
     userId: 'customer-1',
@@ -51,8 +52,10 @@ export const getSubscriptions = async (req: Request, res: Response) => {
     }
 
     res.json(filtered)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Subscription operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -66,8 +69,10 @@ export const getSubscriptionById = async (req: Request, res: Response) => {
     }
 
     res.json(subscription)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Subscription operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -90,11 +95,11 @@ export const createSubscription = async (req: Request, res: Response) => {
     const nextBillingDate = new Date()
     nextBillingDate.setMonth(nextBillingDate.getMonth() + 1)
 
-    const newSubscription = {
+    const newSubscription: Subscription = {
       id: `sub-${Date.now()}`,
-      userId,
-      serviceId,
-      providerId,
+      userId: String(userId).trim(),
+      serviceId: String(serviceId).trim(),
+      providerId: String(providerId).trim(),
       status: 'ACTIVE',
       startDate: new Date().toISOString(),
       nextBillingDate: nextBillingDate.toISOString(),
@@ -115,8 +120,10 @@ export const createSubscription = async (req: Request, res: Response) => {
       message: 'Subscription created successfully',
       subscription: newSubscription
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Subscription operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -148,8 +155,10 @@ export const updateSubscription = async (req: Request, res: Response) => {
       message: 'Subscription updated successfully',
       subscription: updatedSubscription
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Subscription operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -163,7 +172,7 @@ export const cancelSubscription = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Subscription not found' })
     }
 
-    const updatedSubscription = {
+    const updatedSubscription: Subscription = {
       ...mockSubscriptions[subscriptionIndex],
       status: 'CANCELLED',
       cancelledAt: new Date().toISOString(),
@@ -180,8 +189,10 @@ export const cancelSubscription = async (req: Request, res: Response) => {
       message: 'Subscription cancelled successfully',
       subscription: updatedSubscription
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Subscription operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -195,7 +206,7 @@ export const pauseSubscription = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Subscription not found' })
     }
 
-    const updatedSubscription = {
+    const updatedSubscription: Subscription = {
       ...mockSubscriptions[subscriptionIndex],
       status: 'PAUSED',
       updatedAt: new Date().toISOString()
@@ -207,8 +218,10 @@ export const pauseSubscription = async (req: Request, res: Response) => {
       message: 'Subscription paused successfully',
       subscription: updatedSubscription
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Subscription operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -222,7 +235,7 @@ export const resumeSubscription = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Subscription not found' })
     }
 
-    const updatedSubscription = {
+    const updatedSubscription: Subscription = {
       ...mockSubscriptions[subscriptionIndex],
       status: 'ACTIVE',
       updatedAt: new Date().toISOString()
@@ -234,8 +247,10 @@ export const resumeSubscription = async (req: Request, res: Response) => {
       message: 'Subscription resumed successfully',
       subscription: updatedSubscription
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Subscription operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 

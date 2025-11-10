@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { Booking } from '../types'
 import { bookingsApi } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
@@ -9,13 +9,7 @@ export function useBookings() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (user) {
-      fetchBookings()
-    }
-  }, [user])
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -57,7 +51,13 @@ export function useBookings() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (user) {
+      fetchBookings()
+    }
+  }, [user, fetchBookings])
 
   const createBooking = async (bookingData: {
     providerId: string

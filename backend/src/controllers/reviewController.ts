@@ -1,8 +1,9 @@
 import { Request, Response } from 'express'
 import { io } from '../server'
+import { Review } from '../types/controller.types'
 
 // Mock reviews data
-const mockReviews: any[] = [
+const mockReviews: Review[] = [
   {
     id: 'rev-001',
     providerId: 'pt-001',
@@ -10,6 +11,7 @@ const mockReviews: any[] = [
     userName: 'Kwame Asante',
     rating: 5,
     comment: 'Excellent work! Very professional and completed the job on time. Highly recommend!',
+    isVerified: true,
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: '2024-01-15T10:00:00Z'
   },
@@ -20,6 +22,7 @@ const mockReviews: any[] = [
     userName: 'Ama Mensah',
     rating: 5,
     comment: 'Great service and fair pricing. Will definitely book again.',
+    isVerified: true,
     createdAt: '2024-01-10T14:30:00Z',
     updatedAt: '2024-01-10T14:30:00Z'
   }
@@ -55,8 +58,10 @@ export const getReviews = async (req: Request, res: Response) => {
       limit: limitNum,
       offset: offsetNum
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
+    console.error('Get reviews error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -70,8 +75,10 @@ export const getReviewById = async (req: Request, res: Response) => {
     }
 
     res.json(review)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
+    console.error('Get reviews error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -79,12 +86,23 @@ export const createReview = async (req: Request, res: Response) => {
   try {
     const { providerId, userId, rating, comment, bookingId, photos, isVerified } = req.body
 
+    // Validation
     if (!providerId || !userId || !rating || !comment) {
       return res.status(400).json({ message: 'Missing required fields' })
     }
 
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({ message: 'Rating must be between 1 and 5' })
+    const ratingNum = Number(rating)
+    if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+      return res.status(400).json({ message: 'Rating must be a number between 1 and 5' })
+    }
+
+    const trimmedComment = String(comment).trim()
+    if (trimmedComment.length === 0) {
+      return res.status(400).json({ message: 'Comment cannot be empty' })
+    }
+
+    if (trimmedComment.length < 10) {
+      return res.status(400).json({ message: 'Comment must be at least 10 characters long' })
     }
 
     // If verified, bookingId is required
@@ -92,13 +110,13 @@ export const createReview = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Booking ID is required for verified reviews' })
     }
 
-    const newReview = {
+    const newReview: Review = {
       id: `rev-${Date.now()}`,
-      providerId,
-      userId,
+      providerId: String(providerId).trim(),
+      userId: String(userId).trim(),
       userName: 'User', // TODO: Get from user data
-      rating: Number(rating),
-      comment,
+      rating: ratingNum,
+      comment: trimmedComment,
       bookingId: bookingId || null,
       photos: photos || [],
       isVerified: isVerified || false,
@@ -118,8 +136,10 @@ export const createReview = async (req: Request, res: Response) => {
     // Calculate new average rating
 
     res.status(201).json(newReview)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
+    console.error('Get reviews error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -141,8 +161,10 @@ export const updateReview = async (req: Request, res: Response) => {
     }
 
     res.json(mockReviews[reviewIndex])
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
+    console.error('Get reviews error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -157,8 +179,10 @@ export const deleteReview = async (req: Request, res: Response) => {
 
     mockReviews.splice(reviewIndex, 1)
     res.json({ message: 'Review deleted successfully' })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
+    console.error('Get reviews error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -201,8 +225,10 @@ export const addProviderResponse = async (req: Request, res: Response) => {
     })
 
     res.json(mockReviews[reviewIndex])
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
+    console.error('Get reviews error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -234,8 +260,10 @@ export const updateProviderResponse = async (req: Request, res: Response) => {
     }
 
     res.json(mockReviews[reviewIndex])
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
+    console.error('Get reviews error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 

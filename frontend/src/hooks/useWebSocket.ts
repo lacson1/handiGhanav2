@@ -9,7 +9,20 @@ export function useWebSocket(roomId?: string) {
   const { isAuthenticated, user } = useAuth()
 
   useEffect(() => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated) {
+      // Disconnect if not authenticated
+      if (socketRef.current) {
+        socketRef.current.disconnect()
+        socketRef.current = null
+      }
+      return
+    }
+
+    // Disconnect existing socket if any
+    if (socketRef.current) {
+      socketRef.current.disconnect()
+      socketRef.current = null
+    }
 
     // Initialize socket connection
     socketRef.current = io(SOCKET_URL, {
@@ -24,6 +37,8 @@ export function useWebSocket(roomId?: string) {
       // Join provider or user room
       if (user?.role === 'PROVIDER' && user?.id) {
         socket.emit('join-room', `provider-${user.id}`)
+      } else if (user?.role === 'ADMIN') {
+        socket.emit('join-room', 'admin-room')
       } else if (user?.id) {
         socket.emit('join-room', `user-${user.id}`)
       }
@@ -37,10 +52,17 @@ export function useWebSocket(roomId?: string) {
       console.log('WebSocket disconnected')
     })
 
+    socket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error)
+    })
+
     return () => {
-      socket.disconnect()
+      if (socketRef.current) {
+        socketRef.current.disconnect()
+        socketRef.current = null
+      }
     }
-  }, [isAuthenticated, user, roomId])
+  }, [isAuthenticated, user?.id, user?.role, roomId])
 
   return socketRef.current
 }

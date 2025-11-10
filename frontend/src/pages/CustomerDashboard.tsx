@@ -8,6 +8,8 @@ import SubscriptionManagement from '../components/SubscriptionManagement'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { useToast } from '../context/ToastContext'
+import { useWebSocket } from '../hooks/useWebSocket'
 import { useBookings } from '../hooks/useBookings'
 import ProtectedRoute from '../components/ProtectedRoute'
 import Button from '../components/ui/Button'
@@ -66,6 +68,8 @@ const mockBookings = [
 function CustomerDashboardContent() {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const { showToast } = useToast()
+  const socket = useWebSocket()
   const navigate = useNavigate()
   const location = useLocation()
   const { bookings: userBookings } = useBookings()
@@ -88,6 +92,30 @@ function CustomerDashboardContent() {
     if (savedEmail !== null) setEmailNotifications(savedEmail === 'true')
     if (savedSms !== null) setSmsNotifications(savedSms === 'true')
   }, [])
+
+  // WebSocket listeners for real-time booking updates
+  useEffect(() => {
+    if (!socket) return
+
+    socket.on('booking-status-updated', (updatedBooking: any) => {
+      if (updatedBooking.userId === user?.id) {
+        setBookings(prev => prev.map(b => b.id === updatedBooking.id ? updatedBooking : b))
+        showToast(`Your booking status has been updated to ${updatedBooking.status}`, 'info', 4000)
+      }
+    })
+
+    socket.on('booking-created', (newBooking: any) => {
+      if (newBooking.userId === user?.id) {
+        setBookings(prev => [newBooking, ...prev])
+        showToast('New booking created successfully!', 'success', 3000)
+      }
+    })
+
+    return () => {
+      socket.off('booking-status-updated')
+      socket.off('booking-created')
+    }
+  }, [socket, user?.id, showToast])
 
   // Sync bookings from useBookings hook
   useEffect(() => {

@@ -2,9 +2,12 @@ import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { io } from '../server'
 import { sendBookingConfirmation, sendBookingNotification } from '../utils/emailService'
-import { mockBookings, getMockUserById, getProviderById } from '../data/mockData'
+import { mockBookings, getMockUserById, getProviderById, MockBooking } from '../data/mockData'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+const JWT_SECRET = process.env.JWT_SECRET
+if (!JWT_SECRET || JWT_SECRET === 'your-secret-key-change-in-production') {
+  console.warn('⚠️  WARNING: JWT_SECRET is not set or using default value. Please set a strong secret in production!')
+}
 
 // In-memory store for bookings (in production, use database)
 let bookingsStore = [...mockBookings]
@@ -19,8 +22,11 @@ export const createBooking = async (req: Request, res: Response) => {
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       try {
+        if (!JWT_SECRET) {
+          throw new Error('JWT_SECRET not configured')
+        }
         const token = authHeader.substring(7)
-        const decoded = jwt.verify(token, JWT_SECRET) as any
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId?: string }
         userId = decoded.userId
       } catch (err) {
         // Invalid token, use from body if provided
@@ -39,7 +45,7 @@ export const createBooking = async (req: Request, res: Response) => {
     }
 
     // Create new booking
-    const booking = {
+    const booking: MockBooking = {
       id: `booking-${Date.now()}`,
       providerId,
       userId,
@@ -76,8 +82,10 @@ export const createBooking = async (req: Request, res: Response) => {
     }
 
     res.status(201).json(booking)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Booking operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -102,8 +110,10 @@ export const getBookings = async (req: Request, res: Response) => {
     // const bookings = await prisma.booking.findMany({ where: { ... } })
 
     res.json(filtered)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Booking operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -121,8 +131,10 @@ export const getBookingById = async (req: Request, res: Response) => {
     // const booking = await prisma.booking.findUnique({ where: { id } })
 
     res.json(booking)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Booking operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -177,8 +189,10 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       message: 'Booking status updated successfully', 
       booking: updatedBooking 
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Booking operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 

@@ -8,6 +8,8 @@ import {
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { useToast } from '../context/ToastContext'
+import { useWebSocket } from '../hooks/useWebSocket'
 import { useBookings } from '../hooks/useBookings'
 import ProtectedRoute from '../components/ProtectedRoute'
 import Button from '../components/ui/Button'
@@ -24,6 +26,8 @@ import ProviderReviewsManagement from '../components/ProviderReviewsManagement'
 function DashboardContent() {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const { showToast } = useToast()
+  const socket = useWebSocket()
   const navigate = useNavigate()
   const { bookings, loading, updateBookingStatus } = useBookings()
   const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'analytics' | 'finance' | 'workflow' | 'services' | 'reviews' | 'customers' | 'business' | 'premium' | 'profile' | 'settings'>('overview')
@@ -103,6 +107,44 @@ function DashboardContent() {
     if (savedSms !== null) setSmsNotifications(savedSms === 'true')
     if (savedAuto !== null) setAutoConfirmBookings(savedAuto === 'true')
   }, [])
+
+  // WebSocket listeners for real-time updates
+  useEffect(() => {
+    if (!socket) return
+
+    socket.on('new-booking', (newBooking: any) => {
+      if (newBooking.providerId === providerId) {
+        showToast(`New booking received: ${newBooking.serviceType}`, 'success', 4000)
+        // Refresh bookings will happen via useBookings hook
+      }
+    })
+
+    socket.on('booking-status-updated', (updatedBooking: any) => {
+      if (updatedBooking.providerId === providerId) {
+        showToast(`Booking status updated to ${updatedBooking.status}`, 'info', 3000)
+        // Refresh bookings will happen via useBookings hook
+      }
+    })
+
+    socket.on('provider-verified', (provider: any) => {
+      if (provider.id === providerId) {
+        showToast('Your account has been verified! 🎉', 'success', 5000)
+      }
+    })
+
+    socket.on('provider-rejected', (provider: any) => {
+      if (provider.id === providerId) {
+        showToast('Your verification request was rejected. Please contact support.', 'error', 5000)
+      }
+    })
+
+    return () => {
+      socket.off('new-booking')
+      socket.off('booking-status-updated')
+      socket.off('provider-verified')
+      socket.off('provider-rejected')
+    }
+  }, [socket, providerId, showToast])
 
   // Filter bookings for this provider
   const myBookings = useMemo(() => {

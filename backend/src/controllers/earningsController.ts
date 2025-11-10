@@ -1,11 +1,12 @@
 import { Request, Response } from 'express'
+import { EarningsDataPoint, MonthlyTrend, CategoryBreakdown } from '../types/controller.types'
 
 // Mock earnings data generator
-const generateEarningsData = (providerId: string, period: string) => {
+const generateEarningsData = (providerId: string, period: string): EarningsDataPoint[] => {
   const now = new Date()
   const days = period === '7d' ? 7 : period === '30d' ? 30 : period === '3m' ? 90 : 365
   
-  const data = []
+  const data: EarningsDataPoint[] = []
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(now)
     date.setDate(date.getDate() - i)
@@ -27,8 +28,8 @@ const generateEarningsData = (providerId: string, period: string) => {
   return data
 }
 
-const generateMonthlyTrends = (providerId: string, months: number = 12) => {
-  const monthsData = []
+const generateMonthlyTrends = (providerId: string, months: number = 12): MonthlyTrend[] => {
+  const monthsData: MonthlyTrend[] = []
   const now = new Date()
   
   for (let i = months - 1; i >= 0; i--) {
@@ -49,7 +50,7 @@ const generateMonthlyTrends = (providerId: string, months: number = 12) => {
   return monthsData
 }
 
-const generateCategoryBreakdown = (providerId: string) => {
+const generateCategoryBreakdown = (providerId: string): CategoryBreakdown[] => {
   // Mock category breakdown (in production, aggregate by service category)
   return [
     { category: 'Electrical', earnings: 4500, jobs: 15, percentage: 35, color: '#FACC15' },
@@ -100,8 +101,10 @@ export const getEarningsAnalytics = async (req: Request, res: Response) => {
         payout: earningsData.map(d => ({ date: d.dayKey, value: d.payout }))
       }
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to fetch earnings analytics' })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch earnings analytics'
+    console.error('Get earnings analytics error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 

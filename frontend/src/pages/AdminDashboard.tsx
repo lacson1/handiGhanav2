@@ -5,6 +5,8 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
+import { useWebSocket } from '../hooks/useWebSocket'
 import ProtectedRoute from '../components/ProtectedRoute'
 import Button from '../components/ui/Button'
 import ProviderDetailModal from '../components/ProviderDetailModal'
@@ -19,6 +21,8 @@ import type { Provider } from '../types'
 
 function AdminDashboardContent() {
   const { user, logout } = useAuth()
+  const { showToast } = useToast()
+  const socket = useWebSocket('admin-room')
   const [activeTab, setActiveTab] = useState<'overview' | 'providers' | 'users' | 'bookings' | 'disputes'>('overview')
   const [providers, setProviders] = useState<any[]>([])
   const [bookings, setBookings] = useState<any[]>([])
@@ -33,6 +37,41 @@ function AdminDashboardContent() {
   useEffect(() => {
     loadData()
   }, [])
+
+  // WebSocket listeners for real-time updates
+  useEffect(() => {
+    if (!socket) return
+
+    socket.on('connect', () => {
+      socket.emit('join-room', 'admin-room')
+    })
+
+    socket.on('booking-status-updated', (updatedBooking: any) => {
+      setBookings(prev => prev.map(b => b.id === updatedBooking.id ? updatedBooking : b))
+      showToast(`Booking status updated to ${updatedBooking.status}`, 'info', 3000)
+    })
+
+    socket.on('provider-verified', (provider: any) => {
+      setProviders(prev => prev.map(p => p.id === provider.id ? provider : p))
+      showToast(`${provider.name} has been verified`, 'success', 4000)
+    })
+
+    socket.on('provider-rejected', (provider: any) => {
+      setProviders(prev => prev.map(p => p.id === provider.id ? provider : p))
+      showToast(`${provider.name} verification rejected`, 'warning', 4000)
+    })
+
+    socket.on('provider-updated', (provider: any) => {
+      setProviders(prev => prev.map(p => p.id === provider.id ? provider : p))
+    })
+
+    return () => {
+      socket.off('booking-status-updated')
+      socket.off('provider-verified')
+      socket.off('provider-rejected')
+      socket.off('provider-updated')
+    }
+  }, [socket, showToast])
 
   const loadData = async () => {
     setLoading(true)
@@ -139,31 +178,41 @@ function AdminDashboardContent() {
   }, [bookings, statusFilter])
 
   const handleVerifyProvider = async (providerId: string) => {
+    const provider = providers.find(p => p.id === providerId)
     try {
       await providersApi.update(providerId, { verified: true })
-      await loadData()
-      alert('Provider verified successfully!')
+      setProviders(providers.map(p => 
+        p.id === providerId ? { ...p, verified: true } : p
+      ))
+      showToast(`${provider?.name || 'Provider'} verified successfully!`, 'success')
+      // Log action for audit trail
+      console.log(`[AUDIT] Admin ${user?.name} (${user?.email}) verified provider ${providerId} at ${new Date().toISOString()}`)
     } catch (error) {
       // Update local state on error (for mock data)
       setProviders(providers.map(p => 
         p.id === providerId ? { ...p, verified: true } : p
       ))
-      alert('Provider verified successfully!')
+      showToast(`${provider?.name || 'Provider'} verified successfully!`, 'success')
     }
   }
 
   const handleRejectProvider = async (providerId: string) => {
+    const provider = providers.find(p => p.id === providerId)
     if (confirm('Are you sure you want to reject this provider?')) {
       try {
         await providersApi.update(providerId, { verified: false })
-        await loadData()
-        alert('Provider rejected')
+        setProviders(providers.map(p => 
+          p.id === providerId ? { ...p, verified: false } : p
+        ))
+        showToast(`${provider?.name || 'Provider'} verification rejected`, 'warning')
+        // Log action for audit trail
+        console.log(`[AUDIT] Admin ${user?.name} (${user?.email}) rejected provider ${providerId} at ${new Date().toISOString()}`)
       } catch (error) {
         // Update local state on error (for mock data)
         setProviders(providers.map(p => 
           p.id === providerId ? { ...p, verified: false } : p
         ))
-        alert('Provider rejected')
+        showToast(`${provider?.name || 'Provider'} verification rejected`, 'warning')
       }
     }
   }
@@ -232,8 +281,13 @@ function AdminDashboardContent() {
       ).join(' ')
       
       await bookingsApi.updateStatus(bookingId, formattedStatus.toUpperCase())
-      await loadData()
-      alert(`Booking status updated to ${formattedStatus}`)
+      setBookings(bookings.map(b => 
+        b.id === bookingId ? { ...b, status: formattedStatus } : b
+      ))
+      showToast(`Booking status updated to ${formattedStatus}`, 'success')
+      // Log action for audit trail
+      const booking = bookings.find(b => b.id === bookingId)
+      console.log(`[AUDIT] Admin ${user?.name} (${user?.email}) updated booking ${bookingId} status to ${formattedStatus} at ${new Date().toISOString()}`)
     } catch (error) {
       // Update local state on error
       const formattedStatus = newStatus.split(' ').map(word => 
@@ -242,15 +296,18 @@ function AdminDashboardContent() {
       setBookings(bookings.map(b => 
         b.id === bookingId ? { ...b, status: formattedStatus } : b
       ))
-      alert(`Booking status updated to ${formattedStatus}`)
+      showToast(`Booking status updated to ${formattedStatus}`, 'success')
     }
   }
 
   const handleDeleteUser = async (userId: string) => {
+    const userToDelete = users.find(u => u.id === userId)
     if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       // In a real app, this would call an API
       setUsers(users.filter(u => u.id !== userId))
-      alert('User deleted')
+      showToast(`${userToDelete?.name || 'User'} deleted successfully`, 'success')
+      // Log action for audit trail
+      console.log(`[AUDIT] Admin ${user?.name} (${user?.email}) deleted user ${userId} (${userToDelete?.name}) at ${new Date().toISOString()}`)
     }
   }
 

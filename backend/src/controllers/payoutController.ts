@@ -1,30 +1,42 @@
 import { Request, Response } from 'express'
-
-// Mock payout/wallet data
-interface Payout {
-  id: string
-  providerId: string
-  amount: number
-  method: 'MOBILE_MONEY_MTN' | 'MOBILE_MONEY_VODAFONE' | 'MOBILE_MONEY_AIRTELTIGO' | 'BANK_TRANSFER'
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
-  recipientNumber?: string
-  bankAccount?: string
-  transactionId?: string
-  createdAt: string
-  completedAt?: string
-}
-
-interface Wallet {
-  providerId: string
-  balance: number
-  pendingBalance: number
-  totalEarned: number
-  totalWithdrawn: number
-  lastUpdated: string
-}
+import { Payout, Wallet, PayoutMethod, PayoutStatus } from '../types/controller.types'
 
 const mockPayouts: Payout[] = []
 const mockWallets: Map<string, Wallet> = new Map()
+
+// Process payout asynchronously (in production, use a job queue like Bull)
+const processPayout = async (payoutId: string, amount: number, wallet: Wallet): Promise<void> => {
+  try {
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    const payoutIndex = mockPayouts.findIndex(p => p.id === payoutId)
+    if (payoutIndex === -1) return
+    
+    mockPayouts[payoutIndex].status = 'PROCESSING'
+    
+    // Simulate completion after additional delay
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    const currentPayoutIndex = mockPayouts.findIndex(p => p.id === payoutId)
+    if (currentPayoutIndex !== -1 && mockPayouts[currentPayoutIndex]) {
+      mockPayouts[currentPayoutIndex].status = 'COMPLETED'
+      mockPayouts[currentPayoutIndex].completedAt = new Date().toISOString()
+      mockPayouts[currentPayoutIndex].transactionId = `TXN-${Date.now()}`
+      
+      // Update wallet
+      wallet.pendingBalance -= amount
+      wallet.totalWithdrawn += amount
+      wallet.lastUpdated = new Date().toISOString()
+    }
+  } catch (error) {
+    console.error('Payout processing error:', error)
+    const payoutIndex = mockPayouts.findIndex(p => p.id === payoutId)
+    if (payoutIndex !== -1) {
+      mockPayouts[payoutIndex].status = 'FAILED'
+    }
+  }
+}
 
 // Initialize wallet for provider
 const getOrCreateWallet = (providerId: string): Wallet => {
@@ -59,8 +71,10 @@ export const getWalletBalance = async (req: Request, res: Response) => {
         .slice(0, 10)
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to fetch wallet balance' })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch wallet balance'
+    console.error('Get wallet balance error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -74,8 +88,9 @@ export const requestPayout = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Provider ID is required' })
     }
 
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ message: 'Valid amount is required' })
+    const amountNum = Number(amount)
+    if (isNaN(amountNum) || amountNum <= 0) {
+      return res.status(400).json({ message: 'Valid amount is required and must be greater than 0' })
     }
 
     if (!method) {
@@ -105,8 +120,8 @@ export const requestPayout = async (req: Request, res: Response) => {
     const payout: Payout = {
       id: `payout-${Date.now()}`,
       providerId: id,
-      amount: Number(amount),
-      method: method as Payout['method'],
+      amount: amountNum,
+      method: method as PayoutMethod,
       status: 'PENDING',
       recipientNumber,
       bankAccount,
@@ -116,40 +131,25 @@ export const requestPayout = async (req: Request, res: Response) => {
     mockPayouts.push(payout)
 
     // Deduct from wallet balance (move to pending)
-    wallet.balance -= amount
-    wallet.pendingBalance += amount
+    wallet.balance -= amountNum
+    wallet.pendingBalance += amountNum
     wallet.lastUpdated = new Date().toISOString()
 
-    // In production, process payout asynchronously
-    // For now, simulate processing
-    setTimeout(() => {
-      const payoutIndex = mockPayouts.findIndex(p => p.id === payout.id)
-      if (payoutIndex !== -1) {
-        mockPayouts[payoutIndex].status = 'PROCESSING'
-        
-        // Simulate completion after 2 seconds
-        setTimeout(() => {
-          if (payoutIndex !== -1 && mockPayouts[payoutIndex]) {
-            mockPayouts[payoutIndex].status = 'COMPLETED'
-            mockPayouts[payoutIndex].completedAt = new Date().toISOString()
-            mockPayouts[payoutIndex].transactionId = `TXN-${Date.now()}`
-            
-            // Update wallet
-            wallet.pendingBalance -= amount
-            wallet.totalWithdrawn += amount
-            wallet.lastUpdated = new Date().toISOString()
-          }
-        }, 2000)
-      }
-    }, 1000)
+    // Process payout asynchronously (don't await - fire and forget)
+    // In production, use a proper job queue (Bull, BullMQ, etc.)
+    processPayout(payout.id, amountNum, wallet).catch(error => {
+      console.error('Failed to process payout:', error)
+    })
 
     res.status(201).json({
       message: 'Payout request created successfully',
       payout,
       wallet
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to create payout request' })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create payout request'
+    console.error('Request payout error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -184,8 +184,10 @@ export const getPayoutHistory = async (req: Request, res: Response) => {
       limit: limitNum,
       offset: offsetNum
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to fetch payout history' })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch payout history'
+    console.error('Get payout history error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -195,12 +197,22 @@ export const addEarnings = async (req: Request, res: Response) => {
     const { id } = req.params
     const { amount, bookingId, commissionRate = 0.15 } = req.body
 
-    if (!id || !amount) {
-      return res.status(400).json({ message: 'Provider ID and amount are required' })
+    if (!id) {
+      return res.status(400).json({ message: 'Provider ID is required' })
+    }
+
+    const amountNum = Number(amount)
+    if (isNaN(amountNum) || amountNum <= 0) {
+      return res.status(400).json({ message: 'Valid amount is required and must be greater than 0' })
+    }
+
+    const commissionRateNum = Number(commissionRate)
+    if (isNaN(commissionRateNum) || commissionRateNum < 0 || commissionRateNum > 1) {
+      return res.status(400).json({ message: 'Commission rate must be between 0 and 1' })
     }
 
     const wallet = getOrCreateWallet(id)
-    const providerEarnings = amount * (1 - commissionRate) // After platform commission
+    const providerEarnings = amountNum * (1 - commissionRateNum) // After platform commission
 
     wallet.balance += providerEarnings
     wallet.totalEarned += providerEarnings
@@ -209,11 +221,13 @@ export const addEarnings = async (req: Request, res: Response) => {
     res.json({
       message: 'Earnings added to wallet',
       amount: providerEarnings,
-      commission: amount * commissionRate,
+      commission: amountNum * commissionRateNum,
       wallet
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to add earnings' })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to add earnings'
+    console.error('Add earnings error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 

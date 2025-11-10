@@ -87,22 +87,24 @@ export const uploadImage = async (req: Request, res: Response) => {
       url: result.secure_url,
       publicId: result.public_id,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Upload error:', error)
     
     // Provide more specific error messages
     let errorMessage = 'Upload failed'
-    if (error.message?.includes('Invalid API Key')) {
-      errorMessage = 'Cloudinary configuration error. Please check your API credentials.'
-    } else if (error.message?.includes('Network')) {
-      errorMessage = 'Network error. Please check your internet connection.'
-    } else {
-      errorMessage = error?.message || 'Upload failed. Please try again.'
+    if (error instanceof Error) {
+      if (error.message?.includes('Invalid API Key')) {
+        errorMessage = 'Cloudinary configuration error. Please check your API credentials.'
+      } else if (error.message?.includes('Network')) {
+        errorMessage = 'Network error. Please check your internet connection.'
+      } else {
+        errorMessage = error.message || 'Upload failed. Please try again.'
+      }
     }
 
     res.status(500).json({ 
       message: errorMessage,
-      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
     })
   }
 }

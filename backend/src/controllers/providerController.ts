@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
-import { mockProviders, getProviderById as getProvider } from '../data/mockData'
+import { io } from '../server'
+import { mockProviders, getProviderById as getProvider, MockProvider } from '../data/mockData'
 
 // In-memory store for providers (starts with mock data, gets updated with new providers)
 let providersStore = [...mockProviders]
@@ -47,8 +48,10 @@ export const getProviders = async (req: Request, res: Response) => {
     }
 
     res.json(filtered)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Provider operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -66,8 +69,10 @@ export const getProviderById = async (req: Request, res: Response) => {
     }
 
     res.json(provider)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Provider operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -75,23 +80,34 @@ export const createProvider = async (req: Request, res: Response) => {
   try {
     const { name, category, location, description, phone, whatsapp, bio } = req.body
 
+    // Validation
     if (!name || !category || !location || !description) {
       return res.status(400).json({ message: 'Name, category, location, and description are required' })
     }
 
+    // Sanitize inputs
+    const trimmedName = String(name).trim()
+    const trimmedCategory = String(category).trim()
+    const trimmedLocation = String(location).trim()
+    const trimmedDescription = String(description || bio || '').trim()
+
+    if (trimmedName.length === 0 || trimmedCategory.length === 0 || trimmedLocation.length === 0 || trimmedDescription.length === 0) {
+      return res.status(400).json({ message: 'Name, category, location, and description cannot be empty' })
+    }
+
     // Create new provider
-    const newProvider = {
+    const newProvider: MockProvider = {
       id: `provider-${Date.now()}`,
-      name,
-      category,
-      location,
-      description: description || bio,
+      name: trimmedName,
+      category: trimmedCategory,
+      location: trimmedLocation,
+      description: trimmedDescription,
       rating: 0,
       reviewCount: 0,
       verified: false,
       availability: "Available Now" as const,
-      phone: phone || whatsapp,
-      whatsapp: whatsapp || phone,
+      phone: phone ? String(phone).trim() : whatsapp ? String(whatsapp).trim() : undefined,
+      whatsapp: whatsapp ? String(whatsapp).trim() : phone ? String(phone).trim() : undefined,
       serviceAreas: [location],
       skills: [],
       joinedDate: new Date().toISOString().split('T')[0]
@@ -107,8 +123,10 @@ export const createProvider = async (req: Request, res: Response) => {
       message: 'Provider created successfully',
       provider: newProvider
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Provider operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -144,12 +162,28 @@ export const updateProvider = async (req: Request, res: Response) => {
     // TODO: Update in database with Prisma
     // const provider = await prisma.provider.update({ where: { id }, data: updates })
 
+    // Emit WebSocket event for provider verification
+    if (updates.verified !== undefined) {
+      if (updates.verified) {
+        io.emit('provider-verified', updatedProvider)
+        io.to(`provider-${id}`).emit('provider-verified', updatedProvider)
+      } else {
+        io.emit('provider-rejected', updatedProvider)
+        io.to(`provider-${id}`).emit('provider-rejected', updatedProvider)
+      }
+    } else {
+      // General provider update
+      io.emit('provider-updated', updatedProvider)
+    }
+
     res.json({
       message: 'Provider updated successfully',
       provider: updatedProvider
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Provider operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 

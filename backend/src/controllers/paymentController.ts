@@ -74,7 +74,7 @@ export const initializePayment = async (req: Request, res: Response) => {
           })
           return
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Fallback to mock response if API fails
         console.error('Mobile Money API error:', error)
         res.json({
@@ -155,8 +155,10 @@ export const initializePayment = async (req: Request, res: Response) => {
       reference,
       method: 'card'
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Payment initialization failed' })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Payment initialization failed'
+    console.error('Initialize payment error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -178,7 +180,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
           const verification = await verifyVodafoneCash(reference)
           return res.json(verification)
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Mobile Money verification error:', error)
         // Fall through to mock verification
       }
@@ -200,7 +202,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
           message: 'Payment verified',
           data: response.data.data
         })
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Paystack verification error:', error)
       }
     }
@@ -215,8 +217,10 @@ export const verifyPayment = async (req: Request, res: Response) => {
         amount: 0,
       },
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Payment verification failed' })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Payment verification failed'
+    console.error('Verify payment error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -287,8 +291,9 @@ async function initializeMTNMoMo(params: {
       accessCode: accessToken,
       transactionId: paymentResponse.data.transactionId || params.reference
     }
-  } catch (error: any) {
-    console.error('MTN MoMo API error:', error.response?.data || error.message)
+  } catch (error: unknown) {
+    const errorDetails = error instanceof Error ? error.message : 'Unknown error'
+    console.error('MTN MoMo API error:', errorDetails)
     throw error
   }
 }
@@ -340,8 +345,9 @@ async function verifyMTNMoMo(reference: string) {
         amount: verificationResponse.data.amount || 0
       }
     }
-  } catch (error: any) {
-    console.error('MTN MoMo verification error:', error.response?.data || error.message)
+  } catch (error: unknown) {
+    const errorDetails = error instanceof Error ? error.message : 'Unknown error'
+    console.error('MTN MoMo verification error:', errorDetails)
     throw error
   }
 }
@@ -391,8 +397,9 @@ async function initializeVodafoneCash(params: {
       accessCode: paymentResponse.data.accessCode || 'vodafone-access-code',
       transactionId: paymentResponse.data.transactionId || params.reference
     }
-  } catch (error: any) {
-    console.error('Vodafone Cash API error:', error.response?.data || error.message)
+  } catch (error: unknown) {
+    const errorDetails = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Vodafone Cash API error:', errorDetails)
     // Return mock response on error
     return {
       reference: params.reference,
@@ -436,8 +443,9 @@ async function verifyVodafoneCash(reference: string) {
         amount: verificationResponse.data.amount || 0
       }
     }
-  } catch (error: any) {
-    console.error('Vodafone Cash verification error:', error.response?.data || error.message)
+  } catch (error: unknown) {
+    const errorDetails = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Vodafone Cash verification error:', errorDetails)
     return {
       status: true,
       message: 'Payment verified (mock)',

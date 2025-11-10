@@ -1,8 +1,9 @@
 import { Request, Response } from 'express'
+import { Service } from '../types/controller.types'
 
 // Mock services data - in production, this would come from Prisma
 // For now, we'll use a simple in-memory store
-let mockServices: any[] = [
+let mockServices: Service[] = [
   {
     id: 'service-1',
     providerId: '1',
@@ -97,8 +98,10 @@ export const getServices = async (req: Request, res: Response) => {
     }
 
     res.json(filtered)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Service operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -112,8 +115,10 @@ export const getServiceById = async (req: Request, res: Response) => {
     }
 
     res.json(service)
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Service operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -134,38 +139,59 @@ export const createService = async (req: Request, res: Response) => {
       visitsPerPeriod
     } = req.body
 
+    // Validation
     if (!providerId || !name || !description || !category || !pricingModel) {
       return res.status(400).json({ 
         message: 'Provider ID, name, description, category, and pricing model are required' 
       })
     }
 
-    if (pricingModel === 'pay-as-you-go' && (!basePrice || basePrice <= 0)) {
+    // Sanitize inputs
+    const trimmedName = String(name).trim()
+    const trimmedDescription = String(description).trim()
+    const trimmedCategory = String(category).trim()
+
+    if (trimmedName.length === 0 || trimmedDescription.length === 0 || trimmedCategory.length === 0) {
+      return res.status(400).json({ 
+        message: 'Name, description, and category cannot be empty' 
+      })
+    }
+
+    if (pricingModel !== 'pay-as-you-go' && pricingModel !== 'subscription') {
+      return res.status(400).json({ 
+        message: 'Pricing model must be either "pay-as-you-go" or "subscription"' 
+      })
+    }
+
+    const basePriceNum = basePrice ? Number(basePrice) : 0
+    const monthlyPriceNum = monthlyPrice ? Number(monthlyPrice) : 0
+
+    if (pricingModel === 'pay-as-you-go' && (isNaN(basePriceNum) || basePriceNum <= 0)) {
       return res.status(400).json({ 
         message: 'Base price is required and must be greater than 0 for pay-as-you-go services' 
       })
     }
 
-    if (pricingModel === 'subscription' && (!monthlyPrice || monthlyPrice <= 0)) {
+    if (pricingModel === 'subscription' && (isNaN(monthlyPriceNum) || monthlyPriceNum <= 0)) {
       return res.status(400).json({ 
         message: 'Monthly price is required and must be greater than 0 for subscription services' 
       })
     }
 
-    const newService = {
+    const newService: Service = {
       id: `service-${Date.now()}`,
-      providerId,
-      name,
-      description,
-      category,
+      providerId: String(providerId).trim(),
+      name: trimmedName,
+      description: trimmedDescription,
+      category: trimmedCategory,
       pricingModel,
-      basePrice: basePrice || 0,
-      duration: duration || 60,
-      isActive: isActive !== undefined ? isActive : true,
-      monthlyPrice: monthlyPrice || undefined,
-      billingCycle: billingCycle || undefined,
-      subscriptionFeatures: subscriptionFeatures || [],
-      visitsPerPeriod: visitsPerPeriod || undefined
+      basePrice: basePriceNum,
+      duration: duration ? Number(duration) : 60,
+      isActive: isActive !== undefined ? Boolean(isActive) : true,
+      monthlyPrice: monthlyPriceNum > 0 ? monthlyPriceNum : undefined,
+      billingCycle: billingCycle ? String(billingCycle).trim() : undefined,
+      subscriptionFeatures: Array.isArray(subscriptionFeatures) ? subscriptionFeatures.map(f => String(f).trim()) : [],
+      visitsPerPeriod: visitsPerPeriod ? Number(visitsPerPeriod) : undefined
     }
 
     mockServices.push(newService)
@@ -177,8 +203,10 @@ export const createService = async (req: Request, res: Response) => {
       message: 'Service created successfully',
       service: newService
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Service operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -209,8 +237,10 @@ export const updateService = async (req: Request, res: Response) => {
       message: 'Service updated successfully',
       service: updatedService
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Service operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -230,8 +260,10 @@ export const deleteService = async (req: Request, res: Response) => {
     // await prisma.service.delete({ where: { id } })
 
     res.json({ message: 'Service deleted successfully' })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+    console.error('Service operation error:', error)
+    res.status(500).json({ message: errorMessage })
   }
 }
 
