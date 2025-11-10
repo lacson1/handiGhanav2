@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with Ghana colors -->
+  <rect width="512" height="512" fill="#FACC15"/>
+  <rect x="0" y="0" width="512" height="170.67" fill="#CE1126"/>
+  <rect x="0" y="341.33" width="512" height="170.67" fill="#006B3F"/>
+  
+  <!-- H Letter -->
+  <text x="256" y="320" font-family="Arial, sans-serif" font-size="280" font-weight="bold" fill="#000000" text-anchor="middle" dominant-baseline="middle">H</text>
+</svg>
+
