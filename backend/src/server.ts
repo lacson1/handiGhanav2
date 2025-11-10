@@ -23,9 +23,6 @@ initSentry()
 
 const app = express()
 const httpServer = createServer(app)
-
-// Sentry request handler must be the first middleware
-app.use(Sentry.Handlers.requestHandler())
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -86,9 +83,11 @@ io.on('connection', (socket) => {
 // Export io for use in controllers
 export { io }
 
-// Error handling middleware
+// Error handling middleware (Sentry will catch errors automatically)
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack)
+  // Sentry will automatically capture this error
+  Sentry.captureException(err)
   res.status(err.status || 500).json({
     message: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })

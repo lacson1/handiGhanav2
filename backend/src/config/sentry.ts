@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/node'
+import { nodeProfilingIntegration } from "@sentry/profiling-node"
 
 export const initSentry = () => {
   if (process.env.SENTRY_DSN) {
@@ -6,13 +7,10 @@ export const initSentry = () => {
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV || 'development',
       tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+      profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
       
-      // Performance Monitoring
       integrations: [
-        // Enable HTTP calls tracing
-        new Sentry.Integrations.Http({ tracing: true }),
-        // Enable Express.js middleware tracing
-        new Sentry.Integrations.Express({ app: undefined as any }),
+        nodeProfilingIntegration(),
       ],
     })
 
@@ -23,4 +21,3 @@ export const initSentry = () => {
 }
 
 export default Sentry
-
