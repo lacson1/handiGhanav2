@@ -359,7 +359,7 @@ export default function WorkflowManagement({ providerId }: WorkflowManagementPro
   }
 
   const getBookingInfo = (bookingId: string) => {
-    return bookings.find(b => b.id === bookingId) || mockBookings.find(b => b.id === bookingId)
+    return bookings.find((b: any) => b.id === bookingId)
   }
 
   // Statistics

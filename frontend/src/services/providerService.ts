@@ -1,35 +1,33 @@
-import { providersApi } from '../lib/api'
 import type { Provider } from '../types'
+import { providersApi } from '../lib/api'
 
-export const providerService = {
-  async getAllProviders(filters?: {
-    category?: string
-    location?: string
-    verified?: boolean
-    availableNow?: boolean
-    minRating?: number
-    search?: string
-  }): Promise<Provider[]> {
+class ProviderService {
+  async getAllProviders(filters?: any): Promise<Provider[]> {
     try {
-      const data = await providersApi.getAll(filters)
-      return data as Provider[]
+      return await providersApi.getAll(filters)
     } catch (error) {
-      // Fallback to mock data
-      const { mockProviders } = await import('../data/mockProviders')
-      return mockProviders
+      console.error('Error fetching providers:', error)
+      return []
     }
-  },
+  }
 
   async getProviderById(id: string): Promise<Provider | null> {
     try {
-      const data = await providersApi.getById(id)
-      return data as Provider
+      return await providersApi.getById(id)
     } catch (error) {
-      // Fallback to mock data
-      const { mockProviders } = await import('../data/mockProviders')
-      return mockProviders.find(p => p.id === id) || null
+      console.error('Error fetching provider:', error)
+      return null
     }
-  },
+  }
+
+  async searchProviders(query: string, filters?: any): Promise<Provider[]> {
+    try {
+      return await providersApi.getAll({ ...filters, search: query })
+    } catch (error) {
+      console.error('Error searching providers:', error)
+      return []
+    }
+  }
 
   async createProvider(data: {
     name: string
@@ -52,36 +50,30 @@ export const providerService = {
         availability: "Available Now" as const,
       }
       const result = await providersApi.create(providerData)
-      // Backend returns { message: '...', provider: {...} }
-      // Extract the provider object from the response
       if (result.provider) {
         return result.provider as Provider
       }
-      // Fallback: if response is already a provider object
       return result as Provider
     } catch (error: any) {
       console.error('Error creating provider:', error)
-      // Extract error message from API response if available
       const errorMessage = error.message || error.response?.data?.message || 'Failed to create provider profile. Please try again.'
       throw new Error(errorMessage)
     }
-  },
+  }
 
   async updateProvider(id: string, data: Partial<Provider>): Promise<Provider> {
     try {
       const result = await providersApi.update(id, data)
-      // Backend returns { message: '...', provider: {...} }
-      // Extract the provider object from the response
       if (result.provider) {
         return result.provider as Provider
       }
-      // Fallback: if response is already a provider object
       return result as Provider
     } catch (error: any) {
       console.error('Error updating provider:', error)
       const errorMessage = error.message || error.response?.data?.message || 'Failed to update provider'
       throw new Error(errorMessage)
     }
-  },
+  }
 }
 
+export const providerService = new ProviderService()

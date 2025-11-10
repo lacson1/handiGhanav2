@@ -15,7 +15,7 @@ import { useBookings } from '../hooks/useBookings'
 import ProtectedRoute from '../components/ProtectedRoute'
 import Button from '../components/ui/Button'
 import { cn } from '../lib/utils'
-import { getMockUserById } from '../data/mockUsers'
+// Mock data removed
 import type { ServiceCategory, GhanaCity } from '../types'
 import FinanceManagement from '../components/FinanceManagement'
 import WorkflowManagement from '../components/WorkflowManagement'
@@ -189,8 +189,8 @@ function DashboardContent() {
     }
   }, [myBookings])
 
-  const getCustomerInfo = (userId: string) => {
-    return getMockUserById(userId)
+  const getCustomerInfo = (userId: string): any => {
+    return null // TODO: Fetch from usersApi.getById(userId)
   }
 
   const handleLogout = () => {

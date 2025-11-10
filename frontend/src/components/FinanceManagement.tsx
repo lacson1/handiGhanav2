@@ -8,7 +8,7 @@ import {
   BarChart, Bar, AreaChart, Area, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts'
-import { earningsApi, payoutsApi } from '../lib/api'
+import { earningsApi } from '../lib/api'
 import type { Invoice } from '../types'
 import Button from './ui/Button'
 import InvoiceModal from './InvoiceModal'
@@ -1021,7 +1021,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
                     Transactions ({earning.transactions.length})
                   </p>
                   <div className="space-y-2">
-                    {earning.transactions.map((transaction) => (
+                    {earning.transactions.map((transaction: any) => (
                       <div
                         key={transaction.id}
                         className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50"

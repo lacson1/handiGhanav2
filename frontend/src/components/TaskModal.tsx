@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Calendar, FileText } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { WorkflowTask } from '../types'
-import { mockBookings } from '../data/mockBookings'
+// Mock data removed
 import Button from './ui/Button'
 import { cn } from '../lib/utils'
 
@@ -40,7 +40,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
       const tomorrow = new Date()
       tomorrow.setDate(tomorrow.getDate() + 1)
       setFormData({
-        bookingId: mockBookings[0]?.id || '',
+        bookingId: '',
         title: '',
         description: '',
         status: 'Not Started',
@@ -126,7 +126,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
                     )}
                   >
                     <option value="">Select a booking</option>
-                    {mockBookings.map(booking => (
+                    {[].map((booking: any) => (
                       <option key={booking.id} value={booking.id}>
                         {booking.serviceType} - {new Date(booking.date).toLocaleDateString()} at {booking.time}
                       </option>

@@ -16,7 +16,7 @@ export default function HomePage() {
   const [drawerProvider, setDrawerProvider] = useState<Provider | null>(null)
 
   const filteredProviders = useMemo(() => {
-    let result = [...mockProviders]
+    let result: Provider[] = []
 
     if (filters.category) {
       result = result.filter(p => p.category === filters.category)

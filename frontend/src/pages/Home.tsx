@@ -46,7 +46,7 @@ export default function Home() {
         setProviders(fetchedProviders)
       } catch (error) {
         console.error('Failed to load providers from API, using mock data:', error)
-        setProviders(mockProviders)
+        setProviders([])
       } finally {
         setLoadingProviders(false)
       }

@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Plus, Trash2, DollarSign, Calendar, Printer } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Invoice, InvoiceItem } from '../types'
-import { mockBookings } from '../data/mockBookings'
-import { getMockUserById } from '../data/mockUsers'
+// Mock data removed
 import Button from './ui/Button'
 import { cn } from '../lib/utils'
 
@@ -39,7 +38,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
       const nextWeek = new Date()
       nextWeek.setDate(nextWeek.getDate() + 7)
       setFormData({
-        bookingId: mockBookings[0]?.id || '',
+        bookingId: '',
         customerName: '',
         serviceType: '',
         status: 'Draft',
@@ -52,13 +51,13 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
 
   useEffect(() => {
     if (formData.bookingId) {
-      const booking = mockBookings.find(b => b.id === formData.bookingId)
+      const booking = null // TODO: Fetch from bookingsApi.getById(formData.bookingId)
       if (booking) {
-        const customer = getMockUserById(booking.userId)
+        const customer: any = null // TODO: Fetch from usersApi.getById(booking.userId)
         setFormData(prev => ({
           ...prev,
           customerName: customer?.name || '',
-          serviceType: booking.serviceType
+          serviceType: (booking as any)?.serviceType || ''
         }))
       }
     }
@@ -445,7 +444,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
                       )}
                     >
                       <option value="">Select a booking</option>
-                      {mockBookings.map(booking => (
+                      {[].map((booking: any) => (
                         <option key={booking.id} value={booking.id}>
                           {booking.serviceType} - {new Date(booking.date).toLocaleDateString()}
                         </option>

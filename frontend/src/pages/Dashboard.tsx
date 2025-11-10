@@ -153,7 +153,7 @@ export default function Dashboard() {
   }
 
   const getProviderInfo = (providerId: string) => {
-    return getProviderById(providerId) || mockProviders.find(p => p.id === providerId)
+    return getProviderById(providerId)
   }
 
   return (

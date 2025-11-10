@@ -57,7 +57,7 @@ export default function ProviderProfile() {
           }
         } else {
           // Fallback to mock data
-          const found = mockProviders.find(p => p.id === id)
+          const found = null // TODO: Fetch from providersApi.getById(id)
           if (found) {
             setProvider(found)
           } else {
@@ -66,7 +66,7 @@ export default function ProviderProfile() {
         }
       } catch (err) {
         // Fallback to mock data on error
-        const found = mockProviders.find(p => p.id === id)
+        const found = null // TODO: Fetch from providersApi.getById(id)
         if (found) {
           setProvider(found)
           setError(null)

@@ -28,7 +28,7 @@ export default function SearchResults() {
   }, [searchParams])
 
   const filteredProviders = useMemo(() => {
-    let result = [...mockProviders]
+    let result: Provider[] = []
 
     if (filters.category) {
       result = result.filter(p => p.category === filters.category)

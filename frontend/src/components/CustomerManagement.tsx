@@ -4,7 +4,7 @@ import {
   Search, Phone, Mail, Calendar, DollarSign, 
   Star, MessageCircle, Filter, TrendingUp
 } from 'lucide-react'
-import { mockCustomers } from '../data/mockCustomers'
+// mockCustomers removed - using empty array
 import type { Customer } from '../types'
 import Button from './ui/Button'
 import { cn } from '../lib/utils'
@@ -17,14 +17,16 @@ export default function CustomerManagement({ providerId: _providerId }: Customer
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'name' | 'bookings' | 'spent' | 'recent'>('recent')
 
+  const [customers] = useState<Customer[]>([])
+  
   // Filter and sort customers
   const filteredCustomers = useMemo(() => {
-    let customers = [...mockCustomers]
+    let result = [...customers]
 
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
-      customers = customers.filter(c =>
+      result = result.filter(c =>
         c.name.toLowerCase().includes(query) ||
         c.email.toLowerCase().includes(query) ||
         c.phone?.toLowerCase().includes(query)
@@ -32,7 +34,7 @@ export default function CustomerManagement({ providerId: _providerId }: Customer
     }
 
     // Sort
-    customers.sort((a, b) => {
+    result.sort((a, b) => {
       switch (sortBy) {
         case 'name':
           return a.name.localeCompare(b.name)
@@ -49,15 +51,15 @@ export default function CustomerManagement({ providerId: _providerId }: Customer
       }
     })
 
-    return customers
-  }, [searchQuery, sortBy])
+    return result
+  }, [searchQuery, sortBy, customers])
 
   // Calculate stats
   const stats = useMemo(() => {
-    const totalCustomers = mockCustomers.length
-    const totalBookings = mockCustomers.reduce((sum, c) => sum + c.totalBookings, 0)
-    const totalRevenue = mockCustomers.reduce((sum, c) => sum + c.totalSpent, 0)
-    const avgRating = mockCustomers.reduce((sum, c) => sum + (c.rating || 0), 0) / mockCustomers.length
+    const totalCustomers = customers.length
+    const totalBookings = customers.reduce((sum: number, c: Customer) => sum + c.totalBookings, 0)
+    const totalRevenue = customers.reduce((sum: number, c: Customer) => sum + c.totalSpent, 0)
+    const avgRating = customers.length > 0 ? customers.reduce((sum: number, c: Customer) => sum + (c.rating || 0), 0) / customers.length : 0
 
     return {
       totalCustomers,

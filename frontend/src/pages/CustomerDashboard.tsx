@@ -122,7 +122,7 @@ function CustomerDashboardContent() {
     if (userBookings.length > 0) {
       // Convert Booking type to the format used in this component
       const formattedBookings = userBookings.map(booking => {
-        const provider = mockProviders.find(p => p.id === booking.providerId)
+        const provider: any = null // Will be fetched from API
         return {
           id: booking.id,
           providerId: booking.providerId,
@@ -202,7 +202,7 @@ function CustomerDashboardContent() {
   }
 
   const handleRebook = (booking: any) => {
-    const provider = mockProviders.find(p => p.id === booking.providerId)
+    const provider: any = null // Will be fetched from API
     if (provider) {
       setSelectedProvider(provider)
       // Pre-fill booking details for rebooking
@@ -226,7 +226,7 @@ function CustomerDashboardContent() {
     const allBookings = userBookings.length > 0 ? userBookings : bookings
     
     allBookings.forEach(booking => {
-      const provider = mockProviders.find(p => p.id === booking.providerId)
+      const provider: any = null // Will be fetched from API
       if (provider) {
         const existing = providerMap.get(provider.id)
         if (existing) {
@@ -962,7 +962,7 @@ function CustomerDashboardContent() {
               </div>
               <BookingTracking
                 bookingId={selectedBookingForTracking}
-                provider={mockProviders.find(p => bookings.find(b => b.id === selectedBookingForTracking)?.providerId === p.id) || undefined}
+                provider={undefined}
               />
             </div>
           </div>
