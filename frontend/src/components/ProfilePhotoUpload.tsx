@@ -19,7 +19,7 @@ export default function ProfilePhotoUpload({
   size = 'md',
   className
 }: ProfilePhotoUploadProps) {
-  const { user, login } = useAuth()
+  const { user } = useAuth()
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentAvatar || null)
   const fileInputRef = useRef<HTMLInputElement>(null)

@@ -13,7 +13,7 @@ interface CustomerManagementProps {
   providerId: string
 }
 
-export default function CustomerManagement({ providerId }: CustomerManagementProps) {
+export default function CustomerManagement({ providerId: _providerId }: CustomerManagementProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'name' | 'bookings' | 'spent' | 'recent'>('recent')
 

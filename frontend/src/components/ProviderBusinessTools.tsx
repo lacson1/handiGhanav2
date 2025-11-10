@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { FileText, Calculator, Clock, TrendingUp, Download, Plus } from 'lucide-react'
-import { motion } from 'framer-motion'
 import Button from './ui/Button'
 
 interface Invoice {
@@ -45,7 +44,7 @@ export default function ProviderBusinessTools() {
       issuedDate: '2024-01-22'
     }
   ])
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
+  const [timeEntries] = useState<TimeEntry[]>([])
   const [taxInfo, setTaxInfo] = useState({
     taxId: '',
     taxRate: 12.5, // VAT rate in Ghana

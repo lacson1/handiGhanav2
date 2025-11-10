@@ -2,7 +2,6 @@ import { Star, MapPin, CheckCircle, Clock, Phone, MessageCircle, Award, Trending
 import { motion } from 'framer-motion'
 import type { Provider } from '../types'
 import Button from './ui/Button'
-import { cn } from '../lib/utils'
 
 interface ProviderCardEnhancedProps {
   provider: Provider

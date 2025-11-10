@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Clock, MapPin, CheckCircle, XCircle, Phone, MessageCircle } from 'lucide-react'
+import { Clock, MapPin, CheckCircle, Phone, MessageCircle, XCircle } from 'lucide-react'
 import type { Booking } from '../types'
 import { bookingsApi } from '../lib/api'
 import Button from './ui/Button'
@@ -232,7 +232,8 @@ export default function BookingTracking({ bookingId, provider }: BookingTracking
               variant="outline"
               onClick={() => {
                 const message = encodeURIComponent(`Hi ${provider.name}, I have a booking with you. Can you confirm the details?`)
-                window.open(`https://wa.me/${provider.whatsapp?.replace(/[^0-9]/g, '')}?text=${message}`, '_blank')
+                const whatsappNumber = (provider.whatsapp || '').replace(/[^0-9]/g, '')
+                window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank')
               }}
               className="flex-1"
             >

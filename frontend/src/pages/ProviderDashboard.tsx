@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useRef, ChangeEvent, FormEvent } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Calendar, Star, TrendingUp, Settings, 
@@ -15,6 +16,7 @@ import ProtectedRoute from '../components/ProtectedRoute'
 import Button from '../components/ui/Button'
 import { cn } from '../lib/utils'
 import { getMockUserById } from '../data/mockUsers'
+import type { ServiceCategory, GhanaCity } from '../types'
 import FinanceManagement from '../components/FinanceManagement'
 import WorkflowManagement from '../components/WorkflowManagement'
 import ServicesManagement from '../components/ServicesManagement'
@@ -1004,6 +1006,8 @@ function ProfileEditForm() {
       const { providerService } = await import('../services/providerService')
       const updatedProvider = await providerService.updateProvider(providerId, { 
         ...formData, 
+        category: formData.category as ServiceCategory,
+        location: formData.location as GhanaCity,
         avatar: avatarUrl 
       })
       

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { 
   Calendar, Clock, MapPin, Star, CheckCircle, 
-  X, MessageCircle, Phone, FileText, User, Users, Repeat, Settings, Moon, Sun, Gift, RotateCcw
+  X, FileText, User, Users, Repeat, Settings, Moon, Sun, Gift, RotateCcw
 } from 'lucide-react'
 import SubscriptionManagement from '../components/SubscriptionManagement'
 import { motion } from 'framer-motion'

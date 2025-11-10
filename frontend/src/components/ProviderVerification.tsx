@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Upload, CheckCircle, XCircle, FileText, Camera, Video, User, AlertCircle } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Upload, CheckCircle, XCircle, FileText, Camera, User, AlertCircle } from 'lucide-react'
 import { uploadApi } from '../lib/api'
 import Button from './ui/Button'
 
@@ -11,7 +10,7 @@ interface ProviderVerificationProps {
 
 type VerificationStep = 'id' | 'references' | 'portfolio' | 'review'
 
-export default function ProviderVerification({ providerId, onComplete }: ProviderVerificationProps) {
+export default function ProviderVerification({ providerId: _providerId, onComplete }: ProviderVerificationProps) {
   const [currentStep, setCurrentStep] = useState<VerificationStep>('id')
   const [verificationData, setVerificationData] = useState({
     idDocument: null as File | null,

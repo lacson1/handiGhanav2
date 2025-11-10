@@ -1,4 +1,4 @@
-import { Filter, X, DollarSign, Repeat } from 'lucide-react'
+import { Filter, X } from 'lucide-react'
 import type { FilterState, ServiceCategory, GhanaCity, PricingModel } from '../types'
 import { SERVICE_CATEGORIES, GHANA_CITIES } from '../lib/utils'
 import Button from './ui/Button'

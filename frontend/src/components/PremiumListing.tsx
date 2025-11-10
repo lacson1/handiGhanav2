@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Crown, Check, Star, TrendingUp, Users, Zap } from 'lucide-react'
+import { Crown, Check, TrendingUp, Zap, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Button from './ui/Button'
 
@@ -9,8 +9,8 @@ interface PremiumListingProps {
   onUpgrade?: (tier: string) => void
 }
 
-export default function PremiumListing({ providerId, currentTier = 'FREE', onUpgrade }: PremiumListingProps) {
-  const [selectedTier, setSelectedTier] = useState<string>(currentTier)
+export default function PremiumListing({ providerId: _providerId, currentTier = 'FREE', onUpgrade }: PremiumListingProps) {
+  const [, setSelectedTier] = useState<string>(currentTier)
 
   const tiers = [
     {
@@ -115,7 +115,6 @@ export default function PremiumListing({ providerId, currentTier = 'FREE', onUpg
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {tiers.map((tier) => {
           const isCurrent = tier.id === currentTier
-          const isSelected = tier.id === selectedTier
           
           return (
             <motion.div
@@ -173,7 +172,7 @@ export default function PremiumListing({ providerId, currentTier = 'FREE', onUpg
 
               <Button
                 onClick={() => handleUpgrade(tier.id)}
-                variant={tier.popular ? 'default' : 'outline'}
+                variant={(tier.popular ? 'primary' : 'outline') as 'primary' | 'outline'}
                 className="w-full"
                 disabled={isCurrent}
               >

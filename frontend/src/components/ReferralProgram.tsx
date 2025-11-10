@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Copy, Gift, Users, CheckCircle, Share2 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Copy, Gift, CheckCircle, Share2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Button from './ui/Button'
 

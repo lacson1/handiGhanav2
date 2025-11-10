@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Star, Upload, Image as ImageIcon, Trash2, CheckCircle } from 'lucide-react'
+import { X, Star, Upload, Trash2, CheckCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { reviewsApi, uploadApi } from '../lib/api'
 import Button from './ui/Button'
@@ -79,7 +79,6 @@ export default function ReviewModal({
 
     setIsSubmitting(true)
     try {
-      const { useAuth } = await import('../context/AuthContext')
       // TODO: Get userId from auth context
       await reviewsApi.create({
         providerId,

@@ -5,15 +5,15 @@ import {
   FileText, Download, Send, Eye, Calendar, Printer
 } from 'lucide-react'
 import { 
-  LineChart, Line, BarChart, Bar, AreaChart, Area, 
+  BarChart, Bar, AreaChart, Area, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts'
 import { mockPayments, mockInvoices, mockEarnings } from '../data/mockFinance'
 import { earningsApi } from '../lib/api'
-import type { Payment, Invoice, Earnings } from '../types'
+import type { Invoice } from '../types'
 import Button from './ui/Button'
-import { cn } from '../lib/utils'
 import InvoiceModal from './InvoiceModal'
+import { cn } from '../lib/utils'
 
 interface FinanceManagementProps {
   providerId: string
@@ -332,7 +332,6 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
   }, [])
 
   const [earningsData, setEarningsData] = useState<any>(null)
-  const [loadingEarnings, setLoadingEarnings] = useState(false)
   const [categoryData, setCategoryData] = useState<any>(null)
 
   // Fetch earnings analytics from API
@@ -340,7 +339,6 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
     const loadEarningsData = async () => {
       if (!providerId) return
       
-      setLoadingEarnings(true)
       try {
         const [analytics, trends, categories] = await Promise.all([
           earningsApi.getAnalytics(providerId, earningsPeriod),
@@ -354,8 +352,6 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
         console.error('Failed to load earnings data:', error)
         // Fallback to mock data on error
         setEarningsData(null)
-      } finally {
-        setLoadingEarnings(false)
       }
     }
 
@@ -806,7 +802,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
               <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Earnings</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  GHS {earningsChartData.reduce((sum, d) => sum + d.earnings, 0).toLocaleString()}
+                  GHS {earningsChartData.reduce((sum: number, d: { earnings: number }) => sum + (d.earnings || 0), 0).toLocaleString()}
                 </p>
                 <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                   <TrendingUp className="h-3 w-3 inline mr-1" />
@@ -818,10 +814,10 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Completed Jobs</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {earningsChartData.reduce((sum, d) => sum + d.jobs, 0)}
+                  {earningsChartData.reduce((sum: number, d: { jobs: number }) => sum + (d.jobs || 0), 0)}
                 </p>
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  Avg: GHS {Math.round(earningsChartData.reduce((sum, d) => sum + d.earnings, 0) / earningsChartData.reduce((sum, d) => sum + d.jobs, 1))} per job
+                  Avg: GHS {Math.round(earningsChartData.reduce((sum: number, d: { earnings: number }) => sum + (d.earnings || 0), 0) / Math.max(earningsChartData.reduce((sum: number, d: { jobs: number }) => sum + (d.jobs || 0), 0), 1))} per job
                 </p>
               </div>
               <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl p-4">
@@ -930,7 +926,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
                 Earnings by Service Category
               </h4>
               <div className="space-y-3">
-                {earningsByCategory.map((item) => (
+                {earningsByCategory.map((item: { category: string; earnings: number; jobs: number }) => (
                   <div key={item.category} className="flex items-center gap-4">
                     <div className="w-24">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -943,7 +939,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
                           className="h-full rounded-full flex items-center justify-end pr-2"
                           style={{
                             width: `${(item.earnings / earningsByCategory[0].earnings) * 100}%`,
-                            backgroundColor: item.color
+                            backgroundColor: '#FACC15'
                           }}
                         >
                           <span className="text-xs font-semibold text-white">

@@ -5,7 +5,7 @@ import {
   Plus, Filter, Calendar, FileText, Edit, Search,
   Trash2, Copy, ChevronDown, ChevronUp, SortAsc, X,
   TrendingUp, BarChart3, Tag, Timer, Zap, Layers,
-  Activity, Download, Play, Pause, Square
+  Play, Square
 } from 'lucide-react'
 import { mockWorkflowTasks } from '../data/mockWorkflow'
 import { mockBookings } from '../data/mockBookings'
@@ -1158,7 +1158,6 @@ export default function WorkflowManagement({ providerId }: WorkflowManagementPro
               const year = calendarMonth.getFullYear()
               const month = calendarMonth.getMonth()
               const firstDay = new Date(year, month, 1)
-              const lastDay = new Date(year, month + 1, 0)
               const startDate = new Date(firstDay)
               startDate.setDate(startDate.getDate() - startDate.getDay())
               
@@ -1176,7 +1175,6 @@ export default function WorkflowManagement({ providerId }: WorkflowManagementPro
                   const taskDate = new Date(task.dueDate)
                   return taskDate.toDateString() === date.toDateString()
                 })
-                const overdueTasks = dayTasks.filter(task => isOverdue(task.dueDate) && task.status !== 'Completed')
                 
                 return (
                   <div

@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (data: { name: string; email: string; password: string; phone?: string; role?: string }): Promise<void> => {
     try {
       const { authApi } = await import('../lib/api')
-      await authApi.register({
+      const result = await authApi.register({
         email: data.email,
         password: data.password,
         name: data.name,
@@ -119,6 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Registration successful - user will need to sign in
       // The component will handle redirect to sign in page
+      // Result is intentionally not used as user must sign in separately
+      void result
     } catch (error: any) {
       // If API fails, throw error to be handled by component
       throw new Error(error.message || 'Registration failed')

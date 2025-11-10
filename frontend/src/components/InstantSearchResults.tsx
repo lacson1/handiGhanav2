@@ -1,8 +1,7 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
-import { Search, Star, MapPin, CheckCircle } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Star, MapPin, CheckCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Provider } from '../types'
-import { cn } from '../lib/utils'
 
 interface InstantSearchResultsProps {
   query: string

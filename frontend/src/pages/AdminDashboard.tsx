@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { 
   Users, Shield, TrendingUp, AlertCircle, 
-  CheckCircle, X, Search, Download, Calendar, Filter, Clock, Eye, Trash2, Ban, MoreVertical, Scale
+  CheckCircle, X, Search, Download, Calendar, Filter, Clock, Eye, Trash2, Scale
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
@@ -286,7 +286,7 @@ function AdminDashboardContent() {
       ))
       showToast(`Booking status updated to ${formattedStatus}`, 'success')
       // Log action for audit trail
-      const booking = bookings.find(b => b.id === bookingId)
+      bookings.find(b => b.id === bookingId)
       console.log(`[AUDIT] Admin ${user?.name} (${user?.email}) updated booking ${bookingId} status to ${formattedStatus} at ${new Date().toISOString()}`)
     } catch (error) {
       // Update local state on error

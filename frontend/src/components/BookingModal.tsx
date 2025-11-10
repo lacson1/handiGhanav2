@@ -69,7 +69,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
   }
 
   const loadServices = async () => {
-    if (!provider) return
+    if (!provider || !provider.id) return
     setLoadingServices(true)
     try {
       const data = await servicesApi.getAll({ providerId: provider.id, isActive: true })

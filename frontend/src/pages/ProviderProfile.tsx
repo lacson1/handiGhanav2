@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { 
   Star, MapPin, CheckCircle, Clock, Phone, MessageCircle, 
   ArrowLeft, Calendar, Award, Users, TrendingUp, Shield, 
-  Crown, Camera, Briefcase, Zap, Heart, Building2,
+  Crown, Camera, Briefcase, Zap, Heart,
   DollarSign, Repeat, Check, Sparkles
 } from 'lucide-react'
 import { mockProviders } from '../data/mockProviders'
@@ -13,7 +13,6 @@ import BookingModal from '../components/BookingModal'
 import BookingSuccessModal from '../components/BookingSuccessModal'
 import ReviewList from '../components/ReviewList'
 import Button from '../components/ui/Button'
-import { useBookings } from '../hooks/useBookings'
 import { useAuth } from '../context/AuthContext'
 import { servicesApi } from '../lib/api'
 import type { Service } from '../types'
@@ -22,7 +21,6 @@ import { cn } from '../lib/utils'
 export default function ProviderProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { createBooking } = useBookings()
   const { isAuthenticated } = useAuth()
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
@@ -148,8 +146,9 @@ export default function ProviderProfile() {
     return 'Recently'
   }
 
-  // Mock reviews
-  const reviews = [
+  // Mock reviews (unused for now - will be used when reviews are displayed)
+  /*
+  const mockReviews = [
     {
       id: '1',
       userName: 'Kwame Asante',
@@ -172,6 +171,7 @@ export default function ProviderProfile() {
       createdAt: '2024-01-05'
     }
   ]
+  */
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -388,7 +388,7 @@ export default function ProviderProfile() {
                       Service Areas
                     </h3>
                     <div className="flex flex-wrap gap-2.5">
-                      {provider.serviceAreas.map((area, idx) => (
+                      {provider.serviceAreas.map((area: string, idx: number) => (
                         <span
                           key={idx}
                           className="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm font-medium border border-gray-200 dark:border-gray-600 shadow-sm"
@@ -406,7 +406,7 @@ export default function ProviderProfile() {
                       Skills & Expertise
                     </h3>
                     <div className="flex flex-wrap gap-2.5">
-                      {provider.skills.map((skill, idx) => (
+                      {provider.skills.map((skill: string, idx: number) => (
                         <span
                           key={idx}
                           className="px-4 py-2 rounded-lg bg-blue-600 text-white dark:bg-blue-500 text-sm font-semibold shadow-sm hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"

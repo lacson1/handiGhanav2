@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { 
-  Search, AlertCircle, CheckCircle, Clock, X, 
+  Search, AlertCircle, CheckCircle, Clock, 
   Filter, MessageSquare, DollarSign, Calendar, 
-  User, Briefcase, FileText, Edit, Save, XCircle
+  User, Briefcase, FileText, Save, X
 } from 'lucide-react'
 import { mockDisputes } from '../data/mockDisputes'
 import type { Dispute, DisputeStatus, DisputePriority } from '../types'

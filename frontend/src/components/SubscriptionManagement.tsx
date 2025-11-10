@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
-  Repeat, Calendar, DollarSign, Clock, 
+  Repeat, 
   X, Pause, Play, CheckCircle2, AlertCircle,
   Infinity
 } from 'lucide-react'
