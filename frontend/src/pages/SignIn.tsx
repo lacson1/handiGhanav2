@@ -12,7 +12,6 @@ export default function SignIn() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
-  const [adminClickCount, setAdminClickCount] = useState(0)
 
   // Check for success message from registration
   useEffect(() => {
@@ -33,35 +32,6 @@ export default function SignIn() {
 
     try {
       await login(email, password)
-      // Redirect based on user role
-      const storedUser = localStorage.getItem('user')
-      if (storedUser) {
-        const user = JSON.parse(storedUser)
-        if (user.role === 'PROVIDER') {
-          navigate('/provider-dashboard')
-        } else if (user.role === 'ADMIN') {
-          navigate('/admin')
-        } else {
-          navigate('/my-bookings')
-        }
-      } else {
-        navigate('/my-bookings')
-      }
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleDemoLogin = async (demoEmail: string, demoPassword: string) => {
-    setEmail(demoEmail)
-    setPassword(demoPassword)
-    setError('')
-    setLoading(true)
-
-    try {
-      await login(demoEmail, demoPassword)
       // Redirect based on user role
       const storedUser = localStorage.getItem('user')
       if (storedUser) {
@@ -140,6 +110,12 @@ export default function SignIn() {
             </div>
           </div>
 
+          <div className="flex items-center justify-end">
+            <a href="/forgot-password" className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">
+              Forgot your password?
+            </a>
+          </div>
+
           <div>
             <Button
               type="submit"
@@ -148,54 +124,6 @@ export default function SignIn() {
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
-          </div>
-
-          {/* Demo Login Buttons */}
-          <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-3 text-center">
-              Quick Demo Login
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoLogin('customer@test.com', 'password123')}
-                disabled={loading}
-                className="text-xs"
-              >
-                Customer
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoLogin('provider@test.com', 'password123')}
-                disabled={loading}
-                className="text-xs"
-              >
-                Provider
-              </Button>
-            </div>
-            {/* Discrete admin access - triple click on this section */}
-            <div 
-              className="mt-2 text-center"
-              onClick={() => {
-                if (adminClickCount >= 2) {
-                  handleDemoLogin('admin@test.com', 'admin123')
-                  setAdminClickCount(0)
-                } else {
-                  setAdminClickCount(prev => prev + 1)
-                  setTimeout(() => setAdminClickCount(0), 1000)
-                }
-              }}
-              style={{ cursor: 'pointer' }}
-              title=""
-            >
-              <p className="text-[10px] text-transparent hover:text-gray-400 dark:hover:text-gray-500 transition-colors">
-                Need help? Contact support
-              </p>
-            </div>
           </div>
 
           <div className="text-center space-y-2">

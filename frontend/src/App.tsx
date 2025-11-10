@@ -13,6 +13,8 @@ import SearchResults from './pages/SearchResults'
 import ProviderProfile from './pages/ProviderProfile'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import BecomeProvider from './pages/BecomeProvider'
 import Dashboard from './pages/Dashboard'
 import ProviderDashboard from './pages/ProviderDashboard'
@@ -34,6 +36,8 @@ function AppContent() {
             <Route path="/provider/:id" element={<ProviderProfile />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/become-provider" element={<BecomeProvider />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/provider-dashboard" element={<ProviderDashboard />} />

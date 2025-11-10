@@ -1,5 +1,5 @@
 import express from 'express'
-import { register, login, getProfile, updateProfile } from '../controllers/authController'
+import { register, login, getProfile, requestPasswordReset, resetPassword } from '../controllers/authController'
 
 const router = express.Router()
 
@@ -12,8 +12,11 @@ router.post('/login', login)
 // GET /api/auth/profile - Get current user profile (protected)
 router.get('/profile', getProfile)
 
-// PUT /api/auth/profile - Update current user profile (protected)
-router.put('/profile', updateProfile)
+// POST /api/auth/forgot-password - Request password reset
+router.post('/forgot-password', requestPasswordReset)
+
+// POST /api/auth/reset-password - Reset password with token
+router.post('/reset-password', resetPassword)
 
 export default router
 

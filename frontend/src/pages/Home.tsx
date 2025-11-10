@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, MapPin, CheckCircle, Shield, Clock, Award, ArrowRight, Star, Users, Briefcase } from 'lucide-react'
+import { Search, MapPin, CheckCircle, Shield, Clock, Award, ArrowRight, Star, Users, Briefcase, UserCheck, Heart, TrendingUp } from 'lucide-react'
 
 const categories = [
   { name: 'Electrician', icon: '⚡' },
@@ -299,34 +299,85 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Section - Moved to Bottom with Ghanaian Colors */}
-      <section className="py-16 bg-gradient-to-r from-[#CE1126] via-[#FCD116] to-[#006B3F]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">
-                {stats.totalProviders > 0 ? stats.totalProviders : '...'}
+      {/* Stats Section - Enhanced with Icons and Animations */}
+      <section className="py-16 md:py-20 bg-gradient-to-r from-[#CE1126] via-[#FCD116] to-[#006B3F] relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              Trusted by Thousands Across Ghana
+            </h2>
+            <p className="text-white/90 text-lg">
+              Join our growing community of satisfied customers and professionals
+            </p>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {/* Service Providers */}
+            <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+              <div className="flex justify-center mb-4">
+                <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
               </div>
-              <div className="text-sm text-white/90 font-medium">Service Providers</div>
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2 tabular-nums">
+                {stats.totalProviders > 0 ? `${stats.totalProviders}+` : '...'}
+              </div>
+              <div className="text-sm md:text-base text-white/90 font-medium">Service Providers</div>
             </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">
-                {stats.verifiedProviders > 0 ? stats.verifiedProviders : stats.totalProviders > 0 ? stats.totalProviders : '...'}
+
+            {/* Verified Professionals */}
+            <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+              <div className="flex justify-center mb-4">
+                <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
               </div>
-              <div className="text-sm text-white/90 font-medium">Verified Professionals</div>
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2 tabular-nums">
+                {stats.verifiedProviders > 0 ? `${stats.verifiedProviders}+` : stats.totalProviders > 0 ? `${stats.totalProviders}+` : '...'}
+              </div>
+              <div className="text-sm md:text-base text-white/90 font-medium">Verified Professionals</div>
             </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-1">
-                5.0
-                <Star className="w-6 h-6 fill-white" />
+
+            {/* Platform Rating */}
+            <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+              <div className="flex justify-center mb-4">
+                <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                  <Star className="w-8 h-8 text-white fill-white" />
+                </div>
               </div>
-              <div className="text-sm text-white/90 font-medium">Platform Rating</div>
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2 flex items-center justify-center gap-2 tabular-nums">
+                <span>5.0</span>
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-sm md:text-base text-white/90 font-medium">Platform Rating</div>
             </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">
-                {stats.totalReviews > 0 ? stats.totalReviews : stats.totalProviders > 0 ? stats.totalProviders : '...'}
+
+            {/* Happy Customers */}
+            <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+              <div className="flex justify-center mb-4">
+                <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                  <Heart className="w-8 h-8 text-white fill-white" />
+                </div>
               </div>
-              <div className="text-sm text-white/90 font-medium">Happy Customers</div>
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2 tabular-nums">
+                {stats.totalReviews > 0 ? `${stats.totalReviews}+` : stats.totalProviders > 0 ? `${Math.ceil(stats.totalProviders * 1.5)}+` : '...'}
+              </div>
+              <div className="text-sm md:text-base text-white/90 font-medium">Happy Customers</div>
+            </div>
+          </div>
+
+          {/* Trust Badge */}
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full">
+              <CheckCircle className="w-5 h-5 text-white" />
+              <span className="text-white font-medium">100% Verified Service Providers</span>
             </div>
           </div>
         </div>

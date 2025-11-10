@@ -21,6 +21,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Password reset
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
   // Referral program
   referralCode    String  @unique @default(uuid())
   referredBy      String? // User ID who referred this user

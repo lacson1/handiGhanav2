@@ -16,7 +16,6 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [adminClickCount, setAdminClickCount] = useState(0)
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -25,24 +24,6 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
 
     try {
       await login(email, password)
-      onClose()
-      setEmail('')
-      setPassword('')
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleDemoLogin = async (demoEmail: string, demoPassword: string) => {
-    setEmail(demoEmail)
-    setPassword(demoPassword)
-    setError('')
-    setIsLoading(true)
-
-    try {
-      await login(demoEmail, demoPassword)
       onClose()
       setEmail('')
       setPassword('')
@@ -135,54 +116,6 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                     {isLoading ? 'Signing in...' : 'Sign In'}
                   </Button>
                 </form>
-
-                {/* Demo Login Buttons */}
-                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-3 text-center">
-                    Quick Demo Login
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDemoLogin('customer@test.com', 'password123')}
-                      disabled={isLoading}
-                      className="text-xs"
-                    >
-                      Customer
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDemoLogin('provider@test.com', 'password123')}
-                      disabled={isLoading}
-                      className="text-xs"
-                    >
-                      Provider
-                    </Button>
-                  </div>
-                  {/* Discrete admin access - triple click on this section */}
-                  <div 
-                    className="mt-2 text-center"
-                    onClick={() => {
-                      if (adminClickCount >= 2) {
-                        handleDemoLogin('admin@test.com', 'admin123')
-                        setAdminClickCount(0)
-                      } else {
-                        setAdminClickCount(prev => prev + 1)
-                        setTimeout(() => setAdminClickCount(0), 1000)
-                      }
-                    }}
-                    style={{ cursor: 'pointer' }}
-                    title=""
-                  >
-                    <p className="text-[10px] text-transparent hover:text-gray-400 dark:hover:text-gray-500 transition-colors">
-                      Need help? Contact support
-                    </p>
-                  </div>
-                </div>
 
                 {onSwitchToRegister && (
                   <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
