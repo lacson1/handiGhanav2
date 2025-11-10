@@ -38,6 +38,10 @@ RUN npx prisma generate
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
+# Copy startup script
+COPY start.sh ./
+RUN chmod +x start.sh
+
 # Expose port
 EXPOSE 3001
 
@@ -45,6 +49,6 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Start server
-CMD ["node", "dist/server.js"]
+# Start server with migrations
+CMD ["./start.sh"]
 

@@ -16,7 +16,7 @@ interface AvailabilityCalendarProps {
 }
 
 export default function AvailabilityCalendar({ 
-  providerId, 
+  providerId: _providerId, 
   onSlotSelect,
   selectedDate,
   selectedTime 

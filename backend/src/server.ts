@@ -24,7 +24,7 @@ const io = new Server(httpServer, {
   },
 })
 
-const PORT = process.env.PORT || 3001
+const PORT = Number(process.env.PORT) || 3001
 
 // Middleware
 app.use(cors())
@@ -85,8 +85,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   })
 })
 
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on http://0.0.0.0:${PORT}`)
   console.log(`📡 WebSocket server ready`)
 })
 
