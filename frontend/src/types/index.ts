@@ -9,6 +9,11 @@ export type ServiceCategory =
   | "Gardener"
   | "Tiler"
   | "Welder"
+  | "EmergencyService"
+  | "NetworkSetup"
+  | "VeterinaryCare"
+  | "Pharmacy"
+  | "Other"
 
 export type GhanaCity = 
   | "Accra"
@@ -22,8 +27,14 @@ export type GhanaCity =
   | "Koforidua"
   | "Techiman"
 
+export type ProviderAvailability = 
+  | "Available Now" 
+  | "Available Soon" 
+  | "Not Available"
+
 export interface Provider {
   id: string
+  userId: string
   name: string
   category: ServiceCategory
   location: GhanaCity
@@ -32,7 +43,7 @@ export interface Provider {
   completionRate?: number
   verified: boolean
   description: string
-  availability: "Available Now" | "Available Soon" | "Not Available"
+  availability: ProviderAvailability
   quickSlots?: string[]
   phone?: string
   whatsapp?: string
@@ -41,6 +52,10 @@ export interface Provider {
   serviceAreas?: string[]
   skills?: string[]
   joinedDate?: string
+  // Premium and portfolio fields
+  isPremium?: boolean
+  workPhotos?: string[]
+  subscriptionTier?: 'FREE' | 'BASIC' | 'PREMIUM' | 'ENTERPRISE'
 }
 
 export interface Booking {

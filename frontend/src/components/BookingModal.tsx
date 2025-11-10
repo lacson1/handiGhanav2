@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { X, Calendar, Clock, DollarSign, Repeat, Gift } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { X, Calendar, Clock, DollarSign, Repeat, Gift, Info } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Provider, Service } from '../types'
 import Button from './ui/Button'
@@ -33,6 +33,43 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
   const FIRST_BOOKING_DISCOUNT_PERCENT = 10
   const REFERRAL_DISCOUNT_PERCENT = 10
 
+  const checkFirstBooking = useCallback(async () => {
+    if (!user) return
+    try {
+      // ⚠️ SECURITY NOTE: This should be moved to backend!
+      // Current implementation uses localStorage which can be manipulated by users.
+      // TODO: Replace with backend API call: GET /api/users/:id/first-booking-status
+      // Backend should track hasCompletedFirstBooking on User model
+      const hasCompletedFirstBooking = localStorage.getItem(`firstBooking_${user.id}`) === 'true'
+      setIsFirstBooking(!hasCompletedFirstBooking)
+    } catch (error) {
+      console.error('Failed to check first booking:', error)
+    }
+  }, [user])
+
+  const loadServices = useCallback(async () => {
+    if (!provider || !provider.id) return
+    setLoadingServices(true)
+    try {
+      const data = await servicesApi.getAll({ providerId: provider.id, isActive: true })
+      setServices(data as Service[])
+      // Auto-select default service if provided, otherwise first service if only one available
+      if (defaultService) {
+        const foundService = data.find((s: Service) => s.id === defaultService.id)
+        if (foundService) {
+          setSelectedService(foundService as Service)
+        }
+      } else if (data.length === 1) {
+        setSelectedService(data[0] as Service)
+      }
+    } catch (error) {
+      console.error('Failed to load services:', error)
+      setServices([])
+    } finally {
+      setLoadingServices(false)
+    }
+  }, [provider, defaultService])
+
   useEffect(() => {
     if (isOpen && provider && provider.id) {
       loadServices()
@@ -54,42 +91,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
       setSelectedService(null)
       setNotes('')
     }
-  }, [isOpen, provider?.id, defaultService])
-
-  const checkFirstBooking = async () => {
-    if (!user) return
-    try {
-      // TODO: Check if user has completed first booking
-      // For now, check localStorage
-      const hasCompletedFirstBooking = localStorage.getItem(`firstBooking_${user.id}`) === 'true'
-      setIsFirstBooking(!hasCompletedFirstBooking)
-    } catch (error) {
-      console.error('Failed to check first booking:', error)
-    }
-  }
-
-  const loadServices = async () => {
-    if (!provider || !provider.id) return
-    setLoadingServices(true)
-    try {
-      const data = await servicesApi.getAll({ providerId: provider.id, isActive: true })
-      setServices(data as Service[])
-      // Auto-select default service if provided, otherwise first service if only one available
-      if (defaultService) {
-        const foundService = data.find((s: Service) => s.id === defaultService.id)
-        if (foundService) {
-          setSelectedService(foundService as Service)
-        }
-      } else if (data.length === 1) {
-        setSelectedService(data[0] as Service)
-      }
-    } catch (error) {
-      console.error('Failed to load services:', error)
-      setServices([])
-    } finally {
-      setLoadingServices(false)
-    }
-  }
+  }, [isOpen, provider, defaultService, loadServices, checkFirstBooking])
 
   const today = new Date()
   const tomorrow = new Date(today)
@@ -107,15 +109,16 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (selectedDate && selectedTime && provider && selectedService) {
+    if (selectedDate && selectedTime && provider) {
       try {
         // Create booking via API
+        // If no service selected, use custom service with provider's category
         const booking = await bookingsApi.create({
           providerId: provider.id,
-          serviceId: selectedService.id,
+          serviceId: selectedService?.id || 'custom',
           date: selectedDate,
           time: selectedTime,
-          serviceType: selectedService.name,
+          serviceType: selectedService?.name || `${provider.category} - Custom Quote`,
           notes: notes.trim()
         })
 
@@ -135,7 +138,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
           setNotes('')
           onClose()
         }
-      } catch (error) {
+      } catch {
         alert('Failed to create booking. Please try again.')
       }
     }
@@ -298,10 +301,18 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
                     )}
                   </div>
                 ) : (
-                  <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      No services available. Please contact the provider directly.
-                    </p>
+                  <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                          Custom Quote Request
+                        </p>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          This provider hasn't listed specific services yet. Your booking will be sent as a custom quote request. They'll contact you with pricing details.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -379,7 +390,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
 
                 {/* Discount Banner */}
                 {(isFirstBooking || referralCode) && selectedService && (
-                  <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl">
+                  <div className="p-4 bg-linear-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl">
                     <div className="flex items-center gap-2 mb-2">
                       <Gift className="h-5 w-5 text-green-600 dark:text-green-400" />
                       <p className="font-semibold text-green-900 dark:text-green-100">
@@ -429,7 +440,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
                   </Button>
                   <Button
                     type="submit"
-                    disabled={!selectedDate || !selectedTime || !selectedService}
+                    disabled={!selectedDate || !selectedTime}
                     className="flex-1"
                   >
                     Confirm Booking

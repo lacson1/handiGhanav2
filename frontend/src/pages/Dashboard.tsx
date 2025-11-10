@@ -5,28 +5,18 @@ import { useBookings } from '../hooks/useBookings'
 import { useProviders } from '../hooks/useProviders'
 import { Calendar, Clock, CheckCircle, XCircle, Phone, MessageCircle, MapPin, Star, Filter } from 'lucide-react'
 import Button from '../components/ui/Button'
-import { providersApi } from '../lib/api'
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { user, isAuthenticated, login } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const { bookings, loading, updateBookingStatus } = useBookings()
-  const { getProviderById } = useProviders()
+  const { data: providers = [] } = useProviders()
   const [activeTab, setActiveTab] = useState<'bookings' | 'jobs'>('bookings')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [isLoggingIn, setIsLoggingIn] = useState(false)
-
-  const handleDemoLogin = async (email: string, password: string) => {
-    setIsLoggingIn(true)
-    try {
-      await login(email, password)
-      // User will be authenticated and component will re-render
-    } catch (error) {
-      console.error('Login failed:', error)
-      alert('Login failed. Please try again.')
-    } finally {
-      setIsLoggingIn(false)
-    }
+  
+  // Helper function to get provider by ID
+  const getProviderById = (id: string) => {
+    return providers.find((p: any) => p.id === id)
   }
 
   if (!isAuthenticated) {
@@ -46,37 +36,6 @@ export default function Dashboard() {
             <Button variant="outline" onClick={() => navigate('/')}>
               Go to Home
             </Button>
-          </div>
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-              Quick Demo Login:
-            </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoLogin('customer@test.com', 'password123')}
-                disabled={isLoggingIn}
-              >
-                Customer
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoLogin('provider@test.com', 'password123')}
-                disabled={isLoggingIn}
-              >
-                Provider
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoLogin('admin@test.com', 'admin123')}
-                disabled={isLoggingIn}
-              >
-                Admin
-              </Button>
-            </div>
           </div>
         </div>
       </div>

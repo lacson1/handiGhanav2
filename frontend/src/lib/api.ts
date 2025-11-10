@@ -1,8 +1,21 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
+class ApiRequestError extends Error {
+  statusCode?: number
+  details?: unknown
+
+  constructor(message: string, statusCode?: number, details?: unknown) {
+    super(message)
+    this.name = 'ApiRequestError'
+    this.statusCode = statusCode
+    this.details = details
+  }
+}
+
 async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retries = 1
 ): Promise<T> {
   const token = localStorage.getItem('token')
   
@@ -15,17 +28,69 @@ async function apiRequest<T>(
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  })
+  let lastError: Error | null = null
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }))
-    throw new Error(error.message || 'Request failed')
+  // Retry logic for failed requests
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+      })
+
+      // Handle specific HTTP status codes
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ 
+          message: getErrorMessageForStatus(response.status) 
+        }))
+
+        // Handle authentication errors
+        if (response.status === 401) {
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          window.location.href = '/signin'
+        }
+
+        throw new ApiRequestError(
+          errorData.message || getErrorMessageForStatus(response.status),
+          response.status,
+          errorData
+        )
+      }
+
+      return response.json()
+    } catch (error) {
+      lastError = error as Error
+      
+      // Don't retry on client errors (4xx) or authentication errors
+      if (error instanceof ApiRequestError && error.statusCode && error.statusCode < 500) {
+        throw error
+      }
+
+      // Wait before retrying (exponential backoff)
+      if (attempt < retries) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000))
+      }
+    }
   }
 
-  return response.json()
+  throw lastError || new Error('Request failed after retries')
+}
+
+function getErrorMessageForStatus(status: number): string {
+  const errorMessages: Record<number, string> = {
+    400: 'Bad request. Please check your input.',
+    401: 'Authentication required. Please sign in.',
+    403: 'You do not have permission to perform this action.',
+    404: 'The requested resource was not found.',
+    409: 'This resource already exists or conflicts with another.',
+    429: 'Too many requests. Please try again later.',
+    500: 'Server error. Please try again later.',
+    502: 'Service temporarily unavailable. Please try again.',
+    503: 'Service temporarily unavailable. Please try again.',
+  }
+
+  return errorMessages[status] || 'An unexpected error occurred. Please try again.'
 }
 
 // Auth API
@@ -326,6 +391,15 @@ export const statsApi = {
   },
   getRecentReviews: async (limit: number = 3) => {
     return apiRequest<any[]>(`/stats/reviews/recent?limit=${limit}`)
+  },
+  getTrendingSearches: async (limit: number = 5, days: number = 30) => {
+    return apiRequest<Array<{ term: string; count: number }>>(`/stats/trending-searches?limit=${limit}&days=${days}`)
+  },
+  trackSearch: async (data: { query?: string; category?: string; location?: string }) => {
+    return apiRequest<{ message: string }>('/stats/track-search', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
   },
 }
 

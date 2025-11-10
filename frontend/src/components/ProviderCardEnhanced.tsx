@@ -2,6 +2,7 @@ import { Star, MapPin, CheckCircle, Clock, Phone, MessageCircle, Award, Trending
 import { motion } from 'framer-motion'
 import type { Provider } from '../types'
 import Button from './ui/Button'
+import { formatAvailability, isAvailableNow } from '../lib/utils'
 
 interface ProviderCardEnhancedProps {
   provider: Provider
@@ -58,7 +59,7 @@ export default function ProviderCardEnhanced({
                 alt={provider.name}
                 className="h-24 w-24 sm:h-28 sm:w-28 rounded-xl object-cover"
                 onError={(e) => {
-                  console.error('Failed to load avatar image:', avatarUrl)
+                  // Failed to load avatar image
                   e.currentTarget.style.display = 'none'
                 }}
               />
@@ -82,23 +83,23 @@ export default function ProviderCardEnhanced({
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">
                     {provider.name}
                   </h3>
-                  {provider.availability === "Available Now" && (
+                  {isAvailableNow(provider.availability) && (
                     <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
                       <Clock className="h-3 w-3" />
                       Now
                     </span>
                   )}
                 </div>
-                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">
                   {provider.category}
                 </p>
-                <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-4 text-sm text-gray-900 dark:text-gray-100 mb-2">
                   <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span>{provider.location}</span>
+                    <MapPin className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                    <span className="font-bold">{provider.location}</span>
                   </div>
                   {provider.serviceAreas && provider.serviceAreas.length > 0 && (
-                    <span className="text-xs">
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                       +{provider.serviceAreas.length} areas
                     </span>
                   )}
@@ -110,18 +111,18 @@ export default function ProviderCardEnhanced({
             <div className="flex items-center gap-4 mb-3">
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                <span className="font-semibold text-gray-900 dark:text-white">
+                <span className="font-bold text-gray-900 dark:text-white text-base">
                   {provider.rating.toFixed(1)}
                 </span>
-                <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                <span className="text-xs text-gray-700 dark:text-gray-300 font-semibold">
                   ({provider.reviewCount})
                 </span>
               </div>
               {provider.completionRate && (
                 <>
                   <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
-                  <div className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-300 font-medium">
-                    <TrendingUp className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                  <div className="flex items-center gap-1 text-xs text-gray-800 dark:text-gray-200 font-semibold">
+                    <TrendingUp className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                     <span>{Math.round(provider.completionRate * 100)}% completion</span>
                   </div>
                 </>
@@ -129,7 +130,7 @@ export default function ProviderCardEnhanced({
             </div>
 
             {/* Description */}
-            <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-3 leading-relaxed">
+            <p className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2 mb-3 leading-relaxed font-medium">
               {provider.description}
             </p>
 
@@ -153,22 +154,22 @@ export default function ProviderCardEnhanced({
             )}
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 size="sm"
                 onClick={() => onBook(provider)}
-                className="flex-1 w-full sm:w-auto"
+                className="flex-1 w-full sm:w-auto min-h-[44px]"
               >
                 Book Now
               </Button>
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onViewProfile(provider)}
-                  className="flex-1 sm:flex-none"
+                  className="flex-1 sm:flex-none min-h-[44px]"
                 >
-                  <Eye className="h-4 w-4 sm:mr-1" />
+                  <Eye className="h-5 w-5 sm:mr-1" />
                   <span className="hidden sm:inline">View</span>
                 </Button>
                 {provider.whatsapp && (
@@ -176,10 +177,10 @@ export default function ProviderCardEnhanced({
                     variant="outline"
                     size="sm"
                     onClick={handleWhatsApp}
-                    className="px-3 min-w-[44px]"
+                    className="px-3 min-w-[44px] min-h-[44px]"
                     title="WhatsApp"
                   >
-                    <MessageCircle className="h-4 w-4" />
+                    <MessageCircle className="h-5 w-5" />
                   </Button>
                 )}
                 {provider.phone && (
@@ -187,10 +188,10 @@ export default function ProviderCardEnhanced({
                     variant="outline"
                     size="sm"
                     onClick={handleCall}
-                    className="px-3 min-w-[44px]"
+                    className="px-3 min-w-[44px] min-h-[44px]"
                     title="Call"
                   >
-                    <Phone className="h-4 w-4" />
+                    <Phone className="h-5 w-5" />
                   </Button>
                 )}
               </div>
@@ -210,7 +211,7 @@ export default function ProviderCardEnhanced({
       className="group bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-primary/40"
     >
       {/* Header with Image/Avatar */}
-      <div className="relative h-48 bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700 overflow-hidden">
+      <div className="relative h-48 bg-linear-to-br from-gray-100 via-gray-50 to-gray-100 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700 overflow-hidden">
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -230,7 +231,7 @@ export default function ProviderCardEnhanced({
         )}
         
         {/* Badges Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         
         {provider.verified && (
           <div className="absolute top-3 right-3 z-10">
@@ -240,7 +241,7 @@ export default function ProviderCardEnhanced({
           </div>
         )}
         
-            {provider.availability === "Available Now" && (
+            {isAvailableNow(provider.availability) && (
               <div className="absolute top-3 left-3 z-10">
                 <span className="bg-emerald-600 dark:bg-emerald-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg backdrop-blur-sm">
                   <Clock className="h-3 w-3" />
@@ -261,13 +262,13 @@ export default function ProviderCardEnhanced({
       </div>
 
       {/* Content */}
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-2">
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1.5 truncate">
               {provider.name}
             </h3>
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <p className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">
               {provider.category}
             </p>
           </div>
@@ -281,14 +282,14 @@ export default function ProviderCardEnhanced({
               {provider.rating.toFixed(1)}
             </span>
           </div>
-          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+          <span className="text-xs text-gray-900 dark:text-gray-200 font-bold">
             ({provider.reviewCount} reviews)
           </span>
           {provider.completionRate && (
             <>
-              <div className="h-3 w-px bg-gray-300 dark:bg-gray-600" />
-              <div className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-300 font-medium">
-                <Award className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+              <div className="h-3 w-px bg-gray-400 dark:bg-gray-500" />
+              <div className="flex items-center gap-1 text-xs text-gray-900 dark:text-gray-100 font-bold">
+                <Award className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                 <span>{Math.round(provider.completionRate * 100)}%</span>
               </div>
             </>
@@ -296,18 +297,18 @@ export default function ProviderCardEnhanced({
         </div>
 
         {/* Location */}
-        <div className="flex items-center text-sm text-gray-700 dark:text-gray-300 mb-3">
-          <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0 text-gray-600 dark:text-gray-400" />
-          <span className="truncate font-medium">{provider.location}</span>
+        <div className="flex items-center text-sm text-gray-900 dark:text-gray-100 mb-3">
+          <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0 text-gray-700 dark:text-gray-300" />
+          <span className="truncate font-bold">{provider.location}</span>
           {provider.serviceAreas && provider.serviceAreas.length > 0 && (
-            <span className="ml-1.5 text-xs text-gray-600 dark:text-gray-400 font-medium">
+            <span className="ml-1.5 text-xs text-gray-700 dark:text-gray-300 font-semibold">
               +{provider.serviceAreas.length} areas
             </span>
           )}
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-3 min-h-[2.5rem] leading-relaxed">
+        <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2 mb-3 min-h-[2.5rem] leading-relaxed font-semibold">
           {provider.description}
         </p>
 
@@ -351,7 +352,7 @@ export default function ProviderCardEnhanced({
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row gap-3 mt-5">
           <Button
             size="sm"
             onClick={() => onBook(provider)}
@@ -359,7 +360,7 @@ export default function ProviderCardEnhanced({
           >
             Book Now
           </Button>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {provider.whatsapp && (
               <Button
                 variant="outline"

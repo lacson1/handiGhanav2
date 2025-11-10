@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Users, Star, Briefcase, MapPin, Shield, Heart, CheckCircle } from 'lucide-react'
+import { Users, Star, Shield, Heart, CheckCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { statsApi } from '../lib/api'
 
@@ -36,7 +36,7 @@ export default function StatsSection() {
 
   if (loading) {
     return (
-      <section className="py-12 sm:py-16 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <section className="py-12 sm:py-16 bg-linear-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 animate-pulse">
             {[1, 2, 3, 4].map((i) => (
@@ -65,7 +65,7 @@ export default function StatsSection() {
     {
       icon: Shield,
       value: `${stats.verifiedProviders}+`,
-      label: 'Verified Professionals',
+      label: 'Trusted Professionals',
       color: 'from-green-500 to-green-600',
       bgColor: 'bg-green-50 dark:bg-green-900/20'
     },
@@ -86,7 +86,7 @@ export default function StatsSection() {
   ]
 
   return (
-    <section className="py-12 sm:py-16 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <section className="py-12 sm:py-16 bg-linear-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-10">
@@ -110,7 +110,7 @@ export default function StatsSection() {
               className={`group text-center ${stat.bgColor} rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 hover:scale-105 border border-gray-100 dark:border-gray-700`}
             >
               <div className="flex justify-center mb-4">
-                <div className={`inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br ${stat.color} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-linear-to-br ${stat.color} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                   <stat.icon className="h-7 w-7 sm:h-8 sm:w-8 text-white" strokeWidth={2.5} />
                 </div>
               </div>
@@ -132,7 +132,7 @@ export default function StatsSection() {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="mt-10 text-center"
         >
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-ghana-red via-ghana-yellow to-ghana-green px-6 py-3 rounded-full shadow-lg">
+          <div className="inline-flex items-center gap-2 bg-linear-to-r from-ghana-red via-ghana-yellow to-ghana-green px-6 py-3 rounded-full shadow-lg">
             <CheckCircle className="w-5 h-5 text-white" />
             <span className="text-white font-semibold">100% Verified Service Providers</span>
           </div>

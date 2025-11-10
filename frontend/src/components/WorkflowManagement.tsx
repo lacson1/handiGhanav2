@@ -35,7 +35,7 @@ export default function WorkflowManagement({ providerId }: WorkflowManagementPro
   const [showTemplates, setShowTemplates] = useState(false)
   const [trackingTaskId, setTrackingTaskId] = useState<string | null>(null)
   const [trackingStartTime, setTrackingStartTime] = useState<number | null>(null)
-  const [trackedTime, setTrackedTime] = useState<Record<string, number>>({})
+  const [_trackedTime, _setTrackedTime] = useState<Record<string, number>>({})
   const { bookings } = useBookings()
 
   // Auto-create tasks from confirmed bookings
@@ -112,7 +112,7 @@ export default function WorkflowManagement({ providerId }: WorkflowManagementPro
     if (trackingTaskId && trackingStartTime) {
       const interval = setInterval(() => {
         const elapsed = (Date.now() - trackingStartTime) / (1000 * 60 * 60) // hours
-        setTrackedTime(prev => ({
+        _setTrackedTime((prev: Record<string, number>) => ({
           ...prev,
           [trackingTaskId]: (prev[trackingTaskId] || 0) + elapsed / 60 // Convert to minutes for update
         }))

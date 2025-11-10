@@ -43,12 +43,12 @@ export default function ReferralProgram({ onClose }: ReferralProgramProps) {
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/signup?ref=${referralCode}`
-    const shareText = `Join HandyGhana and get 10% off your first booking! Use my referral code: ${referralCode}`
+    const shareText = `Join Handighana and get 10% off your first booking! Use my referral code: ${referralCode}`
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Join HandyGhana',
+          title: 'Join Handighana',
           text: shareText,
           url: shareUrl
         })

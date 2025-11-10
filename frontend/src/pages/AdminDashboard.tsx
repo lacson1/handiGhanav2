@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { 
-  Users, Shield, TrendingUp, AlertCircle, 
+import {
+  Users, Shield, TrendingUp, AlertCircle,
   CheckCircle, X, Search, Download, Calendar, Filter, Clock, Eye, Trash2, Scale
 } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -13,16 +13,27 @@ import ProviderDetailModal from '../components/ProviderDetailModal'
 import DisputeManagement from '../components/DisputeManagement'
 import { cn } from '../lib/utils'
 import { providersApi, bookingsApi } from '../lib/api'
-import type { Provider } from '../types'
+import type { Provider, Booking } from '../types'
+
+type TabId = 'overview' | 'providers' | 'users' | 'bookings' | 'disputes'
+
+interface AdminUser {
+  id: string
+  name: string
+  email: string
+  phone?: string
+  role: 'CUSTOMER' | 'PROVIDER' | 'ADMIN'
+  avatar?: string
+}
 
 function AdminDashboardContent() {
   const { user, logout } = useAuth()
   const { showToast } = useToast()
   const socket = useWebSocket('admin-room')
-  const [activeTab, setActiveTab] = useState<'overview' | 'providers' | 'users' | 'bookings' | 'disputes'>('overview')
-  const [providers, setProviders] = useState<any[]>([])
-  const [bookings, setBookings] = useState<any[]>([])
-  const [users, setUsers] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState<TabId>('overview')
+  const [providers, setProviders] = useState<Provider[]>([])
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -42,22 +53,22 @@ function AdminDashboardContent() {
       socket.emit('join-room', 'admin-room')
     })
 
-    socket.on('booking-status-updated', (updatedBooking: any) => {
+    socket.on('booking-status-updated', (updatedBooking: Booking) => {
       setBookings(prev => prev.map(b => b.id === updatedBooking.id ? updatedBooking : b))
       showToast(`Booking status updated to ${updatedBooking.status}`, 'info', 3000)
     })
 
-    socket.on('provider-verified', (provider: any) => {
+    socket.on('provider-verified', (provider: Provider) => {
       setProviders(prev => prev.map(p => p.id === provider.id ? provider : p))
       showToast(`${provider.name} has been verified`, 'success', 4000)
     })
 
-    socket.on('provider-rejected', (provider: any) => {
+    socket.on('provider-rejected', (provider: Provider) => {
       setProviders(prev => prev.map(p => p.id === provider.id ? provider : p))
       showToast(`${provider.name} verification rejected`, 'warning', 4000)
     })
 
-    socket.on('provider-updated', (provider: any) => {
+    socket.on('provider-updated', (provider: Provider) => {
       setProviders(prev => prev.map(p => p.id === provider.id ? provider : p))
     })
 
@@ -96,14 +107,14 @@ function AdminDashboardContent() {
     const totalProviders = providers.length
     const pendingVerifications = providers.filter(p => !p.verified).length
     const totalBookings = bookings.length
-    const activeBookings = bookings.filter(b => 
+    const activeBookings = bookings.filter(b =>
       b.status === 'Pending' || b.status === 'Confirmed'
     ).length
     const monthlyBookings = bookings.filter(b => {
       const bookingDate = new Date(b.date)
       const now = new Date()
-      return bookingDate.getMonth() === now.getMonth() && 
-             bookingDate.getFullYear() === now.getFullYear()
+      return bookingDate.getMonth() === now.getMonth() &&
+        bookingDate.getFullYear() === now.getFullYear()
     }).length
     const monthlyRevenue = monthlyBookings * 150 // Mock calculation
     const openDisputes = 0 // TODO: Get from disputes API
@@ -124,12 +135,12 @@ function AdminDashboardContent() {
   // Generate recent activity from real data
   const recentActivity = useMemo(() => {
     const activities: Array<{ action: string; time: string }> = []
-    
+
     // Recent bookings
     const recentBookings = [...bookings]
       .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
       .slice(0, 3)
-    
+
     recentBookings.forEach(booking => {
       const provider = providers.find(p => p.id === booking.providerId)
       const timeAgo = getTimeAgo(new Date(booking.createdAt || booking.date))
@@ -154,7 +165,7 @@ function AdminDashboardContent() {
   function getTimeAgo(date: Date): string {
     const now = new Date()
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    
+
     if (diffInSeconds < 60) return 'Just now'
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`
@@ -177,15 +188,14 @@ function AdminDashboardContent() {
     const provider = providers.find(p => p.id === providerId)
     try {
       await providersApi.update(providerId, { verified: true })
-      setProviders(providers.map(p => 
+      setProviders(providers.map(p =>
         p.id === providerId ? { ...p, verified: true } : p
       ))
       showToast(`${provider?.name || 'Provider'} verified successfully!`, 'success')
-      // Log action for audit trail
-      console.log(`[AUDIT] Admin ${user?.name} (${user?.email}) verified provider ${providerId} at ${new Date().toISOString()}`)
-    } catch (error) {
+      // TODO: Send audit log to backend service
+    } catch {
       // Update local state on error (for mock data)
-      setProviders(providers.map(p => 
+      setProviders(providers.map(p =>
         p.id === providerId ? { ...p, verified: true } : p
       ))
       showToast(`${provider?.name || 'Provider'} verified successfully!`, 'success')
@@ -197,15 +207,14 @@ function AdminDashboardContent() {
     if (confirm('Are you sure you want to reject this provider?')) {
       try {
         await providersApi.update(providerId, { verified: false })
-        setProviders(providers.map(p => 
+        setProviders(providers.map(p =>
           p.id === providerId ? { ...p, verified: false } : p
         ))
         showToast(`${provider?.name || 'Provider'} verification rejected`, 'warning')
-        // Log action for audit trail
-        console.log(`[AUDIT] Admin ${user?.name} (${user?.email}) rejected provider ${providerId} at ${new Date().toISOString()}`)
-      } catch (error) {
+        // TODO: Send audit log to backend service
+      } catch {
         // Update local state on error (for mock data)
-        setProviders(providers.map(p => 
+        setProviders(providers.map(p =>
           p.id === providerId ? { ...p, verified: false } : p
         ))
         showToast(`${provider?.name || 'Provider'} verification rejected`, 'warning')
@@ -270,29 +279,32 @@ function AdminDashboardContent() {
   }
 
   const handleUpdateBookingStatus = async (bookingId: string, newStatus: string) => {
+    // Capitalize first letter of each word and ensure it matches Booking status type
+    const formattedStatus = newStatus.split(' ').map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ')
+
+    // Validate status is one of the allowed values
+    const validStatuses: Booking['status'][] = ['Pending', 'Confirmed', 'Completed', 'Cancelled']
+    const status: Booking['status'] = validStatuses.includes(formattedStatus as Booking['status'])
+      ? formattedStatus as Booking['status']
+      : 'Pending'
+
     try {
-      // Capitalize first letter of each word
-      const formattedStatus = newStatus.split(' ').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ')
-      
-      await bookingsApi.updateStatus(bookingId, formattedStatus.toUpperCase())
-      setBookings(bookings.map(b => 
-        b.id === bookingId ? { ...b, status: formattedStatus } : b
+      await bookingsApi.updateStatus(bookingId, status.toUpperCase())
+      setBookings(bookings.map(b =>
+        b.id === bookingId ? { ...b, status } : b
       ))
-      showToast(`Booking status updated to ${formattedStatus}`, 'success')
+      showToast(`Booking status updated to ${status}`, 'success')
       // Log action for audit trail
       bookings.find(b => b.id === bookingId)
-      console.log(`[AUDIT] Admin ${user?.name} (${user?.email}) updated booking ${bookingId} status to ${formattedStatus} at ${new Date().toISOString()}`)
-    } catch (error) {
+      // TODO: Send audit log to backend service
+    } catch {
       // Update local state on error
-      const formattedStatus = newStatus.split(' ').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ')
-      setBookings(bookings.map(b => 
-        b.id === bookingId ? { ...b, status: formattedStatus } : b
+      setBookings(bookings.map(b =>
+        b.id === bookingId ? { ...b, status } : b
       ))
-      showToast(`Booking status updated to ${formattedStatus}`, 'success')
+      showToast(`Booking status updated to ${status}`, 'success')
     }
   }
 
@@ -302,8 +314,7 @@ function AdminDashboardContent() {
       // In a real app, this would call an API
       setUsers(users.filter(u => u.id !== userId))
       showToast(`${userToDelete?.name || 'User'} deleted successfully`, 'success')
-      // Log action for audit trail
-      console.log(`[AUDIT] Admin ${user?.name} (${user?.email}) deleted user ${userId} (${userToDelete?.name}) at ${new Date().toISOString()}`)
+      // TODO: Send audit log to backend service
     }
   }
 
@@ -337,18 +348,18 @@ function AdminDashboardContent() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
-          <aside className="lg:w-64 flex-shrink-0">
+          <aside className="lg:w-64 shrink-0">
             <nav className="space-y-2">
               {[
-                { id: 'overview', label: 'Overview', icon: TrendingUp },
-                { id: 'providers', label: 'Providers', icon: Shield },
-                { id: 'users', label: 'Users', icon: Users },
-                { id: 'bookings', label: 'Bookings', icon: TrendingUp },
-                { id: 'disputes', label: 'Disputes', icon: Scale }
+                { id: 'overview' as TabId, label: 'Overview', icon: TrendingUp },
+                { id: 'providers' as TabId, label: 'Providers', icon: Shield },
+                { id: 'users' as TabId, label: 'Users', icon: Users },
+                { id: 'bookings' as TabId, label: 'Bookings', icon: TrendingUp },
+                { id: 'disputes' as TabId, label: 'Disputes', icon: Scale }
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left",
                     activeTab === tab.id
@@ -501,8 +512,8 @@ function AdminDashboardContent() {
                                 </Button>
                               </>
                             )}
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={() => handleViewProvider(provider)}
                             >
@@ -534,6 +545,8 @@ function AdminDashboardContent() {
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
+                        aria-label="Filter bookings by status"
+                        title="Filter bookings by status"
                         className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
                       >
                         <option value="all">All Status</option>
@@ -580,11 +593,11 @@ function AdminDashboardContent() {
                               <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="h-4 w-4" />
-                                  {new Date(booking.date).toLocaleDateString('en-GH', { 
-                                    weekday: 'short', 
-                                    year: 'numeric', 
-                                    month: 'short', 
-                                    day: 'numeric' 
+                                  {new Date(booking.date).toLocaleDateString('en-GH', {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
                                   })}
                                 </span>
                                 <span className="flex items-center gap-1">
@@ -602,12 +615,14 @@ function AdminDashboardContent() {
                               <select
                                 value={booking.status || 'Pending'}
                                 onChange={(e) => handleUpdateBookingStatus(booking.id, e.target.value)}
+                                aria-label={`Update booking status for ${booking.serviceType}`}
+                                title={`Update booking status for ${booking.serviceType}`}
                                 className={cn(
                                   "px-3 py-1 rounded-full text-xs font-semibold border-0 focus:ring-2 focus:ring-primary cursor-pointer",
                                   booking.status === 'Confirmed' ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" :
-                                  booking.status === 'Completed' ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" :
-                                  booking.status === 'Cancelled' ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
-                                  "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                    booking.status === 'Completed' ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" :
+                                      booking.status === 'Cancelled' ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
+                                        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
                                 )}
                               >
                                 <option value="Pending">Pending</option>
@@ -651,8 +666,8 @@ function AdminDashboardContent() {
                 ) : (
                   <div className="space-y-4">
                     {users
-                      .filter(u => 
-                        !userSearchQuery || 
+                      .filter(u =>
+                        !userSearchQuery ||
                         u.name?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
                         u.email?.toLowerCase().includes(userSearchQuery.toLowerCase())
                       )
@@ -692,8 +707,8 @@ function AdminDashboardContent() {
                               <span className={cn(
                                 "px-3 py-1 rounded-full text-xs font-semibold",
                                 userItem.role === 'ADMIN' ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" :
-                                userItem.role === 'PROVIDER' ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" :
-                                "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                                  userItem.role === 'PROVIDER' ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" :
+                                    "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
                               )}>
                                 {userItem.role}
                               </span>

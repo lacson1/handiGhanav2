@@ -1,26 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #FACC15;
-  --color-primary-dark: #EAB308;
-  --color-ghana-red: #CE1126;
-  --color-ghana-yellow: #FACC15;
-  --color-ghana-green: #006B3F;
+  /* Primary Ghana Colors - Brand Identity */
+  --color-primary: #FCD116;
+  --color-primary-dark: #e5bc00;
+  --color-primary-light: #fde68a;
   
-  /* Subtle Ghana color variations */
+  --color-ghana-red: #CE1126;
+  --color-ghana-red-dark: #a00e1e;
   --color-ghana-red-light: #f5d5d8;
   --color-ghana-red-subtle: #fce8ea;
-  --color-ghana-green-light: #d4e8df;
-  --color-ghana-green-subtle: #e8f3ed;
+  
+  --color-ghana-yellow: #FCD116;
+  --color-ghana-yellow-dark: #e5bc00;
   --color-ghana-yellow-light: #fef9c3;
   --color-ghana-yellow-subtle: #fefce8;
   
+  --color-ghana-green: #006B3F;
+  --color-ghana-green-dark: #005530;
+  --color-ghana-green-light: #d4e8df;
+  --color-ghana-green-subtle: #e8f3ed;
+  
+  /* Neutral Colors */
   --color-background: hsl(0 0% 100%);
   --color-foreground: hsl(0 0% 3.9%);
   --color-border: hsl(0 0% 89.8%);
   
-  --font-family-sans: 'Inter', 'Poppins', system-ui, sans-serif;
+  /* Typography */
+  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family-heading: 'Inter', system-ui, -apple-system, sans-serif;
+  
+  /* Border Radius - Consistent rounded corners */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
 }
 
 @layer base {
@@ -78,29 +99,44 @@
     border-color: hsl(var(--border));
     -webkit-tap-highlight-color: transparent;
   }
+  
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: 'Inter', 'Poppins', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     touch-action: manipulation;
   }
   
-  /* Mobile-first optimizations */
-  @media (max-width: 640px) {
-    body {
-      font-size: 16px; /* Prevents zoom on iOS */
-    }
+  /* Typography */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  
+  h1 { font-size: 2.5rem; }
+  h2 { font-size: 2rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.25rem; }
+  h5 { font-size: 1.125rem; }
+  h6 { font-size: 1rem; }
+  
+  @media (max-width: 768px) {
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.75rem; }
+    h3 { font-size: 1.375rem; }
   }
   
   /* Touch-friendly button sizes */
   button, a {
-    min-height: 44px; /* iOS recommended touch target */
+    min-height: 44px;
     min-width: 44px;
   }
   
-  /* Prevent text selection on buttons */
   button {
     -webkit-user-select: none;
     user-select: none;
@@ -110,5 +146,11 @@
   html {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Focus styles for accessibility */
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 }

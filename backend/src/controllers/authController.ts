@@ -23,6 +23,13 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
+    // Check if user has a password (OAuth users might not have a password)
+    if (!user.password) {
+      return res.status(401).json({ 
+        message: 'This account uses social login. Please sign in with Google.' 
+      })
+    }
+
     // Check password
     const isValidPassword = await bcrypt.compare(password, user.password)
     if (!isValidPassword) {

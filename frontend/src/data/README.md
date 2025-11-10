@@ -1,6 +1,6 @@
 # Mock Data for Testing
 
-This directory contains mock data for testing the HandyGhana application.
+This directory contains mock data for testing the Handighana application.
 
 ## Mock Users
 

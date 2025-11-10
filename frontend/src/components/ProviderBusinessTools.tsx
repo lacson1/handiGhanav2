@@ -24,7 +24,7 @@ interface TimeEntry {
 
 export default function ProviderBusinessTools() {
   const [activeTab, setActiveTab] = useState<'invoicing' | 'tax' | 'time' | 'insights'>('invoicing')
-  const [invoices, setInvoices] = useState<Invoice[]>([
+  const [invoices, _setInvoices] = useState<Invoice[]>([
     {
       id: 'inv-001',
       customerName: 'John Doe',

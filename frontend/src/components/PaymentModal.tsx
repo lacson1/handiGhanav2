@@ -40,7 +40,7 @@ export default function PaymentModal({ isOpen, onClose, bookingId, amount, onSuc
     setStep('processing')
 
     try {
-      const paymentPayload: any = {
+      const paymentPayload: Record<string, any> = {
         bookingId,
         amount: finalAmount,
         method: paymentMethod === 'card' ? 'CARD' : 
@@ -67,7 +67,7 @@ export default function PaymentModal({ isOpen, onClose, bookingId, amount, onSuc
           setStep('method')
         }, 2000)
       }, 2000)
-    } catch (error) {
+    } catch {
       alert('Payment failed. Please try again.')
       setStep('form')
     }
@@ -172,7 +172,7 @@ export default function PaymentModal({ isOpen, onClose, bookingId, amount, onSuc
                     >
                       <Wallet className="h-6 w-6 text-primary mb-2" />
                       <p className="font-semibold text-gray-900 dark:text-white">Wallet</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">HandyGhana wallet</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Handighana wallet</p>
                     </button>
                   </div>
                 </div>
@@ -345,7 +345,7 @@ export default function PaymentModal({ isOpen, onClose, bookingId, amount, onSuc
                     {paymentMethod === 'wallet' && (
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
                         <p className="text-sm text-gray-700 dark:text-gray-300">
-                          You'll pay from your HandyGhana wallet balance. If you don't have sufficient balance, you'll be redirected to top up.
+                          You'll pay from your Handighana wallet balance. If you don't have sufficient balance, you'll be redirected to top up.
                         </p>
                       </div>
                     )}

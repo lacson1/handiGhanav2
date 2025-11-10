@@ -38,7 +38,8 @@ export default function ResetPassword() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+      const response = await fetch(`${API_URL}/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +57,7 @@ export default function ResetPassword() {
       } else {
         setError(data.message || 'Failed to reset password')
       }
-    } catch (err: any) {
+    } catch {
       setError('Failed to reset password. Please try again.')
     } finally {
       setLoading(false)
@@ -65,12 +66,12 @@ export default function ResetPassword() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-linear-to-b from-gray-50 to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-[#006B3F]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-[#006B3F]" />
+              <div className="w-16 h-16 bg-ghana-green-subtle rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-ghana-green" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Password Reset Successful!</h2>
               <p className="text-gray-600 mb-6">
@@ -87,14 +88,14 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
         {/* Ghana Flag Accent */}
         <div className="flex justify-center mb-8">
           <div className="flex h-1 w-32 rounded-full overflow-hidden shadow-sm">
-            <div className="flex-1 bg-[#CE1126]"></div>
-            <div className="flex-1 bg-[#FCD116]"></div>
-            <div className="flex-1 bg-[#006B3F]"></div>
+            <div className="flex-1 bg-ghana-red"></div>
+            <div className="flex-1 bg-primary"></div>
+            <div className="flex-1 bg-ghana-green"></div>
           </div>
         </div>
 
@@ -126,7 +127,7 @@ export default function ResetPassword() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full pl-10 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-[#006B3F] focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-ghana-green focus:outline-none transition-colors"
                   placeholder="Enter new password"
                 />
                 <button
@@ -153,7 +154,7 @@ export default function ResetPassword() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full pl-10 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-[#006B3F] focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-ghana-green focus:outline-none transition-colors"
                   placeholder="Confirm new password"
                 />
                 <button
@@ -169,7 +170,7 @@ export default function ResetPassword() {
             <button
               type="submit"
               disabled={loading || !token}
-              className="w-full bg-[#006B3F] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#005530] focus:outline-none focus:ring-2 focus:ring-[#006B3F] focus:ring-offset-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="w-full bg-ghana-green text-white py-3 px-4 rounded-lg font-medium hover:bg-ghana-green-dark focus:outline-none focus:ring-2 focus:ring-ghana-green focus:ring-offset-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {loading ? 'Resetting...' : 'Reset Password'}
             </button>

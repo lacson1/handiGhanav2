@@ -2,7 +2,12 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/ui/Button'
-import { Mail, Lock, User, Phone } from 'lucide-react'
+import { EmailInput } from '../components/ui/EmailInput'
+import { PasswordInput } from '../components/ui/PasswordInput'
+import { PhoneInput } from '../components/ui/PhoneInput'
+import { User } from 'lucide-react'
+import { validateEmail, validatePhoneNumber, checkPasswordStrength } from '../utils/formHelpers'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 
 export default function SignUp() {
   const navigate = useNavigate()
@@ -15,20 +20,53 @@ export default function SignUp() {
     phone: '',
   })
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {}
+
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required'
+    } else if (formData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters'
+    }
+
+    if (!formData.email) {
+      errors.email = 'Email is required'
+    } else if (!validateEmail(formData.email)) {
+      errors.email = 'Please enter a valid email address'
+    }
+
+    if (!formData.phone) {
+      errors.phone = 'Phone number is required'
+    } else if (!validatePhoneNumber(formData.phone)) {
+      errors.phone = 'Please enter a valid Ghana phone number'
+    }
+
+    if (!formData.password) {
+      errors.password = 'Password is required'
+    } else {
+      const strength = checkPasswordStrength(formData.password)
+      if (strength.score < 2) {
+        errors.password = 'Password is too weak. Please choose a stronger password.'
+      }
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match'
+    }
+
+    setFieldErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters')
+    if (!validateForm()) {
+      setError('Please fix the errors above')
       return
     }
 
@@ -57,11 +95,18 @@ export default function SignUp() {
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (field: string, value: string) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [field]: value,
     })
+    // Clear field error when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors({
+        ...fieldErrors,
+        [field]: ''
+      })
+    }
   }
 
   return (
@@ -94,86 +139,54 @@ export default function SignUp() {
                   type="text"
                   required
                   value={formData.name}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-ghana-green focus:ring-2 focus:ring-ghana-green/20 transition-colors"
                   placeholder="Enter your full name"
                 />
+                {fieldErrors.name && (
+                  <p className="text-sm text-red-500 mt-1">{fieldErrors.name}</p>
+                )}
               </div>
             </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Enter your email"
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Phone Number (Optional)
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="+233 XX XXX XXXX"
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Create a password"
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Confirm your password"
-                />
-              </div>
-            </div>
+            
+            <EmailInput
+              value={formData.email}
+              onChange={(value) => handleChange('email', value)}
+              label="Email address"
+              error={fieldErrors.email}
+              required
+              showValidation
+              showSuggestions
+            />
+
+            <PhoneInput
+              value={formData.phone}
+              onChange={(value) => handleChange('phone', value)}
+              label="Phone Number"
+              error={fieldErrors.phone}
+              hint="Ghana phone number (e.g., 024 123 4567)"
+              required
+              showValidation
+            />
+
+            <PasswordInput
+              value={formData.password}
+              onChange={(value) => handleChange('password', value)}
+              label="Password"
+              error={fieldErrors.password}
+              required
+              showStrength
+              placeholder="Create a strong password"
+            />
+
+            <PasswordInput
+              value={formData.confirmPassword}
+              onChange={(value) => handleChange('confirmPassword', value)}
+              label="Confirm Password"
+              error={fieldErrors.confirmPassword}
+              required
+              placeholder="Confirm your password"
+            />
           </div>
 
           <div>
@@ -185,6 +198,19 @@ export default function SignUp() {
               {loading ? 'Creating account...' : 'Create Account'}
             </Button>
           </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          <GoogleSignInButton />
 
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">

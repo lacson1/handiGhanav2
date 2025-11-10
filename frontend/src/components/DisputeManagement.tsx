@@ -11,14 +11,14 @@ import { cn } from '../lib/utils'
 
 export default function DisputeManagement() {
   const [disputes, setDisputes] = useState<Dispute[]>([])
-  const [loading, setLoading] = useState(true)
+  const [_loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [newMessage, setNewMessage] = useState('')
+  const [_newMessage, _setNewMessage] = useState('')
 
   // Fetch disputes on mount
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Star, User, CheckCircle, MessageSquare, Image as ImageIcon } from 'lucide-react'
 import { reviewsApi } from '../lib/api'
 import { cn } from '../lib/utils'
@@ -15,11 +15,7 @@ export default function ReviewList({ providerId, limit = 10 }: ReviewListProps) 
   const [stats, setStats] = useState({ average: 0, total: 0 })
   const [expandedPhotos, setExpandedPhotos] = useState<Record<string, boolean>>({})
 
-  useEffect(() => {
-    loadReviews()
-  }, [providerId])
-
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     try {
       const response = await reviewsApi.getByProvider(providerId, limit)
       setReviews(response.reviews || [])
@@ -34,7 +30,11 @@ export default function ReviewList({ providerId, limit = 10 }: ReviewListProps) 
     } finally {
       setLoading(false)
     }
-  }
+  }, [providerId, limit])
+
+  useEffect(() => {
+    loadReviews()
+  }, [loadReviews])
 
   if (loading) {
     return <div className="text-center py-8 text-gray-500">Loading reviews...</div>

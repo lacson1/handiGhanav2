@@ -243,6 +243,42 @@ export const mockProviders: MockProvider[] = [
     skills: ["Landscaping", "Lawn Care", "Garden Design"],
     joinedDate: "2023-05-10"
   },
+  {
+    id: "9",
+    name: "Michael Tetteh",
+    category: "Emergency Service",
+    rating: 4.9,
+    reviewCount: 215,
+    location: "Accra",
+    verified: true,
+    description: "24/7 Emergency Response Team - Available for urgent electrical, plumbing, and structural repairs across Ghana.",
+    availability: "Available Now",
+    quickSlots: ["Available 24/7", "Immediate Response", "Fast Dispatch"],
+    phone: "+233241234575",
+    whatsapp: "+233241234575",
+    serviceAreas: ["Accra", "Tema", "Kumasi", "Cape Coast", "Takoradi"],
+    skills: ["Emergency Repairs", "24/7 Response", "Fast Service", "Urgent Fixes"],
+    completionRate: 0.98,
+    joinedDate: "2020-03-15"
+  },
+  {
+    id: "10",
+    name: "Rescue Services Ghana",
+    category: "Emergency Service",
+    rating: 5.0,
+    reviewCount: 312,
+    location: "Kumasi",
+    verified: true,
+    description: "Premier emergency repair service. Lightning-fast response for all urgent home and business repairs nationwide.",
+    availability: "Available Now",
+    quickSlots: ["24/7 Available", "Rapid Response", "Emergency Only"],
+    phone: "+233241234576",
+    whatsapp: "+233241234576",
+    serviceAreas: ["Kumasi", "Accra", "Tamale", "Sunyani", "Ho"],
+    skills: ["Emergency Response", "Urgent Repairs", "24/7 Service", "Critical Fixes"],
+    completionRate: 0.99,
+    joinedDate: "2019-11-20"
+  },
 ]
 
 export const mockBookings: MockBooking[] = [

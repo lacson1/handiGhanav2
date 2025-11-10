@@ -47,7 +47,7 @@ export default function ReviewModal({
       
       setPhotos([...photos, ...newFiles])
       setPhotoUrls([...photoUrls, ...urls])
-    } catch (error) {
+    } catch {
       alert('Failed to upload photos. Please try again.')
     } finally {
       setUploadingPhotos(false)
@@ -97,7 +97,7 @@ export default function ReviewModal({
       onSuccess?.()
       onClose()
       alert('Thank you for your review!')
-    } catch (error) {
+    } catch {
       alert('Failed to submit review. Please try again.')
     } finally {
       setIsSubmitting(false)

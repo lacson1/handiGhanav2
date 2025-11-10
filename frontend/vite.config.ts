@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'HandyGhana - Trusted Professionals',
-        short_name: 'HandyGhana',
+        name: 'Handighana - Trusted Professionals',
+        short_name: 'Handighana',
         description: 'Find verified electricians, cleaners, plumbers, and more across Ghana',
         theme_color: '#FACC15',
         background_color: '#ffffff',
@@ -70,13 +70,69 @@ export default defineConfig({
                 statuses: [0, 200]
               }
             }
+          },
+          {
+            urlPattern: /^https?:\/\/localhost:3001\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 5 * 60 // 5 minutes
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           }
         ]
       },
       devOptions: {
-        enabled: true,
+        enabled: false,
         type: 'module'
       }
     })
   ],
+  build: {
+    // Optimize build output
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console.logs in production
+        drop_debugger: true,
+      },
+    },
+    // Code splitting optimization
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split vendor code into separate chunks
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['framer-motion', 'lucide-react'],
+          'chart-vendor': ['recharts'],
+          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
+        },
+      },
+    },
+    // Chunk size warning limit
+    chunkSizeWarningLimit: 1000,
+    // Enable source maps for debugging (disable in production)
+    sourcemap: false,
+  },
+  // Performance optimizations
+  server: {
+    hmr: {
+      overlay: false, // Disable error overlay for better performance
+    },
+  },
+  // Dependency optimization
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+    ],
+  },
 })

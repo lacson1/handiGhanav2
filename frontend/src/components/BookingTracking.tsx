@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Clock, MapPin, CheckCircle, Phone, MessageCircle, XCircle } from 'lucide-react'
 import type { Booking } from '../types'
 import { bookingsApi } from '../lib/api'
@@ -28,14 +28,7 @@ export default function BookingTracking({ bookingId, provider }: BookingTracking
   const [loading, setLoading] = useState(true)
   const [estimatedArrival, setEstimatedArrival] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadBooking()
-    // Poll for updates every 30 seconds
-    const interval = setInterval(loadBooking, 30000)
-    return () => clearInterval(interval)
-  }, [bookingId])
-
-  const loadBooking = async () => {
+  const loadBooking = useCallback(async () => {
     try {
       const data = await bookingsApi.getById(bookingId)
       setBooking(data)
@@ -62,7 +55,14 @@ export default function BookingTracking({ bookingId, provider }: BookingTracking
     } finally {
       setLoading(false)
     }
-  }
+  }, [bookingId])
+
+  useEffect(() => {
+    loadBooking()
+    // Poll for updates every 30 seconds
+    const interval = setInterval(loadBooking, 30000)
+    return () => clearInterval(interval)
+  }, [loadBooking])
 
   const getTrackingSteps = (): TrackingStep[] => {
     const status = booking?.status.toLowerCase() as TrackingStatus || 'pending'

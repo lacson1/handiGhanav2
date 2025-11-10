@@ -22,7 +22,7 @@ export default function Hero({ onSearch }: HeroProps) {
   }
 
   return (
-    <section className="relative bg-gradient-to-br from-ghana-yellow-subtle via-white to-ghana-green-subtle dark:from-primary/20 dark:via-gray-900 dark:to-primary/10 py-16 md:py-24">
+    <section className="relative bg-linear-to-br from-ghana-yellow-subtle via-white to-ghana-green-subtle dark:from-primary/20 dark:via-gray-900 dark:to-primary/10 py-16 md:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Edit, Trash2, Eye, EyeOff, DollarSign, Clock, Repeat } from 'lucide-react'
 import type { Service } from '../types'
@@ -17,11 +17,7 @@ export default function ServicesManagement({ providerId }: ServicesManagementPro
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingService, setEditingService] = useState<Service | null>(null)
 
-  useEffect(() => {
-    loadServices()
-  }, [providerId])
-
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     setLoading(true)
     try {
       const data = await servicesApi.getAll({ providerId, isActive: undefined })
@@ -32,7 +28,11 @@ export default function ServicesManagement({ providerId }: ServicesManagementPro
     } finally {
       setLoading(false)
     }
-  }
+  }, [providerId])
+
+  useEffect(() => {
+    loadServices()
+  }, [loadServices])
 
   const handleSaveService = async (serviceData: Omit<Service, 'id'>) => {
     try {

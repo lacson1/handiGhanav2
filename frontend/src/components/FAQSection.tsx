@@ -45,7 +45,7 @@ export default function FAQSection() {
             Frequently Asked Questions
           </h2>
           <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
-            Everything you need to know about HandyGhana
+            Everything you need to know about Handighana
           </p>
         </motion.div>
 

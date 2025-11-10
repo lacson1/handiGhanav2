@@ -67,7 +67,7 @@ export default function CustomerManagement({ providerId: _providerId }: Customer
       totalRevenue,
       avgRating
     }
-  }, [])
+  }, [customers])
 
   return (
     <div className="space-y-6">

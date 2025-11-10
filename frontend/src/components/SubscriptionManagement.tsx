@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Repeat, 
@@ -19,11 +19,7 @@ export default function SubscriptionManagement({ userId }: SubscriptionManagemen
   const [loading, setLoading] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  useEffect(() => {
-    loadSubscriptions()
-  }, [userId])
-
-  const loadSubscriptions = async () => {
+  const loadSubscriptions = useCallback(async () => {
     setLoading(true)
     try {
       const data = await subscriptionsApi.getAll({ userId })
@@ -52,7 +48,11 @@ export default function SubscriptionManagement({ userId }: SubscriptionManagemen
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
+
+  useEffect(() => {
+    loadSubscriptions()
+  }, [loadSubscriptions])
 
   const handleCancel = async (subscriptionId: string) => {
     if (!confirm('Are you sure you want to cancel this subscription? This action cannot be undone.')) {

@@ -1,10 +1,11 @@
 import Button from './ui/Button'
+import { formatCategory } from '../lib/utils'
 
 interface CategoryButtonsProps {
   onCategorySelect?: (category: string) => void
 }
 
-const categories = ['Electrician', 'Plumber', 'Cleaner', 'Handyman']
+const categories = ['EmergencyService', 'Electrician', 'Plumber', 'Cleaner', 'Handyman']
 
 export default function CategoryButtons({ onCategorySelect }: CategoryButtonsProps) {
   return (
@@ -17,7 +18,7 @@ export default function CategoryButtons({ onCategorySelect }: CategoryButtonsPro
           onClick={() => onCategorySelect?.(category)}
           className="hover:bg-ghana-yellow-subtle hover:border-ghana-yellow/50 hover:text-black transition-colors border-ghana-green/20"
         >
-          {category}
+          {formatCategory(category)}
         </Button>
       ))}
     </div>

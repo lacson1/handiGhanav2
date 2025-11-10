@@ -2,6 +2,7 @@ import { Star, MapPin, CheckCircle, Clock, Phone, MessageCircle } from 'lucide-r
 import { motion } from 'framer-motion'
 import type { Provider } from '../types'
 import Button from './ui/Button'
+import { formatAvailability, isAvailableNow } from '../lib/utils'
 
 interface ProviderCardProps {
   provider: Provider
@@ -30,7 +31,7 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
       className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-ghana-yellow/40"
     >
       {/* Header with Image/Avatar */}
-      <div className="relative h-48 bg-gradient-to-br from-ghana-yellow-subtle via-primary/20 to-ghana-green-subtle">
+      <div className="relative h-48 bg-linear-to-br from-ghana-yellow-subtle via-primary/20 to-ghana-green-subtle">
         {provider.avatar ? (
           <img
             src={provider.avatar}
@@ -51,7 +52,7 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
             </div>
           </div>
         )}
-        {provider.availability === "Available Now" && (
+        {isAvailableNow(provider.availability) && (
           <div className="absolute top-3 left-3">
             <span className="bg-ghana-green text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
               <Clock className="h-3 w-3" />
@@ -62,13 +63,13 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
       </div>
 
       {/* Content */}
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-2">
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
               {provider.name}
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <p className="text-sm text-gray-800 dark:text-gray-200 font-semibold mb-2">
               {provider.category}
             </p>
           </div>
@@ -77,29 +78,29 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
         {/* Rating */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="ml-1 text-sm font-semibold text-gray-900 dark:text-white">
+            <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+            <span className="ml-1 text-base font-bold text-gray-900 dark:text-white">
               {provider.rating.toFixed(1)}
             </span>
           </div>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">
             ({provider.reviewCount} reviews)
           </span>
           {provider.completionRate && (
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-sm text-gray-800 dark:text-gray-200 font-semibold">
               • {Math.round(provider.completionRate * 100)}% completion
             </span>
           )}
         </div>
 
         {/* Location */}
-        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-3">
-          <MapPin className="h-4 w-4 mr-1" />
+        <div className="flex items-center text-sm text-gray-800 dark:text-gray-200 mb-3 font-semibold">
+          <MapPin className="h-4 w-4 mr-1 text-gray-600 dark:text-gray-400" />
           {provider.location}
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-4">
+        <p className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2 mb-4 leading-relaxed font-medium">
           {provider.description}
         </p>
 
@@ -124,7 +125,7 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-3 mt-5">
           <Button
             variant="primary"
             size="sm"
@@ -140,6 +141,7 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
               onClick={handleWhatsApp}
               className="px-3 min-h-[44px] min-w-[44px]"
               title="WhatsApp"
+              aria-label={`Contact ${provider.name} on WhatsApp`}
             >
               <MessageCircle className="h-5 w-5" />
             </Button>
@@ -151,6 +153,7 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
               onClick={handleCall}
               className="px-3 min-h-[44px] min-w-[44px]"
               title="Call"
+              aria-label={`Call ${provider.name}`}
             >
               <Phone className="h-5 w-5" />
             </Button>
@@ -160,7 +163,7 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
           variant="ghost"
           size="sm"
           onClick={() => onViewProfile(provider)}
-          className="w-full mt-2 min-h-[44px]"
+          className="w-full mt-3 min-h-[44px]"
         >
           View Profile
         </Button>

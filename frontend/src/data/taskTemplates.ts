@@ -168,6 +168,70 @@ export const taskTemplates: TaskTemplate[] = [
         tags: ['testing']
       }
     ]
+  },
+  {
+    id: 'template-emergency-service',
+    name: 'Emergency Service Workflow',
+    description: '24/7 urgent repairs across Ghana - Fast response for critical situations',
+    category: 'EmergencyService',
+    tasks: [
+      {
+        title: 'Immediate response and dispatch',
+        description: 'Contact customer within 5 minutes and confirm emergency details',
+        priority: 'Urgent',
+        dueDate: new Date(Date.now() + 0.1 * 24 * 60 * 60 * 1000).toISOString(),
+        estimatedHours: 0.25,
+        tags: ['emergency', 'dispatch', '24/7']
+      },
+      {
+        title: 'Arrive on-site',
+        description: 'Travel to location and arrive within promised timeframe',
+        priority: 'Urgent',
+        dueDate: new Date(Date.now() + 0.2 * 24 * 60 * 60 * 1000).toISOString(),
+        estimatedHours: 0.5,
+        tags: ['emergency', 'response']
+      },
+      {
+        title: 'Assess emergency situation',
+        description: 'Quickly evaluate the problem and safety concerns',
+        priority: 'Urgent',
+        dueDate: new Date(Date.now() + 0.3 * 24 * 60 * 60 * 1000).toISOString(),
+        estimatedHours: 0.5,
+        tags: ['assessment', 'safety', 'diagnosis']
+      },
+      {
+        title: 'Implement temporary fix',
+        description: 'Apply immediate solution to prevent further damage or restore basic function',
+        priority: 'Urgent',
+        dueDate: new Date(Date.now() + 0.5 * 24 * 60 * 60 * 1000).toISOString(),
+        estimatedHours: 1,
+        tags: ['emergency', 'repair', 'temporary-fix']
+      },
+      {
+        title: 'Complete permanent repair',
+        description: 'Perform full repair to resolve the issue completely',
+        priority: 'Urgent',
+        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+        estimatedHours: 2,
+        tags: ['repair', 'permanent-fix']
+      },
+      {
+        title: 'Safety verification and testing',
+        description: 'Test all systems and ensure safety standards are met',
+        priority: 'Urgent',
+        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+        estimatedHours: 0.5,
+        tags: ['testing', 'safety', 'verification']
+      },
+      {
+        title: 'Follow-up documentation',
+        description: 'Document emergency response details and provide customer with report',
+        priority: 'High',
+        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+        estimatedHours: 0.25,
+        tags: ['documentation', 'reporting']
+      }
+    ]
   }
 ]
 

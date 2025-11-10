@@ -6,7 +6,7 @@ export const bookingService = {
     try {
       const data = await bookingsApi.getAll(filters)
       return data as Booking[]
-    } catch (error) {
+    } catch {
       // Return empty array on error
       return []
     }
@@ -16,7 +16,7 @@ export const bookingService = {
     try {
       const data = await bookingsApi.getById(id)
       return data as Booking
-    } catch (error) {
+    } catch {
       return null
     }
   },

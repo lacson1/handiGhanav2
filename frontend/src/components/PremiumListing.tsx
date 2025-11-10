@@ -184,7 +184,7 @@ export default function PremiumListing({ providerId: _providerId, currentTier = 
       </div>
 
       {/* Benefits */}
-      <div className="mt-8 p-6 bg-gradient-to-r from-primary/10 to-blue-50 dark:from-primary/20 dark:to-blue-900/20 rounded-xl">
+      <div className="mt-8 p-6 bg-linear-to-r from-primary/10 to-blue-50 dark:from-primary/20 dark:to-blue-900/20 rounded-xl">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Why Upgrade?
         </h3>

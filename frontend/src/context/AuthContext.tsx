@@ -13,6 +13,7 @@ interface AuthContextType {
   user: User | null
   token: string | null
   login: (email: string, password: string) => Promise<void>
+  loginWithToken: (token: string, user: User) => void
   register: (data: { name: string; email: string; password: string; phone?: string; role?: string }) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
@@ -24,6 +25,7 @@ const defaultAuthContext: AuthContextType = {
   user: null,
   token: null,
   login: async () => {},
+  loginWithToken: () => {},
   register: async () => {},
   logout: () => {},
   isAuthenticated: false,
@@ -69,6 +71,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const loginWithToken = (token: string, user: User) => {
+    setUser(user)
+    setToken(token)
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(user))
+  }
+
   const register = async (data: { name: string; email: string; password: string; phone?: string; role?: string }): Promise<void> => {
     try {
       const { authApi } = await import('../lib/api')
@@ -101,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         token,
         login,
+        loginWithToken,
         register,
         logout,
         isAuthenticated: !!user && !!token,

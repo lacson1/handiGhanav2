@@ -1,0 +1,29 @@
+{
+  "name": "Handighana - Trusted Professionals Across Ghana",
+  "short_name": "Handighana",
+  "description": "Connect with verified professionals for all your home and business service needs across Ghana",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#E6B800",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "utilities", "services"],
+  "lang": "en-GH",
+  "dir": "ltr"
+}
+

@@ -3,7 +3,7 @@ import { X, DollarSign, Clock, Repeat, CheckCircle2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Service, ServiceCategory, PricingModel, BillingCycle } from '../types'
 import Button from './ui/Button'
-import { cn } from '../lib/utils'
+import { cn, formatCategory } from '../lib/utils'
 
 interface ServiceModalProps {
   isOpen: boolean
@@ -14,7 +14,8 @@ interface ServiceModalProps {
 
 const serviceCategories: ServiceCategory[] = [
   'Electrician', 'Plumber', 'Cleaner', 'Handyman',
-  'Carpenter', 'Painter', 'Mechanic', 'Gardener', 'Tiler', 'Welder'
+  'Carpenter', 'Painter', 'Mechanic', 'Gardener', 'Tiler', 'Welder', 
+  'EmergencyService', 'NetworkSetup', 'VeterinaryCare', 'Pharmacy', 'Other'
 ]
 
 export default function ServiceModal({ isOpen, onClose, onSave, service }: ServiceModalProps) {
@@ -176,7 +177,7 @@ export default function ServiceModal({ isOpen, onClose, onSave, service }: Servi
                     className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     {serviceCategories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat} value={cat}>{formatCategory(cat)}</option>
                     ))}
                   </select>
                 </div>

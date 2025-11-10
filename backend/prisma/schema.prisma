@@ -15,11 +15,15 @@ model User {
   email     String   @unique
   name      String
   phone     String?
-  password  String
+  password  String?  // Optional for OAuth users
   avatar    String?
   role      UserRole @default(CUSTOMER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // OAuth fields
+  googleId     String? @unique
+  authProvider String? // 'google', 'local', etc.
 
   // Password reset
   resetToken       String?
@@ -92,6 +96,13 @@ model Provider {
   services Service[]
   payouts  Payout[]
 
+  @@index([category])
+  @@index([location])
+  @@index([verified])
+  @@index([rating])
+  @@index([availability])
+  @@index([category, location])
+  @@index([verified, rating])
   @@map("providers")
 }
 
@@ -133,6 +144,12 @@ model Booking {
   payment  Payment?
   reviews  Review[] // Reviews for this booking
 
+  @@index([providerId])
+  @@index([userId])
+  @@index([status])
+  @@index([date])
+  @@index([userId, status])
+  @@index([providerId, status])
   @@map("bookings")
 }
 
@@ -155,6 +172,11 @@ model Review {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
 
+  @@index([providerId])
+  @@index([userId])
+  @@index([isVerified])
+  @@index([rating])
+  @@index([providerId, rating])
   @@map("reviews")
 }
 
@@ -175,6 +197,7 @@ enum ServiceCategory {
   Gardener
   Tiler
   Welder
+  EmergencyService
   NetworkSetup
   VeterinaryCare
   Pharmacy

@@ -27,7 +27,7 @@ export default function BookingSuccessModal({
   const handleWhatsApp = () => {
     if (provider.whatsapp) {
       const message = encodeURIComponent(
-        `Hi ${provider.name}! I just booked your ${provider.category} service on HandyGhana for ${new Date(bookingDetails.date).toLocaleDateString()} at ${bookingDetails.time}. Looking forward to working with you!`
+        `Hi ${provider.name}! I just booked your ${provider.category} service on Handighana for ${new Date(bookingDetails.date).toLocaleDateString()} at ${bookingDetails.time}. Looking forward to working with you!`
       )
       window.open(`https://wa.me/${provider.whatsapp.replace(/[^0-9]/g, '')}?text=${message}`, '_blank')
     }

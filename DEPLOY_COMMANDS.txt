@@ -1,0 +1,112 @@
+🚀 HANDIGHANA DEPLOYMENT COMMANDS
+=====================================
+
+📋 BEFORE YOU START:
+1. Have a database URL ready (Supabase/Neon/Railway)
+2. Logged into Fly.io: fly auth login
+3. Logged into Vercel: vercel login
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 OPTION 1: AUTOMATED (Easiest)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+./deploy-production.sh
+
+→ Follow the prompts
+→ Choose option 3 (Deploy Both)
+→ Done in 15 minutes!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔵 OPTION 2: MANUAL STEP-BY-STEP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📦 STEP 1: DEPLOY BACKEND (Fly.io)
+
+cd backend
+
+# Build
+npm run build
+
+# Deploy
+fly deploy
+
+# Set secrets
+fly secrets set DATABASE_URL="postgresql://..."
+fly secrets set JWT_SECRET="$(openssl rand -base64 32)"
+fly secrets set SESSION_SECRET="$(openssl rand -hex 32)"
+fly secrets set FRONTEND_URL="https://your-app.vercel.app"
+
+# Run migrations
+fly ssh console -C "npx prisma migrate deploy"
+
+# Test
+curl https://handighana-backend.fly.dev/health
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 STEP 2: DEPLOY FRONTEND (Vercel)
+
+cd frontend
+
+# Set API URL
+vercel env add VITE_API_URL production
+# Enter: https://handighana-backend.fly.dev/api
+
+# Deploy
+vercel --prod
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ VERIFICATION
+
+Backend:  https://handighana-backend.fly.dev/health
+Frontend: https://your-app.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🛠️  USEFUL COMMANDS
+
+# Backend logs
+fly logs -a handighana-backend -f
+
+# Backend SSH
+fly ssh console -a handighana-backend
+
+# Backend restart
+fly apps restart handighana-backend
+
+# Frontend redeploy
+cd frontend && vercel --prod
+
+# Check secrets
+fly secrets list -a handighana-backend
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🆘 TROUBLESHOOTING
+
+Backend down:
+  fly logs -a handighana-backend
+  fly status -a handighana-backend
+
+Database issues:
+  fly ssh console -C "npx prisma migrate deploy"
+
+Frontend issues:
+  vercel env ls
+  vercel --prod (redeploy)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOCUMENTATION
+
+Full guide:     DEPLOYMENT_NOW.md
+Quick start:    DEPLOY_QUICK_START.md
+Checklist:      PRE_DEPLOYMENT_CHECKLIST.md
+Auto script:    ./deploy-production.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 TIME TO DEPLOY: 15-20 minutes

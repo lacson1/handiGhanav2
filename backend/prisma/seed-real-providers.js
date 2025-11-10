@@ -117,26 +117,42 @@ async function main() {
         }
       }
 
+      // Map category to valid enum values
+      const categoryMap = {
+        'Electrician': 'Electrician',
+        'Plumber': 'Plumber',
+        'Cleaner': 'Cleaner',
+        'Handyman': 'Handyman',
+        'Carpenter': 'Carpenter',
+        'Painter': 'Painter',
+        'Mechanic': 'Mechanic',
+        'Gardener': 'Gardener',
+        'Tiler': 'Tiler',
+        'Welder': 'Welder',
+        'Network Setup': 'NetworkSetup',
+        'Veterinary Care': 'VeterinaryCare',
+        'Pharmacy': 'Pharmacy',
+        'Veterinary Histopathology': 'VeterinaryCare',
+      }
+      
+      const validCategory = categoryMap[row.category] || 'Other'
+
       // Create provider profile
       const provider = await prisma.provider.create({
         data: {
           userId: user.id,
           name: row.name.trim(),
-          category: row.category || 'General Services',
+          category: validCategory,
           location: row.area || 'Accra',
           phone: row.phone || '',
           whatsapp: row.whatsapp || row.phone || '',
-          email: email,
           description: row.bio || `Professional ${row.category} service provider`,
           rating: rating,
           reviewCount: reviewCount,
           verified: verified,
-          availability: row.availability || 'Available Now',
-          hourlyRate: hourlyRate,
-          bio: row.bio || '',
-          experience: experience,
+          availability: 'AVAILABLE_NOW',
+          serviceAreas: serviceAreas.length > 0 ? serviceAreas : [row.area || 'Accra'],
           skills: specializations.length > 0 ? specializations : (services.length > 0 ? services : []),
-          certifications: row.certifications ? parseJSON(row.certifications) : [],
           avatar: row.profile_photo_url || row.profile_image || undefined,
         }
       })

@@ -78,9 +78,9 @@ export default function ProfilePhotoUpload({
           window.location.reload()
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Upload error:', error)
-      const errorMessage = error?.message || 'Failed to upload image. Please try again.'
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.'
       alert(errorMessage)
       setPreview(currentAvatar || null)
     } finally {
@@ -109,7 +109,7 @@ export default function ProfilePhotoUpload({
         }
       }
       setPreview(null)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Remove error:', error)
       alert('Failed to remove photo. Please try again.')
     }

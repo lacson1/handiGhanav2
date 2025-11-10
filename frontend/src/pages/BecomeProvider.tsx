@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Button from '../components/ui/Button'
-import { SERVICE_CATEGORIES, GHANA_CITIES } from '../lib/utils'
+import { SERVICE_CATEGORIES, formatCategory } from '../lib/utils'
 import { providerService } from '../services/providerService'
 import { useAuth } from '../context/AuthContext'
 import ProviderVerification from '../components/ProviderVerification'
+import { LocationInput } from '../components/ui/LocationInput'
+import { PhoneInput } from '../components/ui/PhoneInput'
+import { User, Mail } from 'lucide-react'
 
 export default function BecomeProvider() {
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
   const [formData, setFormData] = useState({
     name: user?.name || '',
+    email: user?.email || '',
     category: '',
     location: '',
     contact: '',
@@ -49,6 +53,13 @@ export default function BecomeProvider() {
     })
   }
 
+  const handleFieldChange = (field: string, value: string) => {
+    setFormData({
+      ...formData,
+      [field]: value,
+    })
+  }
+
   if (showVerification && providerId) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -60,7 +71,10 @@ export default function BecomeProvider() {
               if (isAuthenticated && user?.role === 'PROVIDER') {
                 navigate('/provider-dashboard')
               } else {
-                navigate('/signin', { state: { message: 'Provider profile created! Please sign in.' } })
+                const message = formData.email 
+                  ? 'Provider profile created! Use "Forgot Password" on the sign-in page to set your password and access your account.'
+                  : 'Provider profile created! Please sign in.'
+                navigate('/signin', { state: { message } })
               }
             }}
           />
@@ -77,7 +91,7 @@ export default function BecomeProvider() {
             Become a Provider
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-8">
-            Join HandyGhana and start offering your services to customers across Ghana.
+            Join Handighana and start offering your services to customers across Ghana.
             {!isAuthenticated && (
               <span className="block mt-2 text-sm">
                 You'll be prompted to sign in after creating your profile.
@@ -96,16 +110,44 @@ export default function BecomeProvider() {
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Full Name *
               </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter your full name"
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Enter your full name"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Email Address *
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={isAuthenticated}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder="your.email@example.com"
+                />
+              </div>
+              {isAuthenticated && (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Email is taken from your account
+                </p>
+              )}
             </div>
 
             <div>
@@ -122,45 +164,27 @@ export default function BecomeProvider() {
               >
                 <option value="">Select a category</option>
                 {SERVICE_CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat} value={cat}>{formatCategory(cat)}</option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Location *
-              </label>
-              <select
-                id="location"
-                name="location"
-                required
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="">Select a location</option>
-                {GHANA_CITIES.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
-            </div>
+            <LocationInput
+              value={formData.location}
+              onChange={(value) => handleFieldChange('location', value)}
+              label="Location *"
+              hint="Select your primary service location"
+              required
+            />
 
-            <div>
-              <label htmlFor="contact" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Contact (Phone/WhatsApp) *
-              </label>
-              <input
-                type="tel"
-                id="contact"
-                name="contact"
-                required
-                value={formData.contact}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="+233 XX XXX XXXX"
-              />
-            </div>
+            <PhoneInput
+              value={formData.contact}
+              onChange={(value) => handleFieldChange('contact', value)}
+              label="Contact (Phone/WhatsApp) *"
+              hint="Your main contact number for customers"
+              required
+              showValidation
+            />
 
             <div>
               <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

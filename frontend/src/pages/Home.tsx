@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, MapPin, CheckCircle, Shield, Clock, Award, ArrowRight, Star, Users, Briefcase, UserCheck, Heart, TrendingUp } from 'lucide-react'
+import { CheckCircle, Shield, Clock, ArrowRight, Star, Users, Briefcase, Heart, TrendingUp } from 'lucide-react'
+import { StatsCardSkeleton } from '../components/LoadingSkeleton'
+import KentePattern from '../components/KentePattern'
+import SearchBar from '../components/SearchBar'
+import { useProviders } from '../hooks/useProviders'
+import { usePlatformStats } from '../hooks/useStats'
+import type { Provider } from '../types'
 
 const categories = [
   { name: 'Electrician', icon: '⚡' },
@@ -15,58 +21,53 @@ const categories = [
 
 export default function Home() {
   const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [location, setLocation] = useState('')
-  const [stats, setStats] = useState({
-    totalProviders: 0,
-    verifiedProviders: 0,
-    averageRating: 0,
-    totalReviews: 0,
-  })
+  
+  // Use React Query hooks for cached data
+  const { data: providers = [], isLoading: isLoadingProviders } = useProviders()
+  const { data: platformStats, isLoading: isLoadingStats } = usePlatformStats()
 
+  // Compute stats from providers if platformStats is not available
+  const stats = platformStats || {
+    totalProviders: providers.length,
+    verifiedProviders: providers.filter((p: Provider) => p.verified).length,
+    averageRating: providers.length > 0 
+      ? providers.reduce((sum: number, p: Provider) => sum + (p.rating || 0), 0) / providers.length 
+      : 0,
+    totalReviews: providers.reduce((sum: number, p: Provider) => sum + (p.reviewCount || 0), 0),
+  }
+
+  // Handle navigation with hash anchors
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/providers`)
-        const providers = await response.json()
-        const verifiedCount = providers.filter((p: any) => p.verified).length
-        const totalRatings = providers.reduce((sum: number, p: any) => sum + (p.rating || 0), 0)
-        const totalReviews = providers.reduce((sum: number, p: any) => sum + (p.reviewCount || 0), 0)
-        const avgRating = providers.length > 0 ? totalRatings / providers.length : 0
-
-        setStats({
-          totalProviders: providers.length,
-          verifiedProviders: verifiedCount,
-          averageRating: avgRating,
-          totalReviews: totalReviews,
-        })
-      } catch (error) {
-        console.error('Failed to fetch stats:', error)
-      }
+    const hash = window.location.hash
+    if (hash) {
+      setTimeout(() => {
+        const element = document.getElementById(hash.replace('#', ''))
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 100)
     }
-
-    fetchStats()
   }, [])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    navigate(`/search?q=${searchQuery}&location=${location}`)
+  const handleSearch = (filters: { category?: string; location?: string; query?: string }) => {
+    const params = new URLSearchParams()
+    if (filters.query) params.append('q', filters.query)
+    if (filters.category) params.append('category', filters.category)
+    if (filters.location) params.append('location', filters.location)
+    navigate(`/search?${params.toString()}`)
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white relative">
+      {/* Kente Background Pattern */}
+      <KentePattern variant="background" colors="ghana" />
+
       {/* Hero Section - Clean with Ghanaian Accent */}
-      <section className="bg-gradient-to-b from-gray-50 to-white border-b border-gray-100">
+      <section className="relative bg-linear-to-b from-gray-50 to-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
           <div className="text-center max-w-4xl mx-auto">
-            {/* Ghanaian Flag Accent - Subtle top border */}
-            <div className="flex justify-center mb-8">
-              <div className="flex h-1 w-32 rounded-full overflow-hidden shadow-sm">
-                <div className="flex-1 bg-[#CE1126]"></div>
-                <div className="flex-1 bg-[#FCD116]"></div>
-                <div className="flex-1 bg-[#006B3F]"></div>
-              </div>
-            </div>
+            {/* Kente Divider at Top */}
+            <KentePattern variant="divider" colors="ghana" className="mb-8" />
 
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
               Find Trusted Service Providers in Ghana
@@ -75,44 +76,20 @@ export default function Home() {
               Connect with verified professionals for all your home and business service needs
             </p>
 
-            {/* Search Bar - With Ghanaian Gold Accent */}
-            <form onSubmit={handleSearch} className="max-w-3xl mx-auto mb-12">
-              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 hover:border-[#FCD116] transition-colors p-2 flex flex-col md:flex-row gap-2">
-                <div className="flex-1 flex items-center px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="What service do you need?"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent text-gray-900 placeholder-gray-400 outline-none"
-                  />
-                </div>
-                <div className="flex-1 flex items-center px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <MapPin className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Enter location"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="flex-1 bg-transparent text-gray-900 placeholder-gray-400 outline-none"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="bg-[#006B3F] text-white px-8 py-4 rounded-lg font-medium hover:bg-[#005530] transition-colors flex items-center justify-center gap-2 shadow-sm"
-                >
-                  Search
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </form>
+            {/* Enhanced Search Bar with Smart Suggestions */}
+            <div className="max-w-3xl mx-auto mb-12">
+              <SearchBar
+                onSearch={handleSearch}
+                providers={providers}
+                onProviderSelect={(provider) => navigate(`/provider/${provider.id}`)}
+              />
+            </div>
           </div>
         </div>
       </section>
 
       {/* Services Categories - Clean Grid */}
-      <section className="py-20 bg-white">
+      <section id="providers" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -122,16 +99,16 @@ export default function Home() {
               Find the right professional for your needs
             </p>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {categories.map((category) => (
               <button
                 key={category.name}
                 onClick={() => navigate(`/search?category=${category.name}`)}
-                className="group bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-[#FCD116] hover:shadow-md transition-all text-center"
+                className="group bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-primary hover:shadow-md transition-all text-center"
               >
                 <div className="text-3xl mb-3">{category.icon}</div>
-                <h3 className="font-medium text-gray-900 group-hover:text-[#006B3F]">
+                <h3 className="font-medium text-gray-900 group-hover:text-ghana-green">
                   {category.name}
                 </h3>
               </button>
@@ -145,7 +122,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Why HandyGhana
+              Why Handighana
             </h2>
             <p className="text-lg text-gray-600">
               Professional service delivery you can trust
@@ -153,21 +130,21 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl p-8 border-2 border-gray-200 hover:border-[#CE1126] transition-colors">
-              <div className="w-12 h-12 bg-[#CE1126]/10 rounded-lg flex items-center justify-center mb-6">
-                <Shield className="w-6 h-6 text-[#CE1126]" />
+            <div className="bg-white rounded-xl p-8 border-2 border-gray-200 hover:border-ghana-red transition-colors">
+              <div className="w-12 h-12 bg-ghana-red-subtle rounded-lg flex items-center justify-center mb-6">
+                <Shield className="w-6 h-6 text-ghana-red" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                Verified Professionals
+                Trusted Professionals
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                All service providers are background-checked and verified for your safety
+                Connect with service providers reviewed and rated by our community
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 border-2 border-gray-200 hover:border-[#FCD116] transition-colors">
-              <div className="w-12 h-12 bg-[#FCD116]/20 rounded-lg flex items-center justify-center mb-6">
-                <Star className="w-6 h-6 text-[#FCD116]" />
+            <div className="bg-white rounded-xl p-8 border-2 border-gray-200 hover:border-primary transition-colors">
+              <div className="w-12 h-12 bg-ghana-yellow-subtle rounded-lg flex items-center justify-center mb-6">
+                <Star className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
                 Customer Reviews
@@ -177,9 +154,9 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 border-2 border-gray-200 hover:border-[#006B3F] transition-colors">
-              <div className="w-12 h-12 bg-[#006B3F]/10 rounded-lg flex items-center justify-center mb-6">
-                <Clock className="w-6 h-6 text-[#006B3F]" />
+            <div className="bg-white rounded-xl p-8 border-2 border-gray-200 hover:border-ghana-green transition-colors">
+              <div className="w-12 h-12 bg-ghana-green-subtle rounded-lg flex items-center justify-center mb-6">
+                <Clock className="w-6 h-6 text-ghana-green" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
                 Fast Booking
@@ -193,7 +170,7 @@ export default function Home() {
       </section>
 
       {/* How It Works - With Ghana Colors */}
-      <section className="py-20 bg-white">
+      <section id="how-it-works" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -206,7 +183,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-12">
             <div className="text-center">
-              <div className="w-16 h-16 bg-[#CE1126] text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">
+              <div className="w-16 h-16 bg-ghana-red text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">
                 1
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
@@ -218,7 +195,7 @@ export default function Home() {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-[#FCD116] text-gray-900 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">
+              <div className="w-16 h-16 bg-primary text-gray-900 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">
                 2
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
@@ -230,7 +207,7 @@ export default function Home() {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-[#006B3F] text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">
+              <div className="w-16 h-16 bg-ghana-green text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">
                 3
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
@@ -245,7 +222,7 @@ export default function Home() {
           <div className="text-center mt-12">
             <button
               onClick={() => navigate('/search')}
-              className="inline-flex items-center gap-2 bg-[#006B3F] text-white px-8 py-4 rounded-lg font-medium hover:bg-[#005530] transition-colors shadow-lg"
+              className="inline-flex items-center gap-2 bg-ghana-green text-white px-8 py-4 rounded-lg font-medium hover:bg-ghana-green-dark transition-colors shadow-lg"
             >
               Get Started
               <ArrowRight className="w-4 h-4" />
@@ -257,41 +234,41 @@ export default function Home() {
       {/* Provider CTA - With Ghana Colors */}
       <section className="py-20 bg-gray-900 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Briefcase className="w-12 h-12 mx-auto mb-6 text-[#FCD116]" />
+          <Briefcase className="w-12 h-12 mx-auto mb-6 text-primary" />
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Are You a Service Provider?
           </h2>
           <p className="text-lg text-gray-300 mb-8 leading-relaxed">
             Join our platform and connect with customers who need your services
           </p>
-          
+
           <div className="grid md:grid-cols-3 gap-6 mb-10 text-left">
             <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-[#006B3F] flex-shrink-0 mt-1" />
+              <CheckCircle className="w-5 h-5 text-ghana-green shrink-0 mt-1" />
               <div>
                 <div className="font-medium mb-1">Grow Your Business</div>
                 <div className="text-sm text-gray-400">Reach more customers online</div>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-[#FCD116] flex-shrink-0 mt-1" />
+              <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-1" />
               <div>
                 <div className="font-medium mb-1">Manage Bookings</div>
                 <div className="text-sm text-gray-400">Easy scheduling system</div>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-[#CE1126] flex-shrink-0 mt-1" />
+              <CheckCircle className="w-5 h-5 text-ghana-red shrink-0 mt-1" />
               <div>
                 <div className="font-medium mb-1">Build Reputation</div>
                 <div className="text-sm text-gray-400">Get reviews and ratings</div>
               </div>
             </div>
           </div>
-          
+
           <button
             onClick={() => navigate('/register?role=provider')}
-            className="inline-flex items-center gap-2 bg-[#FCD116] text-gray-900 px-8 py-4 rounded-lg font-semibold hover:bg-[#e5bc00] transition-colors shadow-lg"
+            className="inline-flex items-center gap-2 bg-primary text-gray-900 px-8 py-4 rounded-lg font-semibold hover:bg-primary-dark transition-colors shadow-lg"
           >
             Register as Provider
             <ArrowRight className="w-4 h-4" />
@@ -300,12 +277,12 @@ export default function Home() {
       </section>
 
       {/* Stats Section - Enhanced with Icons and Animations */}
-      <section className="py-16 md:py-20 bg-gradient-to-r from-[#CE1126] via-[#FCD116] to-[#006B3F] relative overflow-hidden">
+      <section className="py-16 md:py-20 bg-linear-to-r from-ghana-red via-primary to-ghana-green relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,white_1px,transparent_0)] bg-size-[40px_40px]"></div>
         </div>
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
           <div className="text-center mb-12">
@@ -319,58 +296,69 @@ export default function Home() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {/* Service Providers */}
-            <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
-              <div className="flex justify-center mb-4">
-                <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
-                  <Users className="w-8 h-8 text-white" />
+            {isLoadingStats ? (
+              <>
+                <StatsCardSkeleton />
+                <StatsCardSkeleton />
+                <StatsCardSkeleton />
+                <StatsCardSkeleton />
+              </>
+            ) : (
+              <>
+                {/* Service Providers */}
+                <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                  <div className="flex justify-center mb-4">
+                    <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                      <Users className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                  <div className="text-4xl md:text-5xl font-bold text-white mb-2 tabular-nums">
+                    {stats.totalProviders > 0 ? `${stats.totalProviders}+` : '0+'}
+                  </div>
+                  <div className="text-sm md:text-base text-white/90 font-medium">Service Providers</div>
                 </div>
-              </div>
-              <div className="text-4xl md:text-5xl font-bold text-white mb-2 tabular-nums">
-                {stats.totalProviders > 0 ? `${stats.totalProviders}+` : '...'}
-              </div>
-              <div className="text-sm md:text-base text-white/90 font-medium">Service Providers</div>
-            </div>
 
-            {/* Verified Professionals */}
-            <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
-              <div className="flex justify-center mb-4">
-                <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
-                  <Shield className="w-8 h-8 text-white" />
+                {/* Trusted Professionals */}
+                <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                  <div className="flex justify-center mb-4">
+                    <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                      <Shield className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                  <div className="text-4xl md:text-5xl font-bold text-white mb-2 tabular-nums">
+                    {stats.verifiedProviders}
+                  </div>
+                  <div className="text-sm md:text-base text-white/90 font-medium">Trusted Professionals</div>
                 </div>
-              </div>
-              <div className="text-4xl md:text-5xl font-bold text-white mb-2 tabular-nums">
-                {stats.verifiedProviders > 0 ? `${stats.verifiedProviders}+` : stats.totalProviders > 0 ? `${stats.totalProviders}+` : '...'}
-              </div>
-              <div className="text-sm md:text-base text-white/90 font-medium">Verified Professionals</div>
-            </div>
 
-            {/* Platform Rating */}
-            <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
-              <div className="flex justify-center mb-4">
-                <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
-                  <Star className="w-8 h-8 text-white fill-white" />
+                {/* Platform Rating */}
+                <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                  <div className="flex justify-center mb-4">
+                    <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                      <Star className="w-8 h-8 text-white fill-white" />
+                    </div>
+                  </div>
+                  <div className="text-4xl md:text-5xl font-bold text-white mb-2 flex items-center justify-center gap-2 tabular-nums">
+                    <span>{stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '0.0'}</span>
+                    {stats.averageRating > 0 && <TrendingUp className="w-6 h-6 text-white" />}
+                  </div>
+                  <div className="text-sm md:text-base text-white/90 font-medium">Platform Rating</div>
                 </div>
-              </div>
-              <div className="text-4xl md:text-5xl font-bold text-white mb-2 flex items-center justify-center gap-2 tabular-nums">
-                <span>5.0</span>
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-sm md:text-base text-white/90 font-medium">Platform Rating</div>
-            </div>
 
-            {/* Happy Customers */}
-            <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
-              <div className="flex justify-center mb-4">
-                <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
-                  <Heart className="w-8 h-8 text-white fill-white" />
+                {/* Happy Customers */}
+                <div className="group text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                  <div className="flex justify-center mb-4">
+                    <div className="p-4 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                      <Heart className="w-8 h-8 text-white fill-white" />
+                    </div>
+                  </div>
+                  <div className="text-4xl md:text-5xl font-bold text-white mb-2 tabular-nums">
+                    {stats.totalReviews > 0 ? `${stats.totalReviews}+` : '0+'}
+                  </div>
+                  <div className="text-sm md:text-base text-white/90 font-medium">Total Reviews</div>
                 </div>
-              </div>
-              <div className="text-4xl md:text-5xl font-bold text-white mb-2 tabular-nums">
-                {stats.totalReviews > 0 ? `${stats.totalReviews}+` : stats.totalProviders > 0 ? `${Math.ceil(stats.totalProviders * 1.5)}+` : '...'}
-              </div>
-              <div className="text-sm md:text-base text-white/90 font-medium">Happy Customers</div>
-            </div>
+              </>
+            )}
           </div>
 
           {/* Trust Badge */}
@@ -391,7 +379,7 @@ export default function Home() {
           </p>
           <button
             onClick={() => navigate('/search')}
-            className="text-[#006B3F] font-semibold hover:text-[#005530] inline-flex items-center gap-2"
+            className="text-ghana-green font-semibold hover:text-ghana-green-dark inline-flex items-center gap-2"
           >
             Browse All Services
             <ArrowRight className="w-4 h-4" />

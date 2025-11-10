@@ -31,6 +31,7 @@ class ProviderService {
 
   async createProvider(data: {
     name: string
+    email: string
     category: string
     location: string
     contact: string
@@ -39,15 +40,12 @@ class ProviderService {
     try {
       const providerData = {
         name: data.name,
+        email: data.email,
         category: data.category,
         location: data.location,
         phone: data.contact,
         whatsapp: data.contact,
         description: data.bio,
-        rating: 0,
-        reviewCount: 0,
-        verified: false,
-        availability: "Available Now" as const,
       }
       const result = await providersApi.create(providerData)
       if (result.provider) {

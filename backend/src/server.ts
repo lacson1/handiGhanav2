@@ -1,13 +1,17 @@
 import express from 'express'
 import cors from 'cors'
+import compression from 'compression'
 import dotenv from 'dotenv'
+import session from 'express-session'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import { initSentry } from './config/sentry'
 import Sentry from '@sentry/node'
+import passport from './config/passport'
 import providerRoutes from './routes/providers'
 import bookingRoutes from './routes/bookings'
 import authRoutes from './routes/auth'
+import oauthRoutes from './routes/oauth'
 import uploadRoutes from './routes/upload'
 import paymentRoutes from './routes/payments'
 import reviewRoutes from './routes/reviews'
@@ -46,6 +50,12 @@ const io = new Server(httpServer, {
 const PORT = Number(process.env.PORT) || 3001
 
 // Middleware
+// Enable gzip compression for all responses
+app.use(compression({
+  level: 6, // Compression level (0-9, where 9 is maximum compression)
+  threshold: 1024, // Only compress responses larger than 1KB
+}))
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, etc.)
@@ -75,6 +85,23 @@ app.use((req, res, next) => {
   express.urlencoded({ extended: true, limit: '50mb' })(req, res, next)
 })
 
+// Session middleware for OAuth
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'your-session-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+)
+
+// Passport middleware
+app.use(passport.initialize())
+app.use(passport.session())
+
 // Routes
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'HandyGhana API is running' })
@@ -83,6 +110,7 @@ app.get('/health', (req, res) => {
 app.use('/api/providers', providerRoutes)
 app.use('/api/bookings', bookingRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/auth', oauthRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/payments', paymentRoutes)
 app.use('/api/reviews', reviewRoutes)

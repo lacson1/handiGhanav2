@@ -31,7 +31,7 @@ function DashboardContent() {
   const { showToast } = useToast()
   const socket = useWebSocket()
   const navigate = useNavigate()
-  const { bookings, loading, updateBookingStatus } = useBookings()
+  const { bookings, loading, updateBookingStatus, fetchBookings } = useBookings()
   const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'analytics' | 'finance' | 'workflow' | 'services' | 'reviews' | 'customers' | 'business' | 'premium' | 'profile' | 'settings'>('overview')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [isAvailable, setIsAvailable] = useState<boolean>(true)
@@ -40,40 +40,31 @@ function DashboardContent() {
   const [autoConfirmBookings, setAutoConfirmBookings] = useState(false)
   const [providerAvatar, setProviderAvatar] = useState<string>('')
   const [providerName, setProviderName] = useState<string>(user?.name || '')
+  const [providerId, setProviderId] = useState<string>('')
 
-  // Map provider user ID to provider ID
-  const providerIdMap: Record<string, string> = {
-    'provider-1': '1',
-    'provider-2': '2',
-    'provider-3': '3',
-  }
-  const providerId = user?.id ? (providerIdMap[user.id] || user.id) : ''
-
-  // Load provider data to get avatar
+  // Load provider data to get the actual provider ID and details
   useEffect(() => {
     const loadProvider = async () => {
-      if (!providerId) {
-        console.log('No providerId, skipping provider load')
+      if (!user?.id) {
         return
       }
 
       try {
-        console.log('Loading provider data for ID:', providerId)
         const { providerService } = await import('../services/providerService')
-        const provider = await providerService.getProviderById(providerId)
-        
-        console.log('Loaded provider:', { id: provider?.id, name: provider?.name, avatar: provider?.avatar })
+        // Get all providers and find the one matching this user
+        const providers = await providerService.getAllProviders()
+        const provider = providers.find(p => p.userId === user.id)
         
         if (provider) {
+          setProviderId(provider.id) // Set the actual provider ID
           if (provider.avatar) {
-            console.log('Setting provider avatar:', provider.avatar)
             setProviderAvatar(provider.avatar)
-          } else {
-            console.log('No avatar found for provider')
           }
           if (provider.name) {
             setProviderName(provider.name)
           }
+        } else {
+          console.error('No provider record found for user:', user.id)
         }
       } catch (error) {
         console.error('Failed to load provider data:', error)
@@ -98,7 +89,7 @@ function DashboardContent() {
     return () => {
       window.removeEventListener('providerUpdated', handleProviderUpdate as EventListener)
     }
-  }, [providerId])
+  }, [user?.id])
 
   // Load notification preferences from localStorage
   useEffect(() => {
@@ -117,20 +108,23 @@ function DashboardContent() {
     socket.on('new-booking', (newBooking: any) => {
       if (newBooking.providerId === providerId) {
         showToast(`New booking received: ${newBooking.serviceType}`, 'success', 4000)
-        // Refresh bookings will happen via useBookings hook
+        // Auto-refresh bookings to show the new booking
+        fetchBookings()
       }
     })
 
     socket.on('booking-status-updated', (updatedBooking: any) => {
       if (updatedBooking.providerId === providerId) {
         showToast(`Booking status updated to ${updatedBooking.status}`, 'info', 3000)
-        // Refresh bookings will happen via useBookings hook
+        // Auto-refresh bookings to show the updated status
+        fetchBookings()
       }
     })
 
     socket.on('provider-verified', (provider: any) => {
       if (provider.id === providerId) {
         showToast('Your account has been verified! 🎉', 'success', 5000)
+        // Could refresh provider data here if needed
       }
     })
 
@@ -146,7 +140,7 @@ function DashboardContent() {
       socket.off('provider-verified')
       socket.off('provider-rejected')
     }
-  }, [socket, providerId, showToast])
+  }, [socket, providerId, showToast, fetchBookings])
 
   // Filter bookings for this provider
   const myBookings = useMemo(() => {
@@ -189,7 +183,7 @@ function DashboardContent() {
     }
   }, [myBookings])
 
-  const getCustomerInfo = (userId: string): any => {
+  const getCustomerInfo = (_userId: string): any => {
     return null // TODO: Fetch from usersApi.getById(userId)
   }
 
@@ -488,7 +482,7 @@ function DashboardContent() {
                                   onClick={async () => {
                                     try {
                                       await updateBookingStatus(booking.id, 'Confirmed')
-                                    } catch (error) {
+                                    } catch {
                                       alert('Failed to confirm booking')
                                     }
                                   }}
@@ -503,7 +497,7 @@ function DashboardContent() {
                                     if (confirm('Are you sure you want to cancel this booking?')) {
                                       try {
                                         await updateBookingStatus(booking.id, 'Cancelled')
-                                      } catch (error) {
+                                      } catch {
                                         alert('Failed to cancel booking')
                                       }
                                     }
@@ -891,14 +885,7 @@ function DashboardContent() {
 function ProfileEditForm() {
   const { user } = useAuth()
   
-  // Map provider user ID to provider ID (same as in DashboardContent)
-  const providerIdMap: Record<string, string> = {
-    'provider-1': '1',
-    'provider-2': '2',
-    'provider-3': '3',
-  }
-  const providerId = user?.id ? (providerIdMap[user.id] || user.id) : ''
-
+  const [providerId, setProviderId] = useState<string>('')
   const [formData, setFormData] = useState({
     name: 'Bis FagQ',
     category: 'Electrician',
@@ -917,30 +904,40 @@ function ProfileEditForm() {
   // Load provider data when component mounts
   useEffect(() => {
     const loadProvider = async () => {
-      if (!providerId) {
+      if (!user?.id) {
         setLoading(false)
         return
       }
 
       try {
         const { providerService } = await import('../services/providerService')
-        const provider = await providerService.getProviderById(providerId)
+        // Get all providers and find the one matching this user
+        const providers = await providerService.getAllProviders()
+        const provider = providers.find(p => p.userId === user.id)
         
-        if (provider) {
-          setFormData({
-            name: provider.name || 'Bis FagQ',
-            category: provider.category || 'Electrician',
-            location: provider.location || 'Cape Coast',
-            description: provider.description || 'Expert in electrical appliances and home wiring.',
-            phone: provider.phone || '+233241234567',
-            whatsapp: provider.whatsapp || provider.phone || '+233241234567',
-            serviceAreas: (provider as any).serviceAreas || ['Cape Coast', 'Elmina', 'Saltpond'],
-            skills: (provider as any).skills || ['Wiring', 'Appliance Repair', 'Panel Installation']
-          })
-          // Load existing avatar if available
-          if (provider.avatar) {
-            setAvatarUrl(provider.avatar)
-          }
+        if (!provider) {
+          console.error('No provider record found for user:', user.id)
+          setLoading(false)
+          return
+        }
+        
+        // Set the actual provider ID
+        setProviderId(provider.id)
+        
+        // Load form data from provider
+        setFormData({
+          name: provider.name || 'Bis FagQ',
+          category: provider.category || 'Electrician',
+          location: provider.location || 'Cape Coast',
+          description: provider.description || 'Expert in electrical appliances and home wiring.',
+          phone: provider.phone || '+233241234567',
+          whatsapp: provider.whatsapp || provider.phone || '+233241234567',
+          serviceAreas: (provider as any).serviceAreas || ['Cape Coast', 'Elmina', 'Saltpond'],
+          skills: (provider as any).skills || ['Wiring', 'Appliance Repair', 'Panel Installation']
+        })
+        // Load existing avatar if available
+        if (provider.avatar) {
+          setAvatarUrl(provider.avatar)
         }
       } catch (error) {
         console.error('Failed to load provider data:', error)
@@ -950,7 +947,7 @@ function ProfileEditForm() {
     }
 
     loadProvider()
-  }, [providerId])
+  }, [user?.id])
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -971,10 +968,8 @@ function ProfileEditForm() {
 
     setUploading(true)
     try {
-      console.log('Uploading file:', { name: file.name, size: file.size, type: file.type })
       const { uploadApi } = await import('../lib/api')
       const result = await uploadApi.uploadImage(file, 'providers')
-      console.log('Upload result:', result)
       setAvatarUrl(result.url)
       alert('Image uploaded successfully!')
     } catch (error: any) {
@@ -1014,14 +1009,9 @@ function ProfileEditForm() {
       // Update local state with the returned provider data (including avatar)
       if (updatedProvider.avatar) {
         setAvatarUrl(updatedProvider.avatar)
-        console.log('Profile updated with avatar:', updatedProvider.avatar)
-      } else {
-        console.warn('Profile updated but no avatar in response:', updatedProvider)
       }
       
       // Dispatch event to notify other components (like Home page) to refresh
-      // Do this BEFORE the page reload so other tabs/pages can refresh
-      console.log('Dispatching providerUpdated event...')
       window.dispatchEvent(new CustomEvent('providerUpdated', { 
         detail: updatedProvider 
       }))

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { X, Star, MapPin, CheckCircle, Clock, Phone, MessageCircle, Calendar, DollarSign, Repeat } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Provider, Service } from '../types'
 import Button from './ui/Button'
-import { cn } from '../lib/utils'
+import { cn, formatAvailability, isAvailableNow } from '../lib/utils'
 import { servicesApi } from '../lib/api'
 
 interface ProviderDetailsDrawerProps {
@@ -17,13 +17,7 @@ export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBoo
   const [services, setServices] = useState<Service[]>([])
   const [loadingServices, setLoadingServices] = useState(false)
 
-  useEffect(() => {
-    if (isOpen && provider?.id) {
-      loadServices()
-    }
-  }, [isOpen, provider?.id])
-
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     if (!provider?.id) return
     setLoadingServices(true)
     try {
@@ -35,7 +29,13 @@ export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBoo
     } finally {
       setLoadingServices(false)
     }
-  }
+  }, [provider?.id])
+
+  useEffect(() => {
+    if (isOpen && provider?.id) {
+      loadServices()
+    }
+  }, [isOpen, provider?.id, loadServices])
 
   const handleWhatsApp = () => {
     if (provider?.whatsapp) {
@@ -175,25 +175,25 @@ export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBoo
 
               {/* Availability */}
               <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-gray-400" />
+                <Clock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 <span className={cn(
-                  "font-semibold",
-                  provider.availability === "Available Now"
+                  "font-bold text-base",
+                  isAvailableNow(provider.availability)
                     ? "text-green-600 dark:text-green-400"
-                    : "text-gray-600 dark:text-gray-400"
+                    : "text-gray-700 dark:text-gray-300"
                 )}>
-                  {provider.availability}
+                  {formatAvailability(provider.availability)}
                 </span>
               </div>
 
               {/* Location */}
               <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-gray-400" />
-                <span className="text-gray-600 dark:text-gray-400">
+                <MapPin className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                <span className="text-gray-800 dark:text-gray-200 font-semibold">
                   {provider.location}
                 </span>
                 {provider.serviceAreas && provider.serviceAreas.length > 0 && (
-                  <span className="text-sm text-gray-500 dark:text-gray-500">
+                  <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
                     • Also serves: {provider.serviceAreas.join(', ')}
                   </span>
                 )}
@@ -201,10 +201,10 @@ export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBoo
 
               {/* Description */}
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="font-bold text-gray-900 dark:text-white mb-2 text-base">
                   About
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="text-gray-800 dark:text-gray-200 leading-relaxed font-medium">
                   {provider.description}
                 </p>
               </div>

@@ -24,7 +24,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
   const [invoiceFilter, setInvoiceFilter] = useState<string>('all')
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [payments, setPayments] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [_loading, setLoading] = useState(true)
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
   const [earningsPeriod, setEarningsPeriod] = useState<'7d' | '30d' | '3m' | '1y'>('30d')
@@ -348,7 +348,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
       pendingPayments: pendingPayments.length,
       totalTransactions: payments.length
     }
-  }, [])
+  }, [payments])
 
   const [earningsData, setEarningsData] = useState<any>(null)
   const [categoryData, setCategoryData] = useState<any>(null)
@@ -805,7 +805,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
                     if (!providerId) return
                     try {
                       await earningsApi.exportReport(providerId, 'csv', earningsPeriod)
-                    } catch (error) {
+                    } catch {
                       alert('Failed to export report. Please try again.')
                     }
                   }}
@@ -818,7 +818,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4">
+              <div className="bg-linear-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Earnings</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   GHS {earningsChartData.reduce((sum: number, d: { earnings: number }) => sum + (d.earnings || 0), 0).toLocaleString()}
@@ -830,7 +830,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
                     : '+12.5% from last period'}
                 </p>
               </div>
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4">
+              <div className="bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Completed Jobs</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {earningsChartData.reduce((sum: number, d: { jobs: number }) => sum + (d.jobs || 0), 0)}
@@ -839,7 +839,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
                   Avg: GHS {Math.round(earningsChartData.reduce((sum: number, d: { earnings: number }) => sum + (d.earnings || 0), 0) / Math.max(earningsChartData.reduce((sum: number, d: { jobs: number }) => sum + (d.jobs || 0), 0), 1))} per job
                 </p>
               </div>
-              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl p-4">
+              <div className="bg-linear-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl p-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Pending Payout</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   GHS {financialSummary.pendingPayout.toLocaleString()}
@@ -848,7 +848,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
                   2 payments pending
                 </p>
               </div>
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4">
+              <div className="bg-linear-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Paid Out</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   GHS {financialSummary.paidOut.toLocaleString()}

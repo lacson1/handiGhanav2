@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Star, MessageSquare, Send, Edit2, CheckCircle, Image as ImageIcon } from 'lucide-react'
 import { reviewsApi } from '../lib/api'
 import type { Review } from '../types'
@@ -18,11 +18,7 @@ export default function ProviderReviewsManagement({ providerId }: ProviderReview
   const [editingResponse, setEditingResponse] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    loadReviews()
-  }, [providerId])
-
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     try {
       const response = await reviewsApi.getByProvider(providerId, 50)
       setReviews(response.reviews || [])
@@ -36,7 +32,11 @@ export default function ProviderReviewsManagement({ providerId }: ProviderReview
     } finally {
       setLoading(false)
     }
-  }
+  }, [providerId])
+
+  useEffect(() => {
+    loadReviews()
+  }, [loadReviews])
 
   const handleSubmitResponse = async (reviewId: string) => {
     if (!responseText.trim() || responseText.trim().length < 10) {
@@ -59,7 +59,7 @@ export default function ProviderReviewsManagement({ providerId }: ProviderReview
       setEditingResponse(null)
       setResponseText('')
       alert('Response submitted successfully!')
-    } catch (error) {
+    } catch {
       alert('Failed to submit response. Please try again.')
     } finally {
       setSubmitting(false)

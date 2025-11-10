@@ -1,13 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Star, MapPin, CheckCircle, Clock, Phone, MessageCircle, 
-  ArrowLeft, Calendar, Award, Users, TrendingUp, Shield, 
+import {
+  Star, MapPin, CheckCircle, Clock, Phone, MessageCircle,
+  ArrowLeft, Calendar, Award, Users, TrendingUp, Shield,
   Crown, Camera, Briefcase, Zap, Heart,
   DollarSign, Repeat, Check, Sparkles
 } from 'lucide-react'
-import { providersApi } from '../lib/api'
 import { providerService } from '../services/providerService'
 import BookingModal from '../components/BookingModal'
 import BookingSuccessModal from '../components/BookingSuccessModal'
@@ -15,7 +14,7 @@ import ReviewList from '../components/ReviewList'
 import Button from '../components/ui/Button'
 import { useAuth } from '../context/AuthContext'
 import { servicesApi } from '../lib/api'
-import type { Service } from '../types'
+import type { Service, Provider } from '../types'
 import { cn } from '../lib/utils'
 
 export default function ProviderProfile() {
@@ -24,7 +23,7 @@ export default function ProviderProfile() {
   const { isAuthenticated } = useAuth()
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
-  const [provider, setProvider] = useState<any>(null)
+  const [provider, setProvider] = useState<Provider | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastBooking, setLastBooking] = useState<{ date: string; time: string; notes?: string } | null>(null)
@@ -44,7 +43,7 @@ export default function ProviderProfile() {
       setError(null)
 
       try {
-        // Try to get from API first
+        // Fetch provider from API
         const data = await providerService.getProviderById(id)
         if (data) {
           setProvider(data)
@@ -54,25 +53,14 @@ export default function ProviderProfile() {
             setServices(servicesData as Service[])
           } catch (err) {
             console.error('Failed to load services:', err)
+            // Continue even if services fail to load
           }
-        } else {
-          // Fallback to mock data
-          const found = null // TODO: Fetch from providersApi.getById(id)
-          if (found) {
-            setProvider(found)
-          } else {
-            setError('Provider not found')
-          }
-        }
-      } catch (err) {
-        // Fallback to mock data on error
-        const found = null // TODO: Fetch from providersApi.getById(id)
-        if (found) {
-          setProvider(found)
-          setError(null)
         } else {
           setError('Provider not found')
         }
+      } catch (err) {
+        console.error('Error loading provider:', err)
+        setError('Failed to load provider. Please try again later.')
       } finally {
         setLoading(false)
       }
@@ -139,9 +127,17 @@ export default function ProviderProfile() {
   }
 
   const getJoinedDate = () => {
+    if (!provider) return 'Recently'
     if (provider.joinedDate) {
-      const date = new Date(provider.joinedDate)
-      return date.toLocaleDateString('en-GH', { year: 'numeric', month: 'long' })
+      try {
+        const date = new Date(provider.joinedDate)
+        if (isNaN(date.getTime())) {
+          return 'Recently'
+        }
+        return date.toLocaleDateString('en-GH', { year: 'numeric', month: 'long' })
+      } catch {
+        return 'Recently'
+      }
     }
     return 'Recently'
   }
@@ -176,15 +172,15 @@ export default function ProviderProfile() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Enhanced Header with Image */}
-      <div className="relative h-80 bg-gradient-to-br from-primary via-primary/80 to-blue-600 overflow-hidden">
+      <div className="relative h-80 bg-linear-to-br from-primary via-primary/80 to-blue-600 overflow-hidden">
         {provider.image && (
-          <img 
-            src={provider.image} 
+          <img
+            src={provider.image}
             alt={provider.name}
             className="absolute inset-0 w-full h-full object-cover opacity-20"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10">
           <Button
             variant="ghost"
@@ -202,16 +198,16 @@ export default function ProviderProfile() {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 lg:p-10 mb-6">
           {/* Profile Header */}
           <div className="flex flex-col md:flex-row gap-6 mb-8">
-            <div className="flex-shrink-0 relative">
+            <div className="shrink-0 relative">
               <div className="relative">
                 {provider.avatar || provider.image ? (
-                  <img 
-                    src={provider.avatar || provider.image} 
+                  <img
+                    src={provider.avatar || provider.image}
                     alt={provider.name}
                     className="h-32 w-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg"
                   />
                 ) : (
-                  <div className="h-32 w-32 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-4xl font-bold text-white border-4 border-white dark:border-gray-800 shadow-lg">
+                  <div className="h-32 w-32 rounded-full bg-linear-to-br from-primary to-blue-600 flex items-center justify-center text-4xl font-bold text-white border-4 border-white dark:border-gray-800 shadow-lg">
                     {provider.name.charAt(0)}
                   </div>
                 )}
@@ -220,7 +216,7 @@ export default function ProviderProfile() {
                     <CheckCircle className="h-6 w-6 text-black" />
                   </div>
                 )}
-                {(provider as any).isPremium && (
+                {provider.isPremium && (
                   <div className="absolute -top-2 -right-2 bg-yellow-500 rounded-full p-1.5 border-4 border-white dark:border-gray-800">
                     <Crown className="h-5 w-5 text-white" />
                   </div>
@@ -240,7 +236,7 @@ export default function ProviderProfile() {
                         <span className="text-sm font-semibold text-primary">Verified</span>
                       </div>
                     )}
-                    {(provider as any).isPremium && (
+                    {provider.isPremium && (
                       <div className="flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 rounded-full border border-yellow-500/20">
                         <Crown className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                         <span className="text-sm font-semibold text-yellow-600 dark:text-yellow-400">Premium</span>
@@ -254,11 +250,11 @@ export default function ProviderProfile() {
                     <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     <span>{provider.location}</span>
                   </p>
-                  
+
                   {/* Stats Row */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
                     <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                      <Star className="h-6 w-6 fill-yellow-400 text-yellow-400 flex-shrink-0" />
+                      <Star className="h-6 w-6 fill-yellow-400 text-yellow-400 shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                           {provider.rating.toFixed(1)}
@@ -270,7 +266,7 @@ export default function ProviderProfile() {
                     </div>
                     {provider.completionRate && (
                       <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                        <Award className="h-6 w-6 text-green-500 flex-shrink-0" />
+                        <Award className="h-6 w-6 text-green-500 shrink-0" />
                         <div className="min-w-0">
                           <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                             {Math.round(provider.completionRate * 100)}%
@@ -280,7 +276,7 @@ export default function ProviderProfile() {
                       </div>
                     )}
                     <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                      <Users className="h-6 w-6 text-blue-500 flex-shrink-0" />
+                      <Users className="h-6 w-6 text-blue-500 shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                           {getJoinedDate().split(' ')[0]}
@@ -290,7 +286,7 @@ export default function ProviderProfile() {
                     </div>
                     {provider.availability === "Available Now" && (
                       <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-                        <Zap className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+                        <Zap className="h-6 w-6 text-green-600 dark:text-green-400 shrink-0" />
                         <div className="min-w-0">
                           <p className="text-xl font-bold text-green-600 dark:text-green-400 leading-tight">
                             Now
@@ -302,10 +298,10 @@ export default function ProviderProfile() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3 mt-4">
-                <Button 
+                <Button
                   onClick={() => setIsBookingModalOpen(true)}
                   className="flex-1 md:flex-none"
                   size="lg"
@@ -314,8 +310,8 @@ export default function ProviderProfile() {
                   Book Service
                 </Button>
                 {provider.whatsapp && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handleWhatsApp}
                     size="lg"
                   >
@@ -324,8 +320,8 @@ export default function ProviderProfile() {
                   </Button>
                 )}
                 {provider.phone && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handleCall}
                     size="lg"
                   >
@@ -420,16 +416,16 @@ export default function ProviderProfile() {
               </div>
 
               {/* Trust Indicators */}
-              <div className="grid md:grid-cols-2 gap-4 p-6 md:p-8 bg-gradient-to-r from-blue-50 to-primary/10 dark:from-blue-900/20 dark:to-primary/20 rounded-xl border border-primary/20">
+              <div className="grid md:grid-cols-2 gap-4 p-6 md:p-8 bg-linear-to-r from-blue-50 to-primary/10 dark:from-blue-900/20 dark:to-primary/20 rounded-xl border border-primary/20">
                 <div className="flex items-start gap-4">
-                  <Shield className="h-7 w-7 text-primary flex-shrink-0 mt-0.5" />
+                  <Shield className="h-7 w-7 text-primary shrink-0 mt-0.5" />
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white text-base mb-1">Verified Professional</p>
                     <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">Background checked and verified</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <Clock className="h-7 w-7 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <Clock className="h-7 w-7 text-blue-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white text-base mb-1">Quick Response</p>
                     <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">Usually responds within hours</p>
@@ -502,7 +498,7 @@ export default function ProviderProfile() {
                       </p>
 
                       {/* Pricing */}
-                      <div className="mb-4 p-4 bg-gradient-to-r from-primary/5 to-blue-50 dark:from-primary/10 dark:to-blue-900/20 rounded-lg border border-primary/10">
+                      <div className="mb-4 p-4 bg-linear-to-r from-primary/5 to-blue-50 dark:from-primary/10 dark:to-blue-900/20 rounded-lg border border-primary/10">
                         {service.pricingModel === 'pay-as-you-go' ? (
                           <div>
                             <div className="flex items-baseline gap-2">
@@ -551,7 +547,7 @@ export default function ProviderProfile() {
                           <ul className="space-y-1.5">
                             {service.subscriptionFeatures.map((feature, idx) => (
                               <li key={idx} className="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-300">
-                                <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                                <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
                                 <span>{feature}</span>
                               </li>
                             ))}
@@ -613,9 +609,9 @@ export default function ProviderProfile() {
                 <Camera className="h-5 w-5" />
                 Portfolio
               </h2>
-              {(provider as any).workPhotos && (provider as any).workPhotos.length > 0 ? (
+              {provider.workPhotos && provider.workPhotos.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
-                  {(provider as any).workPhotos.map((photo: string, idx: number) => (
+                  {provider.workPhotos.map((photo: string, idx: number) => (
                     <div
                       key={idx}
                       className="aspect-square rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 hover:border-primary transition-all cursor-pointer shadow-sm hover:shadow-md"

@@ -6,14 +6,15 @@ import {
   getEarningsByCategory, 
   exportEarningsReport 
 } from '../controllers/earningsController'
+import { authenticateToken, optionalAuth } from '../middleware/auth'
 
 const router = express.Router()
 
 // GET /api/providers - Get all providers with filters
 router.get('/', getProviders)
 
-// POST /api/providers - Create new provider (protected)
-router.post('/', createProvider)
+// POST /api/providers - Create new provider (authentication optional - handles both cases)
+router.post('/', optionalAuth, createProvider)
 
 // Earnings Analytics Routes (must come before /:id route)
 // GET /api/providers/:id/earnings/analytics?period=30d

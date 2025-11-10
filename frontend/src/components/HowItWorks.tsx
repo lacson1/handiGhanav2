@@ -21,7 +21,7 @@ export default function HowItWorks() {
   ]
 
   return (
-    <section id="how-it-works" className="py-12 sm:py-16 bg-gradient-to-b from-white via-ghana-yellow-subtle/30 to-white dark:bg-gray-800">
+    <section id="how-it-works" className="py-12 sm:py-16 bg-linear-to-b from-white via-ghana-yellow-subtle/30 to-white dark:bg-gray-800">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
           How It Works
@@ -35,7 +35,7 @@ export default function HowItWorks() {
               transition={{ delay: idx * 0.2 }}
               className="text-center"
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-ghana-red/10 via-primary/20 to-ghana-green/10 mb-4 border-2 border-ghana-yellow/30">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-linear-to-br from-ghana-red/10 via-primary/20 to-ghana-green/10 mb-4 border-2 border-ghana-yellow/30">
                 <step.icon className="h-8 w-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">

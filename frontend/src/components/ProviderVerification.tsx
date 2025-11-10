@@ -53,7 +53,7 @@ export default function ProviderVerification({ providerId: _providerId, onComple
         })
       }
       setErrors({ ...errors, [type]: '' })
-    } catch (error) {
+    } catch {
       setErrors({ ...errors, [type]: 'Upload failed. Please try again.' })
     } finally {
       setUploading(false)
@@ -128,7 +128,7 @@ export default function ProviderVerification({ providerId: _providerId, onComple
 
   const handleSubmit = async () => {
     // TODO: Submit verification data to backend
-    console.log('Submitting verification:', verificationData)
+    // Submitting verification
     if (onComplete) {
       onComplete()
     }

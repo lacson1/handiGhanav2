@@ -1,6 +1,9 @@
 import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { io } from '../server'
+import { AuthRequest } from '../middleware/auth'
+import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 
 const prisma = new PrismaClient()
 
@@ -77,11 +80,11 @@ export const getProviderById = async (req: Request, res: Response) => {
   }
 }
 
-export const createProvider = async (req: Request, res: Response) => {
+export const createProvider = async (req: AuthRequest, res: Response) => {
   try {
     const {
-      userId,
       name,
+      email,
       category,
       location,
       description,
@@ -91,6 +94,69 @@ export const createProvider = async (req: Request, res: Response) => {
       serviceAreas
     } = req.body
 
+    // Validate required fields
+    if (!name || !category || !location || !description) {
+      return res.status(400).json({ message: 'Missing required fields' })
+    }
+
+    let userId = req.userId
+
+    // If user is not authenticated, we need to handle email
+    if (!userId) {
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required for non-authenticated users' })
+      }
+
+      // Check if user exists with this email
+      let user = await prisma.user.findUnique({
+        where: { email }
+      })
+
+      if (user) {
+        // User exists, check if they already have a provider profile
+        const existingProvider = await prisma.provider.findUnique({
+          where: { userId: user.id }
+        })
+
+        if (existingProvider) {
+          return res.status(400).json({ 
+            message: 'A provider profile already exists for this email. Please sign in to manage your profile.' 
+          })
+        }
+
+        userId = user.id
+      } else {
+        // Create new user account with a temporary password
+        const tempPassword = crypto.randomBytes(16).toString('hex')
+        const hashedPassword = await bcrypt.hash(tempPassword, 10)
+
+        user = await prisma.user.create({
+          data: {
+            email,
+            name,
+            phone,
+            password: hashedPassword,
+            role: 'PROVIDER'
+          }
+        })
+
+        userId = user.id
+
+        // TODO: Send email with temporary credentials or password reset link
+        console.log(`New provider account created for ${email}. Temporary password: ${tempPassword}`)
+      }
+    } else {
+      // User is authenticated, check if they already have a provider profile
+      const existingProvider = await prisma.provider.findUnique({
+        where: { userId }
+      })
+
+      if (existingProvider) {
+        return res.status(400).json({ message: 'User already has a provider profile' })
+      }
+    }
+
+    // Create provider profile
     const provider = await prisma.provider.create({
       data: {
         userId,
@@ -98,17 +164,27 @@ export const createProvider = async (req: Request, res: Response) => {
         category,
         location,
         description,
-        phone,
-        whatsapp,
+        phone: phone || null,
+        whatsapp: whatsapp || null,
         skills: skills || [],
         serviceAreas: serviceAreas || [],
       }
     })
 
+    // Update user role to PROVIDER
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: 'PROVIDER' }
+    })
+
     // Emit real-time update
     io.emit('provider:created', provider)
 
-    res.status(201).json({ message: 'Provider created successfully', provider })
+    res.status(201).json({ 
+      message: 'Provider created successfully', 
+      provider,
+      requiresPasswordSetup: !req.userId && !email ? false : true
+    })
   } catch (error: any) {
     console.error('Error creating provider:', error)
     res.status(500).json({ message: 'Failed to create provider', error: error.message })

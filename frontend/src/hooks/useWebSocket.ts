@@ -24,15 +24,19 @@ export function useWebSocket(roomId?: string) {
       socketRef.current = null
     }
 
-    // Initialize socket connection
+    // Initialize socket connection with error handling
     socketRef.current = io(SOCKET_URL, {
       transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 1000,
+      timeout: 5000,
     })
 
     const socket = socketRef.current
 
     socket.on('connect', () => {
-      console.log('WebSocket connected')
+      // WebSocket connected
       
       // Join provider or user room
       if (user?.role === 'PROVIDER' && user?.id) {
@@ -49,7 +53,7 @@ export function useWebSocket(roomId?: string) {
     })
 
     socket.on('disconnect', () => {
-      console.log('WebSocket disconnected')
+      // WebSocket disconnected
     })
 
     socket.on('connect_error', (error) => {

@@ -31,6 +31,32 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
   }
 }
 
+// Optional authentication - attaches user info if token is present, but doesn't reject if missing
+export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization
+    const token = authHeader && authHeader.split(' ')[1]
+
+    if (!token) {
+      // No token provided - continue without authentication
+      return next()
+    }
+
+    jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+      if (!err && decoded) {
+        // Token is valid - attach user info
+        req.userId = decoded.userId
+        req.userRole = decoded.role
+      }
+      // Continue regardless of token validity
+      next()
+    })
+  } catch (error) {
+    // Even on error, continue without authentication
+    next()
+  }
+}
+
 export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.userRole !== 'admin') {
     return res.status(403).json({ message: 'Admin access required' })
@@ -38,5 +64,5 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
   next()
 }
 
-export default { authenticateToken, requireAdmin }
+export default { authenticateToken, optionalAuth, requireAdmin }
 
