@@ -1,9 +1,10 @@
 import { Request, Response } from 'express'
-import prisma from '../prisma'
+import { PrismaClient, VerificationStatus } from '@prisma/client'
 import { io } from '../server'
 import { sendProviderApprovalEmail } from '../services/emailService'
 import { sendSMS } from '../services/smsService'
-import { VerificationStatus } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 // Get all providers (admin only)
 export const getAllProviders = async (req: Request, res: Response) => {
@@ -142,10 +143,10 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       prisma.provider.count({ where: { verified: true } }),
       prisma.provider.count({ where: { verificationStatus: VerificationStatus.PENDING } }),
       prisma.booking.count(),
-      prisma.booking.count({ where: { status: 'Completed' } }),
+      prisma.booking.count({ where: { status: 'COMPLETED' } }),
       prisma.payment.aggregate({
         _sum: { amount: true },
-        where: { status: 'completed' },
+        where: { status: 'COMPLETED' },
       }),
       prisma.user.count(),
     ])
@@ -188,8 +189,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
           completionRate: totalBookings > 0 ? ((completedBookings / totalBookings) * 100).toFixed(1) : 0,
         },
         revenue: {
-          total: totalRevenue._sum.amount || 0,
-          average: totalBookings > 0 ? ((totalRevenue._sum.amount || 0) / totalBookings).toFixed(2) : 0,
+          total: totalRevenue._sum?.amount || 0,
+          average: totalBookings > 0 ? ((totalRevenue._sum?.amount || 0) / totalBookings).toFixed(2) : 0,
         },
         users: {
           total: totalUsers,
@@ -224,8 +225,8 @@ export const toggleProviderSuspension = async (req: Request, res: Response) => {
     const updatedProvider = await prisma.provider.update({
       where: { id },
       data: {
-        canReceiveBookings: !suspend,
-        verificationStatus: suspend ? VerificationStatus.SUSPENDED : provider.verificationStatus,
+        verified: !suspend,
+        verificationStatus: suspend ? VerificationStatus.REJECTED : provider.verificationStatus,
       },
     })
 
@@ -342,10 +343,10 @@ export const getAnalytics = async (req: Request, res: Response) => {
     // Provider performance
     const topProviders = await prisma.provider.findMany({
       take: 10,
-      orderBy: [{ rating: 'desc' }, { totalReviews: 'desc' }],
+      orderBy: { rating: 'desc' },
       include: {
         bookings: {
-          where: { status: 'Completed' },
+          where: { status: 'COMPLETED' },
           select: { id: true },
         },
         reviews: {
@@ -361,16 +362,16 @@ export const getAnalytics = async (req: Request, res: Response) => {
         bookings: newBookings,
       },
       revenue: {
-        total: revenueByCategory.reduce((sum, item) => sum + (item._sum.amount || 0), 0),
+        total: revenueByCategory.reduce((sum: number, item: any) => sum + (item._sum.amount || 0), 0),
         byCategory: revenueByCategory,
       },
-      topProviders: topProviders.map((p) => ({
+      topProviders: topProviders.map((p: any) => ({
         id: p.id,
         name: p.name,
         rating: p.rating,
         completedBookings: p.bookings.length,
         averageReview: p.reviews.length > 0
-          ? (p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length).toFixed(1)
+          ? (p.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / p.reviews.length).toFixed(1)
           : 0,
       })),
     })
