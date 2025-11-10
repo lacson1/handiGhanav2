@@ -1,7 +1,7 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import type { Provider, FilterState } from '../types'
-import { mockProviders } from '../data/mockProviders'
+import { providersApi } from '../lib/api'
 
 interface ProviderContextType {
   providers: Provider[]
@@ -15,8 +15,22 @@ interface ProviderContextType {
 const ProviderContext = createContext<ProviderContextType | undefined>(undefined)
 
 export function ProviderProvider({ children }: { children: ReactNode }) {
-  const [providers] = useState<Provider[]>(mockProviders)
+  const [providers, setProviders] = useState<Provider[]>([])
   const [filters, setFilters] = useState<FilterState>({})
+
+  // Fetch providers on mount
+  useEffect(() => {
+    const fetchProviders = async () => {
+      try {
+        const data = await providersApi.getAll()
+        setProviders(data as Provider[])
+      } catch (error) {
+        console.error('Failed to fetch providers:', error)
+        setProviders([])
+      }
+    }
+    fetchProviders()
+  }, [])
 
   const filteredProviders = providers.filter(provider => {
     if (filters.category && provider.category !== filters.category) return false

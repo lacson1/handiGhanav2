@@ -7,7 +7,7 @@ import ProviderCard from '../components/ProviderCard'
 import BookingModal from '../components/BookingModal'
 import ProviderDetailsDrawer from '../components/ProviderDetailsDrawer'
 import type { Provider, FilterState } from '../types'
-import { mockProviders } from '../utils/mockData'
+// Mock providers removed - using API
 export default function HomePage() {
   const [filters, setFilters] = useState<FilterState>({})
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null)

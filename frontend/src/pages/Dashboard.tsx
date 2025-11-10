@@ -5,7 +5,7 @@ import { useBookings } from '../hooks/useBookings'
 import { useProviders } from '../hooks/useProviders'
 import { Calendar, Clock, CheckCircle, XCircle, Phone, MessageCircle, MapPin, Star, Filter } from 'lucide-react'
 import Button from '../components/ui/Button'
-import { mockProviders } from '../data/mockProviders'
+import { providersApi } from '../lib/api'
 
 export default function Dashboard() {
   const navigate = useNavigate()

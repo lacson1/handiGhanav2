@@ -5,7 +5,7 @@ import ProviderCard from '../components/ProviderCard'
 import BookingModal from '../components/BookingModal'
 import ProviderDetailsDrawer from '../components/ProviderDetailsDrawer'
 import type { Provider, FilterState } from '../types'
-import { mockProviders } from '../data/mockProviders'
+import { providersApi } from '../lib/api'
 export default function SearchResults() {
   const [searchParams] = useSearchParams()
   const [filters, setFilters] = useState<FilterState>({})

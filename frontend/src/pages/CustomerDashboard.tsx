@@ -21,7 +21,7 @@ import ProfilePhotoUpload from '../components/ProfilePhotoUpload'
 import ReferralProgram from '../components/ReferralProgram'
 import BookingTracking from '../components/BookingTracking'
 import { bookingsApi } from '../lib/api'
-import { mockProviders } from '../data/mockProviders'
+import { providersApi } from '../lib/api'
 import type { Provider } from '../types'
 import { cn } from '../lib/utils'
 

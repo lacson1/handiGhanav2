@@ -17,37 +17,7 @@ export function useBookings() {
       setBookings(data as Booking[])
     } catch (err: any) {
       setError(err.message || 'Failed to fetch bookings')
-      // Fallback to mock bookings for testing
-      try {
-        const { mockBookings } = await import('../data/mockBookings')
-        
-        let filteredBookings: Booking[] = []
-        
-        if (user?.id) {
-          // Map provider user IDs to provider IDs
-          // provider-1 -> 1, provider-2 -> 2, etc.
-          const providerIdMap: Record<string, string> = {
-            'provider-1': '1',
-            'provider-2': '2',
-            'provider-3': '3',
-          }
-          
-          const providerId = providerIdMap[user.id] || user.id
-          
-          // Filter bookings: customer sees their bookings, provider sees bookings for their provider ID
-          filteredBookings = mockBookings.filter(b => {
-            if (user.role === 'PROVIDER') {
-              return b.providerId === providerId
-            } else {
-              return b.userId === user.id
-            }
-          })
-        }
-        
-        setBookings(filteredBookings)
-      } catch {
-        setBookings([])
-      }
+      setBookings([])
     } finally {
       setLoading(false)
     }

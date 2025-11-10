@@ -13,10 +13,6 @@ import ProviderDetailModal from '../components/ProviderDetailModal'
 import DisputeManagement from '../components/DisputeManagement'
 import { cn } from '../lib/utils'
 import { providersApi, bookingsApi } from '../lib/api'
-import { mockProviders } from '../data/mockProviders'
-import { mockBookings } from '../data/mockBookings'
-import { mockUsers } from '../data/mockUsers'
-import { mockDisputes } from '../data/mockDisputes'
 import type { Provider } from '../types'
 
 function AdminDashboardContent() {
@@ -77,18 +73,18 @@ function AdminDashboardContent() {
     setLoading(true)
     try {
       const [providersData, bookingsData] = await Promise.all([
-        providersApi.getAll().catch(() => mockProviders),
-        bookingsApi.getAll().catch(() => mockBookings)
+        providersApi.getAll().catch(() => []),
+        bookingsApi.getAll().catch(() => [])
       ])
       setProviders(providersData)
       setBookings(bookingsData)
-      setUsers(mockUsers) // Use mock users for now
+      setUsers([]) // TODO: Fetch users from API when endpoint is ready
     } catch (error) {
       console.error('Failed to load data:', error)
       // Fallback to mock data
-      setProviders(mockProviders)
-      setBookings(mockBookings)
-      setUsers(mockUsers)
+      setProviders([])
+      setBookings([])
+      setUsers([])
     } finally {
       setLoading(false)
     }
@@ -110,8 +106,8 @@ function AdminDashboardContent() {
              bookingDate.getFullYear() === now.getFullYear()
     }).length
     const monthlyRevenue = monthlyBookings * 150 // Mock calculation
-    const openDisputes = mockDisputes.filter(d => d.status === 'Open' || d.status === 'In Review').length
-    const urgentDisputes = mockDisputes.filter(d => d.priority === 'Urgent').length
+    const openDisputes = 0 // TODO: Get from disputes API
+    const urgentDisputes = 0 // TODO: Get from disputes API
 
     return {
       totalUsers,

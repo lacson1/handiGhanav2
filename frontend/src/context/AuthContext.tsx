@@ -53,10 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.login(email, password)
       
       const user: User = {
-        id: response.user.id || 'user-1',
-        email: response.user.email || email,
-        name: response.user.name || 'Provider User',
-        role: response.user.role || 'PROVIDER',
+        id: response.user.id,
+        email: response.user.email,
+        name: response.user.name,
+        role: response.user.role,
         avatar: response.user.avatar
       }
 
@@ -65,44 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('token', response.token)
       localStorage.setItem('user', JSON.stringify(user))
     } catch (error: any) {
-      // Fallback to mock login if API fails
-      try {
-        const { getMockUser } = await import('../data/mockUsers')
-        const mockUserData = getMockUser(email, password)
-        
-        if (mockUserData) {
-          const mockUser: User = {
-            id: mockUserData.id,
-            email: mockUserData.email,
-            name: mockUserData.name,
-            role: mockUserData.role,
-            avatar: mockUserData.avatar
-          }
-          const mockToken = `mock-jwt-token-${mockUserData.id}`
-
-          setUser(mockUser)
-          setToken(mockToken)
-          localStorage.setItem('token', mockToken)
-          localStorage.setItem('user', JSON.stringify(mockUser))
-          return // Successfully logged in with mock user
-        }
-      } catch (mockError) {
-        // If mock user lookup fails, use default
-      }
-      
-      // Default fallback if no mock user found
-      const mockUser: User = {
-        id: 'user-1',
-        email,
-        name: 'Test User',
-        role: 'CUSTOMER'
-      }
-      const mockToken = 'mock-jwt-token'
-
-      setUser(mockUser)
-      setToken(mockToken)
-      localStorage.setItem('token', mockToken)
-      localStorage.setItem('user', JSON.stringify(mockUser))
+      throw new Error(error.message || 'Invalid credentials')
     }
   }
 
@@ -119,10 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Registration successful - user will need to sign in
       // The component will handle redirect to sign in page
-      // Result is intentionally not used as user must sign in separately
       void result
     } catch (error: any) {
-      // If API fails, throw error to be handled by component
       throw new Error(error.message || 'Registration failed')
     }
   }
@@ -153,7 +114,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  // Context will never be undefined now since we provide a default value
   return context
 }
-

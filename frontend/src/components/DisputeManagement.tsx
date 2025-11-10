@@ -5,19 +5,36 @@ import {
   Filter, MessageSquare, DollarSign, Calendar, 
   User, Briefcase, FileText, Save, X
 } from 'lucide-react'
-import { mockDisputes } from '../data/mockDisputes'
 import type { Dispute, DisputeStatus, DisputePriority } from '../types'
 import Button from './ui/Button'
 import { cn } from '../lib/utils'
 
 export default function DisputeManagement() {
-  const [disputes, setDisputes] = useState<Dispute[]>(mockDisputes)
+  const [disputes, setDisputes] = useState<Dispute[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [newMessage, setNewMessage] = useState('')
+
+  // Fetch disputes on mount
+  useEffect(() => {
+    const fetchDisputes = async () => {
+      setLoading(true)
+      try {
+        // TODO: Replace with actual API call when backend endpoint is ready
+        setDisputes([])
+      } catch (error) {
+        console.error('Error fetching disputes:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDisputes()
+  }, [])
   const [adminNotes, setAdminNotes] = useState('')
   const [resolution, setResolution] = useState('')
 

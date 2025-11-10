@@ -1,10 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
 import type { Provider, FilterState, Service } from '../types'
-import { mockProviders } from '../data/mockProviders'
 import { providersApi, servicesApi } from '../lib/api'
 
 export function useProviders(filters?: FilterState) {
-  const [providers, setProviders] = useState<Provider[]>(mockProviders)
+  const [providers, setProviders] = useState<Provider[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -83,8 +82,7 @@ export function useProviders(filters?: FilterState) {
       setProviders(data as Provider[])
     } catch (err: any) {
       setError(err.message || 'Failed to fetch providers')
-      // Fallback to mock data on error
-      setProviders(mockProviders)
+      setProviders([])
     } finally {
       setLoading(false)
     }

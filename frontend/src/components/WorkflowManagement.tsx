@@ -7,8 +7,6 @@ import {
   TrendingUp, BarChart3, Tag, Timer, Zap, Layers,
   Play, Square
 } from 'lucide-react'
-import { mockWorkflowTasks } from '../data/mockWorkflow'
-import { mockBookings } from '../data/mockBookings'
 import { taskTemplates } from '../data/taskTemplates'
 import { useBookings } from '../hooks/useBookings'
 import type { WorkflowTask, TaskTemplate } from '../types'
@@ -24,7 +22,7 @@ export default function WorkflowManagement({ providerId }: WorkflowManagementPro
   const [activeView, setActiveView] = useState<'board' | 'list' | 'calendar' | 'stats'>('board')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
-  const [tasks, setTasks] = useState<WorkflowTask[]>(mockWorkflowTasks)
+  const [tasks, setTasks] = useState<WorkflowTask[]>([])
   const [showTaskModal, setShowTaskModal] = useState(false)
   const [editingTask, setEditingTask] = useState<WorkflowTask | null>(null)
   const [searchQuery, setSearchQuery] = useState('')

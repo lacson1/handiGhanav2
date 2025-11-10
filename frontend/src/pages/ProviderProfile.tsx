@@ -7,7 +7,7 @@ import {
   Crown, Camera, Briefcase, Zap, Heart,
   DollarSign, Repeat, Check, Sparkles
 } from 'lucide-react'
-import { mockProviders } from '../data/mockProviders'
+import { providersApi } from '../lib/api'
 import { providerService } from '../services/providerService'
 import BookingModal from '../components/BookingModal'
 import BookingSuccessModal from '../components/BookingSuccessModal'

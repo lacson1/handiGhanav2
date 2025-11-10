@@ -8,8 +8,7 @@ import {
   BarChart, Bar, AreaChart, Area, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts'
-import { mockPayments, mockInvoices, mockEarnings } from '../data/mockFinance'
-import { earningsApi } from '../lib/api'
+import { earningsApi, payoutsApi } from '../lib/api'
 import type { Invoice } from '../types'
 import Button from './ui/Button'
 import InvoiceModal from './InvoiceModal'
@@ -23,10 +22,30 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
   const [activeView, setActiveView] = useState<'overview' | 'payments' | 'invoices' | 'earnings'>('overview')
   const [paymentFilter, setPaymentFilter] = useState<string>('all')
   const [invoiceFilter, setInvoiceFilter] = useState<string>('all')
-  const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices)
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [payments, setPayments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
   const [earningsPeriod, setEarningsPeriod] = useState<'7d' | '30d' | '3m' | '1y'>('30d')
+
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        // In a real app, these would be actual API calls
+        // For now, we'll set empty arrays since the backend doesn't have these endpoints yet
+        setPayments([])
+        setInvoices([])
+      } catch (error) {
+        console.error('Error fetching finance data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [providerId])
 
   const handleSaveInvoice = (invoiceData: Omit<Invoice, 'id' | 'issuedDate'>) => {
     if (editingInvoice) {
@@ -303,9 +322,9 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
 
   // Filter payments
   const filteredPayments = useMemo(() => {
-    if (paymentFilter === 'all') return mockPayments
-    return mockPayments.filter(p => p.status.toLowerCase() === paymentFilter.toLowerCase())
-  }, [paymentFilter])
+    if (paymentFilter === 'all') return payments
+    return payments.filter(p => p.status.toLowerCase() === paymentFilter.toLowerCase())
+  }, [paymentFilter, payments])
 
   // Filter invoices
   const filteredInvoices = useMemo(() => {
@@ -315,11 +334,11 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
 
   // Calculate financial summary
   const financialSummary = useMemo(() => {
-    const totalEarnings = mockEarnings.reduce((sum, e) => sum + e.totalEarnings, 0)
-    const pendingPayout = mockEarnings.reduce((sum, e) => sum + e.pendingPayout, 0)
-    const paidOut = mockEarnings.reduce((sum, e) => sum + e.paidOut, 0)
-    const completedPayments = mockPayments.filter(p => p.status === 'Completed')
-    const pendingPayments = mockPayments.filter(p => p.status === 'Pending')
+    const totalEarnings = 0 // Calculate from API data
+    const pendingPayout = 0 // Calculate from API data
+    const paidOut = 0 // Calculate from API data
+    const completedPayments = payments.filter(p => p.status === 'Completed')
+    const pendingPayments = payments.filter(p => p.status === 'Pending')
     
     return {
       totalEarnings,
@@ -327,7 +346,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
       paidOut,
       completedPayments: completedPayments.length,
       pendingPayments: pendingPayments.length,
-      totalTransactions: mockPayments.length
+      totalTransactions: payments.length
     }
   }, [])
 
@@ -538,7 +557,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
               Recent Payments
             </h3>
             <div className="space-y-3">
-              {mockPayments.slice(0, 5).map((payment) => (
+              {payments.slice(0, 5).map((payment) => (
                 <div
                   key={payment.id}
                   className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50"
@@ -960,7 +979,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
           </div>
 
           {/* Historical Earnings */}
-          {mockEarnings.map((earning) => (
+          {[].map((earning: any) => (
             <div
               key={earning.id}
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
