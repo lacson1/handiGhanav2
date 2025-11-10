@@ -317,7 +317,7 @@ export default function Home() {
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-1">
-                {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '5.0'}
+                5.0
                 <Star className="w-6 h-6 fill-white" />
               </div>
               <div className="text-sm text-white/90 font-medium">Platform Rating</div>
