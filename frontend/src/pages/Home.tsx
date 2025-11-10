@@ -2,6 +2,10 @@ import { useState, useMemo, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import HeroSection from '../components/HeroSection'
 import HowItWorks from '../components/HowItWorks'
+import StatsSection from '../components/StatsSection'
+import TrustBadges from '../components/TrustBadges'
+import TestimonialsSection from '../components/TestimonialsSection'
+import FAQSection from '../components/FAQSection'
 import FilterBarEnhanced from '../components/FilterBarEnhanced'
 import ProviderCardEnhanced from '../components/ProviderCardEnhanced'
 import BookingModal from '../components/BookingModal'
@@ -207,8 +211,14 @@ export default function Home() {
         onProviderSelect={handleProviderSelect}
       />
 
+      {/* Trust Badges */}
+      <TrustBadges />
+
       {/* How It Works Section */}
       <HowItWorks />
+
+      {/* Stats Section with Real Data */}
+      <StatsSection />
 
       {/* Providers Section */}
       <section id="providers" className="py-12 sm:py-16 bg-gradient-to-b from-white to-ghana-green-subtle/20 dark:bg-gray-900">
@@ -281,6 +291,12 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Testimonials Section with Real Reviews */}
+      <TestimonialsSection />
+
+      {/* FAQ Section */}
+      <FAQSection />
 
       {/* Booking Modal */}
       <BookingModal

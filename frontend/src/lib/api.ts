@@ -309,6 +309,26 @@ export const subscriptionsApi = {
   },
 }
 
+// Stats API
+export const statsApi = {
+  getPlatformStats: async () => {
+    return apiRequest<{
+      totalProviders: number
+      verifiedProviders: number
+      totalBookings: number
+      completedBookings: number
+      totalReviews: number
+      activeUsers: number
+      averageRating: number
+      totalCategories: number
+      totalLocations: number
+    }>('/stats/platform')
+  },
+  getRecentReviews: async (limit: number = 3) => {
+    return apiRequest<any[]>(`/stats/reviews/recent?limit=${limit}`)
+  },
+}
+
 // Services API
 export const servicesApi = {
   getAll: async (filters?: { providerId?: string; isActive?: boolean }) => {

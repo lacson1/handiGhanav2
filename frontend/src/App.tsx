@@ -9,7 +9,6 @@ import { useToast } from './context/ToastContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
-import HomePage from './pages/HomePage'
 import SearchResults from './pages/SearchResults'
 import ProviderProfile from './pages/ProviderProfile'
 import SignIn from './pages/SignIn'
@@ -31,7 +30,6 @@ function AppContent() {
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/home" element={<HomePage />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/provider/:id" element={<ProviderProfile />} />
             <Route path="/signin" element={<SignIn />} />

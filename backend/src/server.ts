@@ -3,6 +3,8 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
+import { initSentry } from './config/sentry'
+import Sentry from '@sentry/node'
 import providerRoutes from './routes/providers'
 import bookingRoutes from './routes/bookings'
 import authRoutes from './routes/auth'
@@ -12,11 +14,18 @@ import reviewRoutes from './routes/reviews'
 import serviceRoutes from './routes/services'
 import subscriptionRoutes from './routes/subscriptions'
 import payoutRoutes from './routes/payouts'
+import statsRoutes from './routes/stats'
 
 dotenv.config()
 
+// Initialize Sentry for error tracking
+initSentry()
+
 const app = express()
 const httpServer = createServer(app)
+
+// Sentry request handler must be the first middleware
+app.use(Sentry.Handlers.requestHandler())
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -58,6 +67,7 @@ app.use('/api/reviews', reviewRoutes)
 app.use('/api/services', serviceRoutes)
 app.use('/api/subscriptions', subscriptionRoutes)
 app.use('/api/payouts', payoutRoutes)
+app.use('/api/stats', statsRoutes)
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
