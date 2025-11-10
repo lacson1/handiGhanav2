@@ -200,20 +200,45 @@ FRONTEND_URL=http://localhost:5173
 
 ## 🚢 Deployment
 
+### Production URLs
+
+- **Frontend**: https://handighana.com
+- **Backend API**: https://handighana-backend.fly.dev
+- **Admin Dashboard**: https://handighana.com/admin
+
 ### Frontend (Vercel)
+
+The frontend is deployed on Vercel with the custom domain `handighana.com`.
+
 ```bash
 cd frontend
 npm run build
-# Deploy to Vercel
+vercel --prod
 ```
 
-### Backend (Render/Railway)
+**Custom Domain Setup**: See [DOMAIN_SETUP_GUIDE.md](./DOMAIN_SETUP_GUIDE.md) for detailed instructions.
+
+### Backend (Fly.io)
+
+The backend is deployed on Fly.io.
+
 ```bash
 cd backend
 npm run build
-# Deploy to Render or Railway
-# Make sure to set all environment variables
+fly deploy
 ```
+
+### Environment Variables
+
+Make sure to set all required environment variables in your deployment platforms:
+
+**Vercel** (Frontend):
+- `VITE_API_URL`: https://handighana-backend.fly.dev/api
+- `VITE_SOCKET_URL`: https://handighana-backend.fly.dev
+
+**Fly.io** (Backend):
+- Set via `fly secrets set KEY=value`
+- See `.env.example` for all required variables
 
 ## 📦 New Features Added
 

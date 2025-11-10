@@ -15,6 +15,8 @@ import serviceRoutes from './routes/services'
 import subscriptionRoutes from './routes/subscriptions'
 import payoutRoutes from './routes/payouts'
 import statsRoutes from './routes/stats'
+import testRoutes from './routes/test'
+import adminRoutes from './routes/admin'
 
 dotenv.config()
 
@@ -23,17 +25,40 @@ initSentry()
 
 const app = express()
 const httpServer = createServer(app)
+
+// Allowed origins for CORS
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://handighana.com',
+  'https://www.handighana.com',
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[]
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 })
 
 const PORT = Number(process.env.PORT) || 3001
 
 // Middleware
-app.use(cors())
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true)
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(null, true) // For now, allow all. Change to false in production if needed
+    }
+  },
+  credentials: true,
+}))
 
 // Body parsers - exclude upload routes as multer handles multipart/form-data
 app.use((req, res, next) => {
@@ -65,6 +90,8 @@ app.use('/api/services', serviceRoutes)
 app.use('/api/subscriptions', subscriptionRoutes)
 app.use('/api/payouts', payoutRoutes)
 app.use('/api/stats', statsRoutes)
+app.use('/api/test', testRoutes)
+app.use('/api/admin', adminRoutes)
 
 // WebSocket connection handling
 io.on('connection', (socket) => {

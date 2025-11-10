@@ -1,331 +1,315 @@
-import { useState, useMemo, useEffect } from 'react'
-import { Search } from 'lucide-react'
-import HeroSection from '../components/HeroSection'
-import HowItWorks from '../components/HowItWorks'
-import StatsSection from '../components/StatsSection'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Search, MapPin, Star, Shield, Clock, Award, ArrowRight, CheckCircle, TrendingUp, Users } from 'lucide-react'
 import TrustBadges from '../components/TrustBadges'
 import TestimonialsSection from '../components/TestimonialsSection'
 import FAQSection from '../components/FAQSection'
-import FilterBarEnhanced from '../components/FilterBarEnhanced'
-import ProviderCardEnhanced from '../components/ProviderCardEnhanced'
-import BookingModal from '../components/BookingModal'
-import BookingSuccessModal from '../components/BookingSuccessModal'
-import ProviderDetailsDrawer from '../components/ProviderDetailsDrawer'
-import type { Provider, FilterState } from '../types'
-import { providersApi } from '../lib/api'
-import { providerService } from '../services/providerService'
-import { useNavigate } from 'react-router-dom'
-import { useBookings } from '../hooks/useBookings'
-import { useAuth } from '../context/AuthContext'
+import StatsSection from '../components/StatsSection'
+
+const categories = [
+  { name: 'Electrician', icon: '⚡', count: 45 },
+  { name: 'Plumber', icon: '🔧', count: 38 },
+  { name: 'Cleaner', icon: '🧹', count: 62 },
+  { name: 'Carpenter', icon: '🔨', count: 29 },
+  { name: 'Painter', icon: '🎨', count: 34 },
+  { name: 'Mechanic', icon: '🔩', count: 28 },
+  { name: 'Gardener', icon: '🌱', count: 19 },
+  { name: 'Other', icon: '✨', count: 15 },
+]
 
 export default function Home() {
   const navigate = useNavigate()
-  const { createBooking } = useBookings()
-  const { isAuthenticated } = useAuth()
-  const [filters, setFilters] = useState<FilterState>({})
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null)
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [drawerProvider, setDrawerProvider] = useState<Provider | null>(null)
-  const [lastBooking, setLastBooking] = useState<{ date: string; time: string; notes?: string } | null>(null)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [sortBy, setSortBy] = useState<'rating' | 'reviews' | 'newest' | 'name'>('rating')
-  const [providers, setProviders] = useState<Provider[]>([])
-  const [loadingProviders, setLoadingProviders] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [location, setLocation] = useState('')
 
-  // Load providers from API
-  useEffect(() => {
-    const loadProviders = async () => {
-      try {
-        setLoadingProviders(true)
-        const fetchedProviders = await providerService.getAllProviders()
-        console.log('Loaded providers from API:', fetchedProviders.length)
-        console.log('Provider with ID 1:', fetchedProviders.find(p => p.id === '1'))
-        // Log avatar for debugging
-        const provider1 = fetchedProviders.find(p => p.id === '1')
-        if (provider1) {
-          console.log('Provider 1 avatar:', provider1.avatar)
-        }
-        setProviders(fetchedProviders)
-      } catch (error) {
-        console.error('Failed to load providers from API, using mock data:', error)
-        setProviders([])
-      } finally {
-        setLoadingProviders(false)
-      }
-    }
-
-    loadProviders()
-
-    // Listen for provider updates to refresh the list
-    const handleProviderUpdate = (event?: CustomEvent) => {
-      console.log('Provider updated event received, refreshing list...', event?.detail)
-      // Add a small delay to ensure backend has processed the update
-      setTimeout(() => {
-        loadProviders()
-      }, 500)
-    }
-
-    // Listen for custom event
-    window.addEventListener('providerUpdated', handleProviderUpdate as EventListener)
-    // Refresh when window regains focus (user comes back from another tab)
-    window.addEventListener('focus', loadProviders)
-    // Also listen for storage events (in case data is updated in another tab)
-    window.addEventListener('storage', loadProviders)
-
-    return () => {
-      window.removeEventListener('providerUpdated', handleProviderUpdate as EventListener)
-      window.removeEventListener('focus', loadProviders)
-      window.removeEventListener('storage', loadProviders)
-    }
-  }, [])
-
-  const filteredProviders = useMemo(() => {
-    let result = [...providers]
-
-    if (filters.category) {
-      result = result.filter(p => p.category === filters.category)
-    }
-
-    if (filters.location) {
-      result = result.filter(p => p.location === filters.location)
-    }
-
-    if (filters.verified === true) {
-      result = result.filter(p => p.verified)
-    }
-
-    if (filters.availableNow === true) {
-      result = result.filter(p => p.availability === "Available Now")
-    }
-
-    if (filters.minRating) {
-      result = result.filter(p => p.rating >= filters.minRating!)
-    }
-
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase()
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query)
-      )
-    }
-
-    // Apply sorting
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case 'rating':
-          return b.rating - a.rating
-        case 'reviews':
-          return b.reviewCount - a.reviewCount
-        case 'newest':
-          const dateA = new Date(a.joinedDate || 0).getTime()
-          const dateB = new Date(b.joinedDate || 0).getTime()
-          return dateB - dateA
-        case 'name':
-          return a.name.localeCompare(b.name)
-        default:
-          return 0
-      }
-    })
-
-    return result
-  }, [providers, filters, sortBy])
-
-  const handleSearch = (searchFilters: { category?: string; location?: string; query?: string }) => {
-    setFilters({
-      ...filters,
-      category: searchFilters.category as any,
-      location: searchFilters.location as any,
-      searchQuery: searchFilters.query,
-    })
-    // Scroll to providers section
-    document.getElementById('providers')?.scrollIntoView({ behavior: 'smooth' })
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    navigate(`/search?q=${searchQuery}&location=${location}`)
   }
 
-  const handleBook = (provider: Provider) => {
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      // Show login prompt or redirect to login
-      if (confirm('Please sign in to book a service. Would you like to sign in now?')) {
-        navigate('/signin', { state: { returnTo: '/', providerId: provider.id } })
-      }
-      return
-    }
-    
-    setSelectedProvider(provider)
-    setIsBookingModalOpen(true)
-  }
+  const features = [
+    {
+      icon: Shield,
+      title: 'Verified Professionals',
+      description: 'All service providers are background-checked and verified',
+      color: 'text-blue-600',
+      bg: 'bg-blue-50'
+    },
+    {
+      icon: Star,
+      title: 'Top-Rated Services',
+      description: 'Read reviews from real customers before you book',
+      color: 'text-yellow-600',
+      bg: 'bg-yellow-50'
+    },
+    {
+      icon: Clock,
+      title: 'Quick Response',
+      description: 'Get instant quotes and same-day service availability',
+      color: 'text-green-600',
+      bg: 'bg-green-50'
+    },
+    {
+      icon: Award,
+      title: 'Quality Guaranteed',
+      description: 'Satisfaction guarantee on all completed services',
+      color: 'text-purple-600',
+      bg: 'bg-purple-50'
+    },
+  ]
 
-  const handleViewProfile = (provider: Provider) => {
-    setDrawerProvider(provider)
-    setIsDrawerOpen(true)
-  }
-
-  const handleBookingConfirm = async (booking: { date: string; time: string; notes: string }) => {
-    if (!selectedProvider) return
-
-    try {
-      // Optimistic update - create booking immediately
-      await createBooking({
-        providerId: selectedProvider.id,
-        date: booking.date,
-        time: booking.time,
-        serviceType: selectedProvider.category,
-        notes: booking.notes
-      })
-
-      // Show success modal
-      setLastBooking(booking)
-      setIsBookingModalOpen(false)
-      setIsSuccessModalOpen(true)
-    } catch (error) {
-      console.error('Booking failed:', error)
-      alert('Failed to create booking. Please try again.')
-    }
-  }
-
-  const handleProviderSelect = (provider: Provider) => {
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      if (confirm('Please sign in to book a service. Would you like to sign in now?')) {
-        navigate('/signin', { state: { returnTo: '/', providerId: provider.id } })
-      }
-      setIsDrawerOpen(false)
-      return
-    }
-    
-    setSelectedProvider(provider)
-    setIsDrawerOpen(false)
-    setIsBookingModalOpen(true)
-  }
+  const howItWorks = [
+    {
+      step: '1',
+      title: 'Search & Compare',
+      description: 'Browse verified service providers in your area',
+      color: 'bg-blue-600'
+    },
+    {
+      step: '2',
+      title: 'Book Instantly',
+      description: 'Choose your date, time, and service details',
+      color: 'bg-purple-600'
+    },
+    {
+      step: '3',
+      title: 'Get It Done',
+      description: 'Professional arrives on time and completes the job',
+      color: 'bg-green-600'
+    },
+  ]
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <HeroSection 
-        onSearch={handleSearch}
-        providers={providers}
-        onProviderSelect={handleProviderSelect}
-      />
-
-      {/* Trust Badges */}
-      <TrustBadges />
-
-      {/* How It Works Section */}
-      <HowItWorks />
-
-      {/* Stats Section with Real Data */}
-      <StatsSection />
-
-      {/* Providers Section */}
-      <section id="providers" className="py-12 sm:py-16 bg-gradient-to-b from-white to-ghana-green-subtle/20 dark:bg-gray-900">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-6 sm:mb-8">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
-              Find Trusted Professionals
-            </h2>
-            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
-              Verified electricians, cleaners, plumbers, and more across Ghana
+      <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center mb-12">
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">
+              Find Trusted Service
+              <span className="block text-yellow-300">Providers in Ghana</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-indigo-100 mb-8 max-w-3xl mx-auto">
+              Connect with verified professionals for home repairs, maintenance, and more
             </p>
           </div>
 
-          <FilterBarEnhanced
-            filters={filters}
-            onFilterChange={setFilters}
-            resultCount={filteredProviders.length}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-          />
-
-          {loadingProviders ? (
-            <div className="text-center py-16">
-              <div className="max-w-md mx-auto">
-                <div className="h-24 w-24 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  Loading providers...
-                </h3>
-              </div>
-            </div>
-          ) : filteredProviders.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="max-w-md mx-auto">
-                <div className="h-24 w-24 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <Search className="h-12 w-12 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  No providers found
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  Try adjusting your filters or search terms to find what you're looking for.
-                </p>
-                <button
-                  onClick={() => setFilters({})}
-                  className="text-primary hover:underline font-medium"
-                >
-                  Clear all filters
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mt-4 sm:mt-6 lg:mt-8"
-              : "space-y-3 sm:space-y-4 mt-4 sm:mt-6 lg:mt-8"
-            }>
-              {filteredProviders.map((provider) => (
-                <ProviderCardEnhanced
-                  key={provider.id}
-                  provider={provider}
-                  onBook={handleBook}
-                  onViewProfile={handleViewProfile}
-                  viewMode={viewMode}
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2">
+              <div className="flex-1 flex items-center px-4 py-3 bg-gray-50 rounded-xl">
+                <Search className="w-5 h-5 text-gray-400 mr-3" />
+                <input
+                  type="text"
+                  placeholder="What service do you need?"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent text-gray-900 placeholder-gray-500 outline-none"
                 />
-              ))}
+              </div>
+              <div className="flex-1 flex items-center px-4 py-3 bg-gray-50 rounded-xl">
+                <MapPin className="w-5 h-5 text-gray-400 mr-3" />
+                <input
+                  type="text"
+                  placeholder="Enter your location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="flex-1 bg-transparent text-gray-900 placeholder-gray-500 outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              >
+                Search
+                <ArrowRight className="w-5 h-5" />
+              </button>
             </div>
-          )}
-        </div>
-      </section>
+          </form>
 
-      {/* Testimonials Section with Real Reviews */}
+          {/* Quick Stats */}
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-yellow-300 mb-1">270+</div>
+              <div className="text-indigo-100">Service Providers</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-yellow-300 mb-1">1.2k+</div>
+              <div className="text-indigo-100">Jobs Completed</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-yellow-300 mb-1">4.8★</div>
+              <div className="text-indigo-100">Average Rating</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-yellow-300 mb-1">15+</div>
+              <div className="text-indigo-100">Service Categories</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Wave Divider */}
+        <div className="relative">
+          <svg className="w-full h-16 text-white" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="currentColor"></path>
+          </svg>
+        </div>
+      </div>
+
+      {/* Categories Section */}
+      <div className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Popular Services
+            </h2>
+            <p className="text-lg text-gray-600">
+              Browse by category to find the perfect professional for your needs
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {categories.map((category) => (
+              <button
+                key={category.name}
+                onClick={() => navigate(`/search?category=${category.name}`)}
+                className="group bg-gradient-to-br from-gray-50 to-gray-100 hover:from-indigo-50 hover:to-purple-50 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl border border-gray-200 hover:border-indigo-300"
+              >
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">
+                  {category.icon}
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">
+                  {category.name}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {category.count} providers
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="py-20 bg-gradient-to-br from-gray-50 to-indigo-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Why Choose HandyGhana?
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              We make it easy to find, book, and manage all your home service needs
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
+              >
+                <div className={`${feature.bg} ${feature.color} w-16 h-16 rounded-2xl flex items-center justify-center mb-6`}>
+                  <feature.icon className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* How It Works */}
+      <div className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              How It Works
+            </h2>
+            <p className="text-lg text-gray-600">
+              Get your job done in three simple steps
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {howItWorks.map((item, index) => (
+              <div key={index} className="relative text-center">
+                {index < howItWorks.length - 1 && (
+                  <div className="hidden md:block absolute top-16 left-1/2 w-full h-1 bg-gradient-to-r from-indigo-200 to-purple-200 -z-10" />
+                )}
+                <div className={`${item.color} w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl`}>
+                  <span className="text-5xl font-bold text-white">{item.step}</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  {item.title}
+                </h3>
+                <p className="text-gray-600 text-lg">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <button
+              onClick={() => navigate('/search')}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-10 py-4 rounded-xl text-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl inline-flex items-center gap-3"
+            >
+              Get Started Now
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Trust Section */}
+      <TrustBadges />
+
+      {/* Stats Section */}
+      <StatsSection />
+
+      {/* Testimonials */}
       <TestimonialsSection />
 
-      {/* FAQ Section */}
+      {/* FAQ */}
       <FAQSection />
 
-      {/* Booking Modal */}
-      <BookingModal
-        provider={selectedProvider}
-        isOpen={isBookingModalOpen}
-        onClose={() => setIsBookingModalOpen(false)}
-        onConfirm={handleBookingConfirm}
-      />
-
-      {/* Booking Success Modal */}
-      <BookingSuccessModal
-        isOpen={isSuccessModalOpen}
-        onClose={() => setIsSuccessModalOpen(false)}
-        provider={selectedProvider}
-        bookingDetails={lastBooking}
-        onViewDashboard={() => navigate('/my-bookings')}
-      />
-
-      {/* Provider Details Drawer */}
-      <ProviderDetailsDrawer
-        provider={drawerProvider}
-        isOpen={isDrawerOpen}
-        onClose={() => {
-          setIsDrawerOpen(false)
-          setDrawerProvider(null)
-        }}
-        onBook={handleProviderSelect}
-      />
+      {/* CTA Section */}
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            Are You a Service Provider?
+          </h2>
+          <p className="text-xl text-indigo-100 mb-8">
+            Join our platform and connect with thousands of customers looking for your services
+          </p>
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            <div className="flex items-center gap-3 justify-center md:justify-start">
+              <CheckCircle className="w-6 h-6 text-green-300" />
+              <span>Get More Customers</span>
+            </div>
+            <div className="flex items-center gap-3 justify-center md:justify-start">
+              <TrendingUp className="w-6 h-6 text-green-300" />
+              <span>Grow Your Business</span>
+            </div>
+            <div className="flex items-center gap-3 justify-center md:justify-start">
+              <Users className="w-6 h-6 text-green-300" />
+              <span>Build Your Reputation</span>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/register?role=provider')}
+            className="bg-white text-indigo-600 px-10 py-4 rounded-xl text-lg font-semibold hover:bg-gray-100 transition-all shadow-2xl inline-flex items-center gap-3"
+          >
+            Register as Provider
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
-
