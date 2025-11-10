@@ -171,6 +171,10 @@ enum ServiceCategory {
   Gardener
   Tiler
   Welder
+  NetworkSetup
+  VeterinaryCare
+  Pharmacy
+  Other
 }
 
 enum Availability {
