@@ -2,10 +2,13 @@
 
 ## ✅ Backend Deployment Status
 
-### App Created
+### 🎉 Successfully Deployed!
 - **App Name:** `handighana-backend`
 - **Region:** `iad` (Washington, D.C.)
 - **URL:** https://handighana-backend.fly.dev
+- **IPv6:** `2a09:8280:1::ae:6a90:0`
+- **IPv4:** `66.241.124.247`
+- **Status:** ✅ Running (2 machines for high availability)
 
 ## 🔧 Configuration
 
@@ -100,5 +103,7 @@ Set `DATABASE_URL` secret with your external PostgreSQL connection string.
 ---
 
 **App Name:** handighana-backend  
-**Status:** Deploying...
+**Status:** ✅ **DEPLOYED & RUNNING**  
+**URL:** https://handighana-backend.fly.dev  
+**Deployed:** $(date)
 
