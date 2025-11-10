@@ -161,7 +161,7 @@ export const verifyProvider = async (req: Request, res: Response) => {
       where: { id },
       data: {
         verified: true,
-        verificationStatus: 'APPROVED',
+        verificationStatus: 'VERIFIED',
         verifiedAt: new Date()
       }
     })
