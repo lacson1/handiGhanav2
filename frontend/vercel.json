@@ -1,44 +1,13 @@
 {
-  "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "installCommand": "npm install",
-  "devCommand": "npm run dev",
-  "env": {
-    "VITE_API_URL": "https://handighana-backend.fly.dev/api",
-    "VITE_SOCKET_URL": "https://handighana-backend.fly.dev"
-  },
-  "build": {
-    "env": {
-      "VITE_API_URL": "https://handighana-backend.fly.dev/api",
-      "VITE_SOCKET_URL": "https://handighana-backend.fly.dev"
-    }
-  },
-  "routes": [
-    {
-      "src": "/[^.]+",
-      "dest": "/",
-      "status": 200
-    }
-  ],
-  "headers": [
+  "rewrites": [
     {
       "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
+      "destination": "/index.html"
     }
-  ]
+  ],
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "outputDirectory": "dist"
 }
