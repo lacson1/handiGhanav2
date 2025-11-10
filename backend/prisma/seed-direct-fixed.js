@@ -179,7 +179,7 @@ async function main() {
       // Map category to valid enum value
       const mappedCategory = mapCategory(row.category)
 
-      // Create provider (WITHOUT email field)
+      // Create provider (WITHOUT email field, using valid enums)
       const provider = await prisma.provider.create({
         data: {
           userId: user.id,
@@ -192,7 +192,7 @@ async function main() {
           rating: rating,
           reviewCount: reviewCount,
           verified: verified,
-          availability: row.availability || 'Available Now',
+          availability: 'AVAILABLE_NOW', // Use enum value
           hourlyRate: hourlyRate,
           bio: row.bio || '',
           experience: experience,
