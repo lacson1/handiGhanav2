@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, MapPin, Star, Shield, Clock, Award, ArrowRight, CheckCircle, TrendingUp, Users } from 'lucide-react'
 import TrustBadges from '../components/TrustBadges'
 import TestimonialsSection from '../components/TestimonialsSection'
 import FAQSection from '../components/FAQSection'
 import StatsSection from '../components/StatsSection'
+import { providersApi } from '../lib/api'
 
 const categories = [
   { name: 'Electrician', icon: '⚡', count: 45 },
@@ -21,6 +22,37 @@ export default function Home() {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [location, setLocation] = useState('')
+  const [stats, setStats] = useState({
+    totalProviders: 0,
+    verifiedProviders: 0,
+    averageRating: 0,
+    totalReviews: 0,
+  })
+
+  useEffect(() => {
+    // Fetch real stats from API
+    const fetchStats = async () => {
+      try {
+        const providers = await providersApi.getAll()
+        const verifiedCount = providers.filter((p: any) => p.verified).length
+        const totalRatings = providers.reduce((sum: number, p: any) => sum + (p.rating || 0), 0)
+        const totalReviews = providers.reduce((sum: number, p: any) => sum + (p.reviewCount || 0), 0)
+        const avgRating = providers.length > 0 ? totalRatings / providers.length : 0
+
+        setStats({
+          totalProviders: providers.length,
+          verifiedProviders: verifiedCount,
+          averageRating: avgRating,
+          totalReviews: totalReviews,
+        })
+      } catch (error) {
+        console.error('Failed to fetch stats:', error)
+        // Keep initial values (0) if fetch fails
+      }
+    }
+
+    fetchStats()
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -127,23 +159,31 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Quick Stats */}
+          {/* Quick Stats - Real Data */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             <div className="text-center">
-              <div className="text-4xl font-bold text-yellow-300 mb-1">270+</div>
+              <div className="text-4xl font-bold text-yellow-300 mb-1">
+                {stats.totalProviders > 0 ? `${stats.totalProviders}` : '...'}
+              </div>
               <div className="text-indigo-100">Service Providers</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-yellow-300 mb-1">1.2k+</div>
-              <div className="text-indigo-100">Jobs Completed</div>
+              <div className="text-4xl font-bold text-yellow-300 mb-1">
+                {stats.verifiedProviders > 0 ? `${stats.verifiedProviders}` : '...'}
+              </div>
+              <div className="text-indigo-100">Verified Providers</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-yellow-300 mb-1">4.8★</div>
-              <div className="text-indigo-100">Average Rating</div>
+              <div className="text-4xl font-bold text-yellow-300 mb-1">
+                {stats.averageRating > 0 ? `${stats.averageRating.toFixed(1)}★` : 'New'}
+              </div>
+              <div className="text-indigo-100">Platform Rating</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-yellow-300 mb-1">15+</div>
-              <div className="text-indigo-100">Service Categories</div>
+              <div className="text-4xl font-bold text-yellow-300 mb-1">
+                {stats.totalReviews > 0 ? `${stats.totalReviews}` : 'New'}
+              </div>
+              <div className="text-indigo-100">Reviews</div>
             </div>
           </div>
         </div>
