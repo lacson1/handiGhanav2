@@ -786,12 +786,7 @@ function CustomerDashboardContent() {
                       <Button
                         variant="outline"
                         className="w-full justify-start"
-                        onClick={() => {
-                          const confirmed = window.confirm('Are you sure you want to change your password?')
-                          if (confirmed) {
-                            alert('Password change feature coming soon!')
-                          }
-                        }}
+                        onClick={() => navigate('/settings')}
                       >
                         Change Password
                       </Button>
