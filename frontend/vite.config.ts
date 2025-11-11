@@ -66,13 +66,13 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: /^https?:\/\/localhost:3001\/api\/.*/i,
+            urlPattern: /^https?:\/\/.*\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 5 * 60 // 5 minutes
+                maxAgeSeconds: 1 * 60 // 1 minute - shorter cache for dynamic data
               },
               cacheableResponse: {
                 statuses: [0, 200]
