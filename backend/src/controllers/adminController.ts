@@ -381,6 +381,76 @@ export const getAnalytics = async (req: Request, res: Response) => {
   }
 }
 
+// Delete provider (admin only)
+export const deleteProvider = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+
+    // Check if provider exists
+    const provider = await prisma.provider.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        bookings: {
+          select: { id: true, status: true }
+        }
+      }
+    })
+
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider not found' })
+    }
+
+    // Check if provider has active bookings
+    const activeBookings = provider.bookings.filter(
+      b => b.status === 'PENDING' || b.status === 'CONFIRMED'
+    )
+
+    if (activeBookings.length > 0) {
+      return res.status(400).json({ 
+        message: `Cannot delete provider with ${activeBookings.length} active booking(s). Please cancel or complete bookings first.` 
+      })
+    }
+
+    // Delete provider (cascades to related records via Prisma schema)
+    await prisma.provider.delete({
+      where: { id }
+    })
+
+    // Emit real-time update
+    io.emit('provider:deleted', { id, name: provider.name })
+
+    // Optionally notify the user
+    if (provider.user) {
+      await sendSMS({
+        to: provider.phone || '',
+        message: `Your HandyGhana provider account has been removed. Contact support if you believe this is an error.`,
+      }).catch(() => {
+        // SMS sending is optional, don't fail if it fails
+      })
+    }
+
+    res.json({ 
+      message: 'Provider deleted successfully',
+      deletedProvider: {
+        id: provider.id,
+        name: provider.name
+      }
+    })
+  } catch (error: any) {
+    console.error('Error deleting provider:', error)
+    
+    // Handle foreign key constraint errors
+    if (error.code === 'P2003') {
+      return res.status(400).json({ 
+        message: 'Cannot delete provider due to existing relationships. Please contact support.' 
+      })
+    }
+    
+    res.status(500).json({ message: 'Failed to delete provider', error: error.message })
+  }
+}
+
 export default {
   getAllProviders,
   verifyProvider,
@@ -388,5 +458,6 @@ export default {
   toggleProviderSuspension,
   getAllBookings,
   getAnalytics,
+  deleteProvider,
 }
 

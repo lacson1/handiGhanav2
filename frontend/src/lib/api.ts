@@ -452,3 +452,102 @@ export const servicesApi = {
   },
 }
 
+// Settings API
+export const settingsApi = {
+  getSettings: async () => {
+    return apiRequest<{
+      id: string
+      userId: string
+      emailNotifications: boolean
+      smsNotifications: boolean
+      pushNotifications: boolean
+      bookingReminders: boolean
+      promotions: boolean
+      profileVisibility: 'public' | 'private'
+      showEmail: boolean
+      showPhone: boolean
+    }>('/settings')
+  },
+  updateSettings: async (data: {
+    emailNotifications?: boolean
+    smsNotifications?: boolean
+    pushNotifications?: boolean
+    bookingReminders?: boolean
+    promotions?: boolean
+    profileVisibility?: 'public' | 'private'
+    showEmail?: boolean
+    showPhone?: boolean
+  }) => {
+    return apiRequest<{ message: string; settings: any }>('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  },
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    return apiRequest<{ message: string }>('/settings/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    })
+  },
+}
+
+// Admin API
+export const adminApi = {
+  getProviders: async (filters?: { status?: string; verified?: string; page?: number; limit?: number }) => {
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value))
+        }
+      })
+    }
+    const query = params.toString()
+    return apiRequest<{ providers: any[]; pagination: any }>(`/admin/providers${query ? `?${query}` : ''}`)
+  },
+  verifyProvider: async (id: string, approved: boolean, reason?: string) => {
+    return apiRequest<any>(`/admin/providers/${id}/verify`, {
+      method: 'PUT',
+      body: JSON.stringify({ approved, reason }),
+    })
+  },
+  suspendProvider: async (id: string, suspend: boolean, reason?: string) => {
+    return apiRequest<any>(`/admin/providers/${id}/suspend`, {
+      method: 'PUT',
+      body: JSON.stringify({ suspend, reason }),
+    })
+  },
+  deleteProvider: async (id: string) => {
+    return apiRequest<{ message: string; deletedProvider: { id: string; name: string } }>(`/admin/providers/${id}`, {
+      method: 'DELETE',
+    })
+  },
+  getBookings: async (filters?: { status?: string; page?: number; limit?: number }) => {
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value))
+        }
+      })
+    }
+    const query = params.toString()
+    return apiRequest<{ bookings: any[]; pagination: any }>(`/admin/bookings${query ? `?${query}` : ''}`)
+  },
+  getStats: async () => {
+    return apiRequest<any>('/admin/stats')
+  },
+  getAnalytics: async (filters?: { startDate?: string; endDate?: string }) => {
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value))
+        }
+      })
+    }
+    const query = params.toString()
+    return apiRequest<any>(`/admin/analytics${query ? `?${query}` : ''}`)
+  },
+}
+

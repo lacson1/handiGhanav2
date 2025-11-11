@@ -1,7 +1,9 @@
-import { Star, MapPin, CheckCircle, Clock, Phone, MessageCircle } from 'lucide-react'
+import { Star, MapPin, CheckCircle, Clock, Phone, MessageCircle, MessageSquare } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import type { Provider } from '../types'
 import Button from './ui/Button'
+import QuoteRequestModal from './QuoteRequestModal'
 import { formatAvailability, isAvailableNow } from '../lib/utils'
 
 interface ProviderCardProps {
@@ -11,6 +13,8 @@ interface ProviderCardProps {
 }
 
 export default function ProviderCard({ provider, onBook, onViewProfile }: ProviderCardProps) {
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false)
+
   const handleWhatsApp = () => {
     if (provider.whatsapp) {
       window.open(`https://wa.me/${provider.whatsapp.replace(/[^0-9]/g, '')}`, '_blank')
@@ -125,7 +129,7 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3 mt-5">
+        <div className="flex gap-2 mt-5">
           <Button
             variant="primary"
             size="sm"
@@ -133,6 +137,16 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
             className="flex-1 min-h-[44px]"
           >
             Book Now
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsQuoteModalOpen(true)}
+            className="px-3 min-h-[44px] min-w-[44px]"
+            title="Request Quote"
+            aria-label={`Request quote from ${provider.name}`}
+          >
+            <MessageSquare className="h-5 w-5" />
           </Button>
           {provider.whatsapp && (
             <Button
@@ -168,6 +182,15 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
           View Profile
         </Button>
       </div>
+
+      {/* Quote Request Modal */}
+      <QuoteRequestModal
+        isOpen={isQuoteModalOpen}
+        onClose={() => setIsQuoteModalOpen(false)}
+        providerId={provider.id}
+        providerName={provider.name}
+        category={provider.category}
+      />
     </motion.div>
   )
 }

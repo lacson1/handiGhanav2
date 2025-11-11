@@ -12,7 +12,7 @@ import Button from '../components/ui/Button'
 import ProviderDetailModal from '../components/ProviderDetailModal'
 import DisputeManagement from '../components/DisputeManagement'
 import { cn } from '../lib/utils'
-import { providersApi, bookingsApi } from '../lib/api'
+import { providersApi, bookingsApi, adminApi } from '../lib/api'
 import type { Provider, Booking } from '../types'
 
 type TabId = 'overview' | 'providers' | 'users' | 'bookings' | 'disputes'
@@ -72,11 +72,17 @@ function AdminDashboardContent() {
       setProviders(prev => prev.map(p => p.id === provider.id ? provider : p))
     })
 
+    socket.on('provider:deleted', (data: { id: string; name: string }) => {
+      setProviders(prev => prev.filter(p => p.id !== data.id))
+      showToast(`${data.name} has been deleted`, 'info', 4000)
+    })
+
     return () => {
       socket.off('booking-status-updated')
       socket.off('provider-verified')
       socket.off('provider-rejected')
       socket.off('provider-updated')
+      socket.off('provider:deleted')
     }
   }, [socket, showToast])
 
@@ -225,6 +231,30 @@ function AdminDashboardContent() {
   const handleViewProvider = (provider: Provider) => {
     setSelectedProvider(provider)
     setIsProviderModalOpen(true)
+  }
+
+  const handleDeleteProvider = async (providerId: string) => {
+    const provider = providers.find(p => p.id === providerId)
+    if (!provider) return
+
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete "${provider.name}"?\n\n` +
+      `This action cannot be undone. The provider and all associated data will be removed.`
+    )
+
+    if (!confirmed) return
+
+    try {
+      await adminApi.deleteProvider(providerId)
+      setProviders(providers.filter(p => p.id !== providerId))
+      showToast(`${provider.name} has been deleted successfully`, 'success')
+    } catch (error: any) {
+      console.error('Failed to delete provider:', error)
+      showToast(
+        error.message || 'Failed to delete provider. They may have active bookings.',
+        'error'
+      )
+    }
   }
 
   const handleExportProviders = () => {
@@ -519,6 +549,15 @@ function AdminDashboardContent() {
                             >
                               <Eye className="h-4 w-4 mr-1" />
                               View
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteProvider(provider.id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
                             </Button>
                           </div>
                         </div>

@@ -4,20 +4,13 @@ import { CheckCircle, Shield, Clock, ArrowRight, Star, Users, Briefcase, Heart, 
 import { StatsCardSkeleton } from '../components/LoadingSkeleton'
 import KentePattern from '../components/KentePattern'
 import SearchBar from '../components/SearchBar'
+import TestimonialsSection from '../components/TestimonialsSection'
+import PopularCitiesSection from '../components/PopularCitiesSection'
+import FirstBookingBanner from '../components/FirstBookingBanner'
+import ServiceCategoriesEnhanced from '../components/ServiceCategoriesEnhanced'
 import { useProviders } from '../hooks/useProviders'
 import { usePlatformStats } from '../hooks/useStats'
 import type { Provider } from '../types'
-
-const categories = [
-  { name: 'Electrician', icon: '⚡' },
-  { name: 'Plumber', icon: '🔧' },
-  { name: 'Cleaner', icon: '🧹' },
-  { name: 'Carpenter', icon: '🪚' },
-  { name: 'Painter', icon: '🎨' },
-  { name: 'Mechanic', icon: '🔩' },
-  { name: 'Gardener', icon: '🌱' },
-  { name: 'Other', icon: '✨' },
-]
 
 export default function Home() {
   const navigate = useNavigate()
@@ -59,6 +52,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white relative">
+      {/* First Booking Banner */}
+      <FirstBookingBanner />
+      
       {/* Kente Background Pattern */}
       <KentePattern variant="background" colors="ghana" />
 
@@ -88,34 +84,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Services Categories - Clean Grid */}
-      <section id="providers" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Browse Services
-            </h2>
-            <p className="text-lg text-gray-600">
-              Find the right professional for your needs
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories.map((category) => (
-              <button
-                key={category.name}
-                onClick={() => navigate(`/search?category=${category.name}`)}
-                className="group bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-primary hover:shadow-md transition-all text-center"
-              >
-                <div className="text-3xl mb-3">{category.icon}</div>
-                <h3 className="font-medium text-gray-900 group-hover:text-ghana-green">
-                  {category.name}
-                </h3>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Services Categories - Enhanced with Subcategories */}
+      <ServiceCategoriesEnhanced />
 
       {/* Features - With Ghanaian Accents */}
       <section className="py-20 bg-gray-50">
@@ -230,6 +200,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Popular Cities Section */}
+      <PopularCitiesSection />
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
 
       {/* Provider CTA - With Ghana Colors */}
       <section className="py-20 bg-gray-900 text-white">

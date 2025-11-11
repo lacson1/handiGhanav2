@@ -21,6 +21,7 @@ import payoutRoutes from './routes/payouts'
 import statsRoutes from './routes/stats'
 import testRoutes from './routes/test'
 import adminRoutes from './routes/admin'
+import settingsRoutes from './routes/settings'
 
 dotenv.config()
 
@@ -120,6 +121,7 @@ app.use('/api/payouts', payoutRoutes)
 app.use('/api/stats', statsRoutes)
 app.use('/api/test', testRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/settings', settingsRoutes)
 
 // WebSocket connection handling
 io.on('connection', (socket) => {

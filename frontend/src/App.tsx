@@ -11,6 +11,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import WhatsAppWidget from './components/WhatsAppWidget'
 import './index.css'
 
 // Lazy load pages for code splitting
@@ -29,6 +30,10 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard'))
 const Settings = lazy(() => import('./pages/Settings'))
 const PhotoUploadDemo = lazy(() => import('./pages/PhotoUploadDemo'))
+const FAQ = lazy(() => import('./pages/FAQ'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Terms = lazy(() => import('./pages/Terms'))
+const Help = lazy(() => import('./pages/Help'))
 
 // Loading component for Suspense fallback
 function PageLoader() {
@@ -62,6 +67,10 @@ function AppContent() {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/become-provider" element={<BecomeProvider />} />
               <Route path="/photo-upload-demo" element={<PhotoUploadDemo />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/help" element={<Help />} />
               
               {/* Protected Routes - Require Authentication */}
               <Route path="/dashboard" element={
@@ -102,6 +111,7 @@ function AppContent() {
           </Suspense>
         </main>
         <Footer />
+        <WhatsAppWidget />
         <ToastContainer toasts={toasts} onClose={removeToast} />
       </div>
     </Router>

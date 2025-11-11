@@ -11,16 +11,20 @@ import {
   Eye,
   EyeOff,
   Save,
-  ArrowLeft
+  ArrowLeft,
+  Lock,
+  User,
+  Key
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useToast } from '../context/ToastContext'
 import Button from '../components/ui/Button'
+import { settingsApi } from '../lib/api'
 
 export default function Settings() {
-  const { user: _user } = useAuth()
+  const { user } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { showToast } = useToast()
   const navigate = useNavigate()
@@ -37,42 +41,95 @@ export default function Settings() {
   const [showEmail, setShowEmail] = useState(false)
   const [showPhone, setShowPhone] = useState(false)
 
-  // Load settings from localStorage
-  useEffect(() => {
-    const loadSettings = () => {
-      const savedEmail = localStorage.getItem('emailNotifications')
-      const savedSms = localStorage.getItem('smsNotifications')
-      const savedPush = localStorage.getItem('pushNotifications')
-      const savedReminders = localStorage.getItem('bookingReminders')
-      const savedPromotions = localStorage.getItem('promotions')
-      const savedVisibility = localStorage.getItem('profileVisibility')
-      const savedShowEmail = localStorage.getItem('showEmail')
-      const savedShowPhone = localStorage.getItem('showPhone')
+  // Account Settings
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
-      if (savedEmail !== null) setEmailNotifications(savedEmail === 'true')
-      if (savedSms !== null) setSmsNotifications(savedSms === 'true')
-      if (savedPush !== null) setPushNotifications(savedPush === 'true')
-      if (savedReminders !== null) setBookingReminders(savedReminders === 'true')
-      if (savedPromotions !== null) setPromotions(savedPromotions === 'true')
-      if (savedVisibility) setProfileVisibility(savedVisibility as 'public' | 'private')
-      if (savedShowEmail !== null) setShowEmail(savedShowEmail === 'true')
-      if (savedShowPhone !== null) setShowPhone(savedShowPhone === 'true')
+  // Load settings from API
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        setIsLoading(true)
+        const settings = await settingsApi.getSettings()
+        
+        setEmailNotifications(settings.emailNotifications)
+        setSmsNotifications(settings.smsNotifications)
+        setPushNotifications(settings.pushNotifications)
+        setBookingReminders(settings.bookingReminders)
+        setPromotions(settings.promotions)
+        setProfileVisibility(settings.profileVisibility as 'public' | 'private')
+        setShowEmail(settings.showEmail)
+        setShowPhone(settings.showPhone)
+      } catch (error: any) {
+        console.error('Failed to load settings:', error)
+        showToast('Failed to load settings', 'error')
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     loadSettings()
-  }, [])
+  }, [showToast])
 
-  const saveSettings = () => {
-    localStorage.setItem('emailNotifications', emailNotifications.toString())
-    localStorage.setItem('smsNotifications', smsNotifications.toString())
-    localStorage.setItem('pushNotifications', pushNotifications.toString())
-    localStorage.setItem('bookingReminders', bookingReminders.toString())
-    localStorage.setItem('promotions', promotions.toString())
-    localStorage.setItem('profileVisibility', profileVisibility)
-    localStorage.setItem('showEmail', showEmail.toString())
-    localStorage.setItem('showPhone', showPhone.toString())
+  const saveSettings = async () => {
+    try {
+      setIsSaving(true)
+      await settingsApi.updateSettings({
+        emailNotifications,
+        smsNotifications,
+        pushNotifications,
+        bookingReminders,
+        promotions,
+        profileVisibility,
+        showEmail,
+        showPhone
+      })
 
-    showToast('Settings saved successfully!', 'success')
+      showToast('Settings saved successfully!', 'success')
+    } catch (error: any) {
+      console.error('Failed to save settings:', error)
+      showToast(error.message || 'Failed to save settings', 'error')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showToast('Please fill in all password fields', 'error')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      showToast('New password must be at least 6 characters long', 'error')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      showToast('New passwords do not match', 'error')
+      return
+    }
+
+    try {
+      setIsSaving(true)
+      await settingsApi.changePassword(currentPassword, newPassword)
+      
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      showToast('Password changed successfully!', 'success')
+    } catch (error: any) {
+      console.error('Failed to change password:', error)
+      showToast(error.message || 'Failed to change password', 'error')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -406,25 +463,183 @@ export default function Settings() {
             </div>
           </motion.div>
 
-          {/* Save Button */}
+          {/* Account Settings */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Account
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Manage your account security
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Account Info */}
+              <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Email</span>
+                    <span className="text-sm text-gray-900 dark:text-white">{user?.email || 'N/A'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Account Type</span>
+                    <span className="text-sm text-gray-900 dark:text-white capitalize">{user?.role?.toLowerCase() || 'Customer'}</span>
+                  </div>
+                  {user?.authProvider && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Sign-in Method</span>
+                      <span className="text-sm text-gray-900 dark:text-white capitalize">{user.authProvider}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Change Password */}
+              {(!user || !(user as any).authProvider || (user as any).authProvider === 'local') && (
+                <div className="space-y-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Lock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Change Password
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="current-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Current Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="current-password"
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Enter current password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        >
+                          {showCurrentPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="new-password"
+                          type={showNewPassword ? 'text' : 'password'}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Enter new password (min. 6 characters)"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        >
+                          {showNewPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Confirm New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="confirm-password"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Confirm new password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleChangePassword}
+                      disabled={isSaving || !currentPassword || !newPassword || !confirmPassword}
+                      className="flex items-center gap-2"
+                    >
+                      <Key className="h-4 w-4" />
+                      {isSaving ? 'Changing...' : 'Change Password'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {user && (user as any).authProvider && (user as any).authProvider !== 'local' && (
+                <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    This account uses social login. Password cannot be changed here.
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Save Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
             className="flex justify-end gap-4"
           >
             <Button
               variant="outline"
               onClick={() => navigate(-1)}
+              disabled={isSaving}
             >
               Cancel
             </Button>
             <Button
               onClick={saveSettings}
+              disabled={isSaving || isLoading}
               className="flex items-center gap-2"
             >
               <Save className="h-4 w-4" />
-              Save Changes
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
           </motion.div>
         </div>

@@ -23,16 +23,23 @@ export const createBooking = async (req: Request, res: Response) => {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       try {
         if (!JWT_SECRET) {
+          console.error('JWT_SECRET not configured')
           throw new Error('JWT_SECRET not configured')
         }
         const token = authHeader.substring(7)
         const decoded = jwt.verify(token, JWT_SECRET) as { userId?: string }
         userId = decoded.userId
+        if (!userId) {
+          console.warn('JWT token decoded but userId is missing from payload')
+        }
       } catch (err) {
+        // Log the error for debugging
+        console.error('JWT verification failed:', err instanceof Error ? err.message : 'Unknown error')
         // Invalid token, use from body if provided
         userId = req.body.userId
       }
     } else {
+      console.warn('No Authorization header found in booking request')
       userId = req.body.userId
     }
 
@@ -41,7 +48,11 @@ export const createBooking = async (req: Request, res: Response) => {
     }
 
     if (!userId) {
-      return res.status(401).json({ message: 'User ID is required' })
+      console.error('Booking creation failed: User ID is required. Auth header present:', !!authHeader)
+      return res.status(401).json({ 
+        message: 'Authentication required. Please sign in to create a booking.',
+        details: 'User ID is required. Please ensure you are signed in and your session is valid.'
+      })
     }
 
     // Create new booking

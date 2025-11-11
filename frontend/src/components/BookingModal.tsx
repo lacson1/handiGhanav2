@@ -18,7 +18,7 @@ interface BookingModalProps {
 }
 
 export default function BookingModal({ provider, isOpen, onClose, onConfirm, showPayment = false, defaultService }: BookingModalProps) {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [selectedService, setSelectedService] = useState<Service | null>(null)
@@ -109,6 +109,14 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Check if user is authenticated
+    if (!isAuthenticated || !user) {
+      alert('Please sign in to create a booking. You will be redirected to the sign in page.')
+      window.location.href = '/signin?redirect=' + encodeURIComponent(window.location.pathname)
+      return
+    }
+    
     if (selectedDate && selectedTime && provider) {
       try {
         // Create booking via API
@@ -138,8 +146,18 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
           setNotes('')
           onClose()
         }
-      } catch {
-        alert('Failed to create booking. Please try again.')
+      } catch (error: any) {
+        console.error('Booking creation error:', error)
+        // Show the actual error message from the API
+        const errorMessage = error?.message || error?.details?.message || error?.details || 'Failed to create booking. Please try again.'
+        
+        // If it's an authentication error, redirect to sign in
+        if (error?.statusCode === 401 || errorMessage.toLowerCase().includes('authentication') || errorMessage.toLowerCase().includes('sign in')) {
+          alert(errorMessage + '\n\nYou will be redirected to the sign in page.')
+          window.location.href = '/signin?redirect=' + encodeURIComponent(window.location.pathname)
+        } else {
+          alert(errorMessage)
+        }
       }
     }
   }

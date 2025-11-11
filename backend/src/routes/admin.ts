@@ -6,6 +6,7 @@ import {
   toggleProviderSuspension,
   getAllBookings,
   getAnalytics,
+  deleteProvider,
 } from '../controllers/adminController'
 import { authenticateToken } from '../middleware/auth'
 
@@ -25,6 +26,7 @@ router.get('/analytics', getAnalytics)
 router.get('/providers', getAllProviders)
 router.put('/providers/:id/verify', verifyProvider)
 router.put('/providers/:id/suspend', toggleProviderSuspension)
+router.delete('/providers/:id', deleteProvider)
 
 // Booking management
 router.get('/bookings', getAllBookings)

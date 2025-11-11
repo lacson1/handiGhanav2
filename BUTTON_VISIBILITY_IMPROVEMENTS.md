@@ -165,3 +165,4 @@ The button visibility issue has been completely resolved by:
 
 All action buttons (WhatsApp, Phone, View Profile) are now clearly visible and easily accessible to users across all views and themes.
 
+
