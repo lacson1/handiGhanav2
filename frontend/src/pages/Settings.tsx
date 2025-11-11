@@ -496,10 +496,10 @@ export default function Settings() {
                     <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Account Type</span>
                     <span className="text-sm text-gray-900 dark:text-white capitalize">{user?.role?.toLowerCase() || 'Customer'}</span>
                   </div>
-                  {user?.authProvider && (
+                  {(user as any)?.authProvider && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Sign-in Method</span>
-                      <span className="text-sm text-gray-900 dark:text-white capitalize">{user.authProvider}</span>
+                      <span className="text-sm text-gray-900 dark:text-white capitalize">{(user as any).authProvider}</span>
                     </div>
                   )}
                 </div>
