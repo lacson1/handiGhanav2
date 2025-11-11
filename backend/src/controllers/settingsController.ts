@@ -1,13 +1,18 @@
-import { Request, Response } from 'express'
+import { Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { AuthRequest } from '../middleware/auth'
 
 const prisma = new PrismaClient()
 
 // Get user settings
-export const getSettings = async (req: Request, res: Response) => {
+export const getSettings = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).userId
+    const userId = req.userId
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User ID not found. Please authenticate.' })
+    }
 
     let settings = await prisma.userSettings.findUnique({
       where: { userId }
@@ -15,32 +20,69 @@ export const getSettings = async (req: Request, res: Response) => {
 
     // If no settings exist, create default settings
     if (!settings) {
-      settings = await prisma.userSettings.create({
-        data: {
-          userId,
-          emailNotifications: true,
-          smsNotifications: false,
-          pushNotifications: true,
-          bookingReminders: true,
-          promotions: false,
-          profileVisibility: 'public',
-          showEmail: false,
-          showPhone: false
+      try {
+        settings = await prisma.userSettings.create({
+          data: {
+            userId,
+            emailNotifications: true,
+            smsNotifications: false,
+            pushNotifications: true,
+            bookingReminders: true,
+            promotions: false,
+            profileVisibility: 'public',
+            showEmail: false,
+            showPhone: false
+          }
+        })
+      } catch (createError: any) {
+        // If creation fails (e.g., user doesn't exist), return error
+        console.error('Create settings error:', createError)
+        if (createError.code === 'P2003') {
+          return res.status(404).json({ message: 'User not found' })
         }
-      })
+        throw createError
+      }
     }
 
     res.json(settings)
   } catch (error: any) {
     console.error('Get settings error:', error)
-    res.status(500).json({ message: 'Failed to get settings', error: error.message })
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      meta: error.meta,
+      stack: error.stack
+    })
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2002') {
+      return res.status(409).json({ message: 'Settings already exist for this user' })
+    }
+    if (error.code === 'P2003') {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: 'Settings not found' })
+    }
+    
+    const errorMessage = error.message || 'Failed to get settings'
+    res.status(500).json({ 
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      code: error.code
+    })
   }
 }
 
 // Update user settings
-export const updateSettings = async (req: Request, res: Response) => {
+export const updateSettings = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).userId
+    const userId = req.userId
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User ID not found. Please authenticate.' })
+    }
+
     const {
       emailNotifications,
       smsNotifications,
@@ -52,19 +94,53 @@ export const updateSettings = async (req: Request, res: Response) => {
       showPhone
     } = req.body
 
+    // Validate profileVisibility if provided
+    if (profileVisibility && !['public', 'private'].includes(profileVisibility)) {
+      return res.status(400).json({ message: 'profileVisibility must be "public" or "private"' })
+    }
+
+    // Build update object - only include fields that are provided (not undefined)
+    const updateData: any = {}
+    if (emailNotifications !== undefined) updateData.emailNotifications = emailNotifications
+    if (smsNotifications !== undefined) updateData.smsNotifications = smsNotifications
+    if (pushNotifications !== undefined) updateData.pushNotifications = pushNotifications
+    if (bookingReminders !== undefined) updateData.bookingReminders = bookingReminders
+    if (promotions !== undefined) updateData.promotions = promotions
+    if (profileVisibility) updateData.profileVisibility = profileVisibility
+    if (showEmail !== undefined) updateData.showEmail = showEmail
+    if (showPhone !== undefined) updateData.showPhone = showPhone
+
+    // If no fields to update, just return existing settings
+    if (Object.keys(updateData).length === 0) {
+      const existingSettings = await prisma.userSettings.findUnique({
+        where: { userId }
+      })
+      
+      if (!existingSettings) {
+        // Create default settings if none exist
+        const newSettings = await prisma.userSettings.create({
+          data: {
+            userId,
+            emailNotifications: true,
+            smsNotifications: false,
+            pushNotifications: true,
+            bookingReminders: true,
+            promotions: false,
+            profileVisibility: 'public',
+            showEmail: false,
+            showPhone: false
+          }
+        })
+        return res.json({ message: 'Settings created successfully', settings: newSettings })
+      }
+      
+      return res.json({ message: 'No changes to update', settings: existingSettings })
+    }
+
     // Upsert settings (create if doesn't exist, update if exists)
     const settings = await prisma.userSettings.upsert({
       where: { userId },
-      update: {
-        emailNotifications: emailNotifications !== undefined ? emailNotifications : undefined,
-        smsNotifications: smsNotifications !== undefined ? smsNotifications : undefined,
-        pushNotifications: pushNotifications !== undefined ? pushNotifications : undefined,
-        bookingReminders: bookingReminders !== undefined ? bookingReminders : undefined,
-        promotions: promotions !== undefined ? promotions : undefined,
-        profileVisibility: profileVisibility || undefined,
-        showEmail: showEmail !== undefined ? showEmail : undefined,
-        showPhone: showPhone !== undefined ? showPhone : undefined
-      },
+      update: updateData,
       create: {
         userId,
         emailNotifications: emailNotifications !== undefined ? emailNotifications : true,
@@ -81,14 +157,32 @@ export const updateSettings = async (req: Request, res: Response) => {
     res.json({ message: 'Settings updated successfully', settings })
   } catch (error: any) {
     console.error('Update settings error:', error)
-    res.status(500).json({ message: 'Failed to update settings', error: error.message })
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2003') {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    if (error.code === 'P2002') {
+      return res.status(409).json({ message: 'Settings conflict. Please try again.' })
+    }
+    
+    const errorMessage = error.message || 'Failed to update settings'
+    res.status(500).json({ 
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    })
   }
 }
 
 // Change password
-export const changePassword = async (req: Request, res: Response) => {
+export const changePassword = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).userId
+    const userId = req.userId
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User ID not found. Please authenticate.' })
+    }
+
     const { currentPassword, newPassword } = req.body
 
     if (!currentPassword || !newPassword) {
@@ -133,7 +227,17 @@ export const changePassword = async (req: Request, res: Response) => {
     res.json({ message: 'Password changed successfully' })
   } catch (error: any) {
     console.error('Change password error:', error)
-    res.status(500).json({ message: 'Failed to change password', error: error.message })
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    
+    const errorMessage = error.message || 'Failed to change password'
+    res.status(500).json({ 
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    })
   }
 }
 

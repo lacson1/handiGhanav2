@@ -1,5 +1,5 @@
 import express from 'express'
-import { getProviders, getProviderById, createProvider, updateProvider } from '../controllers/providerController'
+import { getProviders, getProviderById, createProvider, updateProvider, getProviderCountsByCity } from '../controllers/providerController'
 import { 
   getEarningsAnalytics, 
   getEarningsTrends, 
@@ -12,6 +12,9 @@ const router = express.Router()
 
 // GET /api/providers - Get all providers with filters
 router.get('/', getProviders)
+
+// GET /api/providers/counts/by-city - Get provider counts by city
+router.get('/counts/by-city', getProviderCountsByCity)
 
 // POST /api/providers - Create new provider (authentication optional - handles both cases)
 router.post('/', optionalAuth, createProvider)

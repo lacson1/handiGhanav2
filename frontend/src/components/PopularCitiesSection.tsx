@@ -1,18 +1,37 @@
 import { motion } from 'framer-motion'
 import { MapPin, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { providersApi } from '../lib/api'
 
 const popularCities = [
-  { name: 'Accra', icon: '🏙️', providers: '200+', description: 'Capital & Largest City' },
-  { name: 'Kumasi', icon: '🌆', providers: '150+', description: 'Garden City' },
-  { name: 'Takoradi', icon: '⚓', providers: '80+', description: 'Oil City' },
-  { name: 'Tamale', icon: '🌾', providers: '60+', description: 'Northern Hub' },
-  { name: 'Cape Coast', icon: '🏖️', providers: '50+', description: 'Tourist Paradise' },
-  { name: 'Tema', icon: '🚢', providers: '90+', description: 'Harbor City' },
+  { name: 'Accra', icon: '🏙️', description: 'Capital & Largest City' },
+  { name: 'Kumasi', icon: '🌆', description: 'Garden City' },
+  { name: 'Takoradi', icon: '⚓', description: 'Oil City' },
+  { name: 'Tamale', icon: '🌾', description: 'Northern Hub' },
+  { name: 'Cape Coast', icon: '🏖️', description: 'Tourist Paradise' },
+  { name: 'Tema', icon: '🚢', description: 'Harbor City' },
 ]
 
 export default function PopularCitiesSection() {
   const navigate = useNavigate()
+  const [cityCounts, setCityCounts] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchCityCounts = async () => {
+      try {
+        const counts = await providersApi.getCountsByCity()
+        setCityCounts(counts)
+      } catch (error) {
+        console.error('Failed to fetch city counts:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCityCounts()
+  }, [])
 
   return (
     <section className="py-16 bg-white dark:bg-gray-900">
@@ -53,7 +72,11 @@ export default function PopularCitiesSection() {
               </p>
               <div className="flex items-center justify-center gap-1 text-xs font-semibold text-primary">
                 <MapPin className="h-3 w-3" />
-                {city.providers} providers
+                {loading ? (
+                  <span className="text-gray-400">Loading...</span>
+                ) : (
+                  <span>{cityCounts[city.name] || 0} {cityCounts[city.name] === 1 ? 'provider' : 'providers'}</span>
+                )}
               </div>
             </motion.button>
           ))}

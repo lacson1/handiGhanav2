@@ -30,7 +30,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
   const [isFirstBooking, setIsFirstBooking] = useState(false)
   const [referralCode, setReferralCode] = useState('')
   
-  const FIRST_BOOKING_DISCOUNT_PERCENT = 10
+  const FIRST_BOOKING_DISCOUNT_PERCENT = 15 // Matches WELCOME15 banner
   const REFERRAL_DISCOUNT_PERCENT = 10
 
   const checkFirstBooking = useCallback(async () => {

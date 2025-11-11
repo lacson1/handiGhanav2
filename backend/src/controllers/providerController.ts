@@ -251,3 +251,36 @@ export const verifyProvider = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to verify provider', error: error.message })
   }
 }
+
+export const getProviderCountsByCity = async (req: Request, res: Response) => {
+  try {
+    // Get all providers with their locations
+    const providers = await prisma.provider.findMany({
+      select: { location: true }
+    })
+
+    // Count providers by city (case-insensitive matching)
+    const cityCounts: Record<string, number> = {}
+    
+    providers.forEach(provider => {
+      if (provider.location) {
+        // Normalize city name (capitalize first letter, handle variations)
+        const normalizedLocation = provider.location.trim()
+        
+        // Check if location contains any of the popular cities
+        const popularCities = ['Accra', 'Kumasi', 'Takoradi', 'Tamale', 'Cape Coast', 'Tema']
+        for (const city of popularCities) {
+          if (normalizedLocation.toLowerCase().includes(city.toLowerCase())) {
+            cityCounts[city] = (cityCounts[city] || 0) + 1
+            break
+          }
+        }
+      }
+    })
+
+    res.json(cityCounts)
+  } catch (error: any) {
+    console.error('Error fetching provider counts by city:', error)
+    res.status(500).json({ message: 'Failed to fetch provider counts by city', error: error.message })
+  }
+}

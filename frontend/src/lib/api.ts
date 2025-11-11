@@ -154,6 +154,9 @@ export const providersApi = {
       body: JSON.stringify(data),
     })
   },
+  getCountsByCity: async () => {
+    return apiRequest<Record<string, number>>('/providers/counts/by-city')
+  },
 }
 
 // Bookings API
