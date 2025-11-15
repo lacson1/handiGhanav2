@@ -9,7 +9,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts'
 import { earningsApi } from '../lib/api'
-import type { Invoice } from '../types'
+import type { Invoice, Earnings, Payment } from '../types'
 import Button from './ui/Button'
 import InvoiceModal from './InvoiceModal'
 import { cn } from '../lib/utils'
@@ -380,7 +380,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
   // Generate earnings chart data (use API data if available, otherwise mock)
   const earningsChartData = useMemo(() => {
     if (earningsData?.analytics?.chartData) {
-      return earningsData.analytics.chartData.map((d: any) => ({
+      return earningsData.analytics.chartData.map((d: { dayKey: string; earnings: number; jobs: number; payout: number }) => ({
         date: d.dayKey,
         earnings: d.earnings,
         jobs: d.jobs,
@@ -415,7 +415,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
   // Generate monthly trends data
   const monthlyTrendsData = useMemo(() => {
     if (earningsData?.trends?.monthlyData) {
-      return earningsData.trends.monthlyData.map((m: any) => ({
+      return earningsData.trends.monthlyData.map((m: { month: string; earnings: number; jobs: number; avgPerJob: number }) => ({
         month: m.month,
         earnings: m.earnings,
         jobs: m.jobs,
@@ -438,7 +438,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
   // Earnings by category
   const earningsByCategory = useMemo(() => {
     if (categoryData?.categories) {
-      return categoryData.categories.map((c: any) => ({
+      return categoryData.categories.map((c: { category: string; earnings: number; jobs: number; color?: string }) => ({
         category: c.category,
         earnings: c.earnings,
         jobs: c.jobs,
@@ -979,7 +979,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
           </div>
 
           {/* Historical Earnings */}
-          {[].map((earning: any) => (
+          {[].map((earning: Earnings) => (
             <div
               key={earning.id}
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
@@ -1021,7 +1021,7 @@ export default function FinanceManagement({ providerId }: FinanceManagementProps
                     Transactions ({earning.transactions.length})
                   </p>
                   <div className="space-y-2">
-                    {earning.transactions.map((transaction: any) => (
+                    {earning.transactions.map((transaction: Payment) => (
                       <div
                         key={transaction.id}
                         className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50"

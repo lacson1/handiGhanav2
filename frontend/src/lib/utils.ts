@@ -5,6 +5,31 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Validates if a string is a valid HTTP/HTTPS URL
+ * @param url - The URL string to validate
+ * @returns true if the URL is valid, false otherwise
+ */
+export function isValidImageUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false
+  
+  // Trim whitespace
+  const trimmedUrl = url.trim()
+  if (!trimmedUrl) return false
+  
+  // Quick check for http/https prefix
+  if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+    return false
+  }
+  
+  try {
+    const parsed = new URL(trimmedUrl)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export const GHANA_CITIES = [
   "Accra",
   "Kumasi",

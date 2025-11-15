@@ -22,7 +22,7 @@ export default function ReviewList({ providerId, limit = 10 }: ReviewListProps) 
       
       // Calculate stats
       if (response.reviews && response.reviews.length > 0) {
-        const avg = response.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / response.reviews.length
+        const avg = response.reviews.reduce((sum: number, r: Review) => sum + r.rating, 0) / response.reviews.length
         setStats({ average: avg, total: response.total || 0 })
       }
     } catch (error) {

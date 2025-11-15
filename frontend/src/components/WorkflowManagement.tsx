@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { taskTemplates } from '../data/taskTemplates'
 import { useBookings } from '../hooks/useBookings'
-import type { WorkflowTask, TaskTemplate } from '../types'
+import type { WorkflowTask, TaskTemplate, Booking } from '../types'
 import Button from './ui/Button'
 import { cn } from '../lib/utils'
 import TaskModal from './TaskModal'
@@ -359,7 +359,7 @@ export default function WorkflowManagement({ providerId }: WorkflowManagementPro
   }
 
   const getBookingInfo = (bookingId: string) => {
-    return bookings.find((b: any) => b.id === bookingId)
+    return bookings.find((b: Booking) => b.id === bookingId)
   }
 
   // Statistics

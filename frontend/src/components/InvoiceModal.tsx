@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Plus, Trash2, DollarSign, Calendar, Printer } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Invoice, InvoiceItem, Booking } from '../types'
-// Mock data removed
+import { bookingsApi } from '../lib/api'
 import Button from './ui/Button'
 import { cn } from '../lib/utils'
 
@@ -23,6 +23,8 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
     items: [{ description: '', quantity: 1, price: 0 }] as InvoiceItem[]
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loadingBookings, setLoadingBookings] = useState(false)
 
   useEffect(() => {
     if (invoice) {
@@ -50,18 +52,41 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
   }, [invoice, isOpen])
 
   useEffect(() => {
+    if (isOpen) {
+      // Fetch bookings when modal opens
+      const fetchBookings = async () => {
+        setLoadingBookings(true)
+        try {
+          const data = await bookingsApi.getAll()
+          setBookings(Array.isArray(data) ? data : [])
+        } catch (error) {
+          console.error('Failed to fetch bookings:', error)
+          setBookings([])
+        } finally {
+          setLoadingBookings(false)
+        }
+      }
+      fetchBookings()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
     if (formData.bookingId) {
-      // TODO: Fetch from bookingsApi.getById(formData.bookingId)
-      // const booking: Booking | null = await bookingsApi.getById(formData.bookingId)
-      // if (booking) {
-      //   // TODO: Fetch from usersApi.getById(booking.userId)
-      //   const customer: { name?: string } | null = await usersApi.getById(booking.userId)
-      //   setFormData(prev => ({
-      //     ...prev,
-      //     customerName: customer?.name || '',
-      //     serviceType: booking?.serviceType || ''
-      //   }))
-      // }
+      const fetchBookingDetails = async () => {
+        try {
+          const booking = await bookingsApi.getById(formData.bookingId) as Booking & { user?: { name?: string } }
+          if (booking) {
+            setFormData(prev => ({
+              ...prev,
+              customerName: booking.user?.name || prev.customerName,
+              serviceType: booking.serviceType || prev.serviceType
+            }))
+          }
+        } catch (error) {
+          console.error('Failed to fetch booking details:', error)
+        }
+      }
+      fetchBookingDetails()
     }
   }, [formData.bookingId])
 
@@ -162,7 +187,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
         return
       }
 
-    const printContent = `
+      const printContent = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -341,10 +366,10 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
             </thead>
             <tbody>
               ${invoiceData.items.map(item => {
-                const quantity = item.quantity || 0
-                const price = item.price || 0
-                const total = quantity * price
-                return `
+        const quantity = item.quantity || 0
+        const price = item.price || 0
+        const total = quantity * price
+        return `
                 <tr>
                   <td>${escapeHtml(item.description || '')}</td>
                   <td class="text-right">${quantity}</td>
@@ -352,7 +377,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
                   <td class="text-right"><strong>GHS ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
                 </tr>
               `
-              }).join('')}
+      }).join('')}
             </tbody>
           </table>
 
@@ -425,6 +450,8 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
                   <button
                     onClick={onClose}
                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    aria-label="Close modal"
+                    title="Close"
                   >
                     <X className="h-5 w-5 text-gray-500" />
                   </button>
@@ -434,19 +461,23 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                    <label htmlFor="booking-select" className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
                       Booking *
                     </label>
                     <select
+                      id="booking-select"
                       value={formData.bookingId}
                       onChange={(e) => setFormData({ ...formData, bookingId: e.target.value })}
+                      disabled={loadingBookings}
+                      aria-label="Select a booking"
                       className={cn(
                         "w-full px-4 py-2 rounded-xl border bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary",
-                        errors.bookingId ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                        errors.bookingId ? "border-red-500" : "border-gray-300 dark:border-gray-600",
+                        loadingBookings ? "opacity-50 cursor-not-allowed" : ""
                       )}
                     >
-                      <option value="">Select a booking</option>
-                      {[].map((booking: any) => (
+                      <option value="">{loadingBookings ? 'Loading bookings...' : 'Select a booking'}</option>
+                      {bookings.map((booking) => (
                         <option key={booking.id} value={booking.id}>
                           {booking.serviceType} - {new Date(booking.date).toLocaleDateString()}
                         </option>
@@ -456,12 +487,14 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                    <label htmlFor="status-select" className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
                       Status *
                     </label>
                     <select
+                      id="status-select"
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value as Invoice['status'] })}
+                      aria-label="Select invoice status"
                       className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="Draft">Draft</option>
@@ -474,13 +507,15 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                    <label htmlFor="customer-name-input" className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
                       Customer Name *
                     </label>
                     <input
+                      id="customer-name-input"
                       type="text"
                       value={formData.customerName}
                       onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                      aria-label="Customer name"
                       className={cn(
                         "w-full px-4 py-2 rounded-xl border bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary",
                         errors.customerName ? "border-red-500" : "border-gray-300 dark:border-gray-600"
@@ -491,13 +526,15 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                    <label htmlFor="service-type-input" className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
                       Service Type
                     </label>
                     <input
+                      id="service-type-input"
                       type="text"
                       value={formData.serviceType}
                       onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
+                      aria-label="Service type"
                       className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                       readOnly={!!formData.bookingId}
                     />
@@ -505,14 +542,16 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  <label htmlFor="due-date-input" className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
                     <Calendar className="h-4 w-4 inline mr-1" />
                     Due Date *
                   </label>
                   <input
+                    id="due-date-input"
                     type="date"
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    aria-label="Due date"
                     className={cn(
                       "w-full px-4 py-2 rounded-xl border bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary",
                       errors.dueDate ? "border-red-500" : "border-gray-300 dark:border-gray-600"
@@ -540,6 +579,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
                             type="text"
                             value={item.description}
                             onChange={(e) => updateItem(index, 'description', e.target.value)}
+                            aria-label={`Item ${index + 1} description`}
                             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                             placeholder="Item description"
                           />
@@ -550,6 +590,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
                             min="1"
                             value={item.quantity}
                             onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                            aria-label={`Item ${index + 1} quantity`}
                             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                             placeholder="Qty"
                           />
@@ -561,6 +602,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
                             step="0.01"
                             value={item.price}
                             onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value) || 0)}
+                            aria-label={`Item ${index + 1} price`}
                             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                             placeholder="Price"
                           />
@@ -574,6 +616,8 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
                           <button
                             type="button"
                             onClick={() => removeItem(index)}
+                            aria-label={`Remove item ${index + 1}`}
+                            title="Remove item"
                             className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                           >
                             <Trash2 className="h-4 w-4" />

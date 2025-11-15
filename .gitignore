@@ -42,3 +42,4 @@ backend/prisma/migrations/
 .cache/
 .temp/
 
+.vercel

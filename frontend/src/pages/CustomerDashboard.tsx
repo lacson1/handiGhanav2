@@ -21,11 +21,25 @@ import ProfilePhotoUpload from '../components/ProfilePhotoUpload'
 import ReferralProgram from '../components/ReferralProgram'
 import BookingTracking from '../components/BookingTracking'
 import { bookingsApi } from '../lib/api'
-import type { Provider } from '../types'
+import type { Provider, Booking } from '../types'
 import { cn } from '../lib/utils'
 
+// Local booking format used in this component (extends Booking with provider info)
+type LocalBooking = {
+  id: string
+  providerId: string
+  providerName: string
+  providerCategory: string
+  date: string
+  time: string
+  serviceType: string
+  status: string
+  notes: string
+  createdAt: string
+}
+
 // Mock bookings data
-const mockBookings = [
+const mockBookings: LocalBooking[] = [
   {
     id: 'b-001',
     providerId: 'pt-001',
@@ -74,8 +88,8 @@ function CustomerDashboardContent() {
   const { bookings: userBookings } = useBookings()
   const [activeTab, setActiveTab] = useState<'bookings' | 'providers' | 'subscriptions' | 'reviews' | 'referrals' | 'profile' | 'settings'>('bookings')
   const [selectedBookingForTracking, setSelectedBookingForTracking] = useState<string | null>(null)
-  const [bookings, setBookings] = useState(mockBookings)
-  const [selectedBooking, setSelectedBooking] = useState<any>(null)
+  const [bookings, setBookings] = useState<LocalBooking[]>(mockBookings)
+  const [selectedBooking, setSelectedBooking] = useState<LocalBooking | Booking | null>(null)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -96,16 +110,46 @@ function CustomerDashboardContent() {
   useEffect(() => {
     if (!socket) return
 
-    socket.on('booking-status-updated', (updatedBooking: any) => {
+    socket.on('booking-status-updated', (updatedBooking: Booking) => {
       if (updatedBooking.userId === user?.id) {
-        setBookings(prev => prev.map(b => b.id === updatedBooking.id ? updatedBooking : b))
+        setBookings(prev => prev.map(b => {
+          if (b.id === updatedBooking.id) {
+            // Convert Booking to local format
+            return {
+              id: updatedBooking.id,
+              providerId: updatedBooking.providerId,
+              providerName: 'Unknown Provider', // Will be fetched from API
+              providerCategory: 'Unknown',
+              date: updatedBooking.date,
+              time: updatedBooking.time,
+              serviceType: updatedBooking.serviceType,
+              status: updatedBooking.status.toUpperCase(),
+              notes: updatedBooking.notes || '',
+              createdAt: updatedBooking.createdAt
+            }
+          }
+          return b
+        }))
         showToast(`Your booking status has been updated to ${updatedBooking.status}`, 'info', 4000)
       }
     })
 
-    socket.on('booking-created', (newBooking: any) => {
+    socket.on('booking-created', (newBooking: Booking) => {
       if (newBooking.userId === user?.id) {
-        setBookings(prev => [newBooking, ...prev])
+        // Convert Booking to local format
+        const formattedBooking = {
+          id: newBooking.id,
+          providerId: newBooking.providerId,
+          providerName: 'Unknown Provider', // Will be fetched from API
+          providerCategory: 'Unknown',
+          date: newBooking.date,
+          time: newBooking.time,
+          serviceType: newBooking.serviceType,
+          status: newBooking.status.toUpperCase(),
+          notes: newBooking.notes || '',
+          createdAt: newBooking.createdAt
+        }
+        setBookings(prev => [formattedBooking, ...prev])
         showToast('New booking created successfully!', 'success', 3000)
       }
     })
@@ -120,13 +164,13 @@ function CustomerDashboardContent() {
   useEffect(() => {
     if (userBookings.length > 0) {
       // Convert Booking type to the format used in this component
-      const formattedBookings = userBookings.map(booking => {
-        const provider: any = null // Will be fetched from API
+      const formattedBookings: LocalBooking[] = userBookings.map(booking => {
+        // TODO: Fetch provider info from API using booking.providerId
         return {
           id: booking.id,
           providerId: booking.providerId,
-          providerName: provider?.name || 'Unknown Provider',
-          providerCategory: provider?.category || 'Unknown',
+          providerName: 'Unknown Provider', // Will be fetched from API
+          providerCategory: 'Unknown', // Will be fetched from API
           date: booking.date,
           time: booking.time,
           serviceType: booking.serviceType,
@@ -195,24 +239,19 @@ function CustomerDashboardContent() {
     return styles[status as keyof typeof styles] || styles.PENDING
   }
 
-  const handleWriteReview = (booking: any) => {
+  const handleWriteReview = (booking: LocalBooking) => {
     setSelectedBooking(booking)
     setIsReviewModalOpen(true)
   }
 
-  const handleRebook = (booking: any) => {
-    const provider: any = null // Will be fetched from API
+  const handleRebook = (booking: LocalBooking) => {
+    // TODO: Fetch provider from API using booking.providerId
+    const provider: Provider | null = null // Will be fetched from API
     if (provider) {
       setSelectedProvider(provider)
       // Pre-fill booking details for rebooking
-      setSelectedBooking({
-        ...booking,
-        rebookMode: true,
-        defaultService: booking.serviceType,
-        defaultDate: booking.date,
-        defaultTime: booking.time,
-        defaultNotes: booking.notes
-      })
+      // Note: ReviewModal and BookingModal will handle the booking data
+      setSelectedBooking(booking)
       setIsBookingModalOpen(true)
     }
   }
@@ -221,26 +260,13 @@ function CustomerDashboardContent() {
   const myProviders = useMemo(() => {
     const providerMap = new Map<string, { provider: Provider; bookingCount: number; lastBooking: string }>()
     
-    // Use real bookings if available, otherwise use mock
-    const allBookings = userBookings.length > 0 ? userBookings : bookings
+    // Use local bookings format (which includes provider info)
+    const allBookings: LocalBooking[] = bookings
     
+    // TODO: Group by providerId and fetch provider info from API
     allBookings.forEach(booking => {
-      const provider: any = null // Will be fetched from API
-      if (provider) {
-        const existing = providerMap.get(provider.id)
-        if (existing) {
-          existing.bookingCount++
-          if (new Date(booking.date) > new Date(existing.lastBooking)) {
-            existing.lastBooking = booking.date
-          }
-        } else {
-          providerMap.set(provider.id, {
-            provider,
-            bookingCount: 1,
-            lastBooking: booking.date
-          })
-        }
-      }
+      // For now, we can't group providers without fetching them from API
+      // This will be implemented when provider fetching is added
     })
     
     return Array.from(providerMap.values())
@@ -899,7 +925,7 @@ function CustomerDashboardContent() {
             setSelectedBooking(null)
           }}
           providerId={selectedBooking.providerId}
-          providerName={selectedBooking.providerName}
+          providerName={'providerName' in selectedBooking ? selectedBooking.providerName : 'Unknown Provider'}
           bookingId={selectedBooking.id}
           onSuccess={() => {
             loadBookings()

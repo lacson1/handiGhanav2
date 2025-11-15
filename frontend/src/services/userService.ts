@@ -5,8 +5,9 @@ export const userService = {
     try {
       const data = await authApi.getProfile()
       return data
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to fetch user profile')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user profile'
+      throw new Error(errorMessage)
     }
   },
 
@@ -14,8 +15,9 @@ export const userService = {
     try {
       const updated = await authApi.updateProfile(data)
       return updated
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to update user profile')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update user profile'
+      throw new Error(errorMessage)
     }
   },
 }

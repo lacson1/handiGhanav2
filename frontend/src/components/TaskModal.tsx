@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Calendar, FileText } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { WorkflowTask } from '../types'
+import type { WorkflowTask, Booking } from '../types'
 // Mock data removed
 import Button from './ui/Button'
 import { cn } from '../lib/utils'
@@ -126,7 +126,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
                     )}
                   >
                     <option value="">Select a booking</option>
-                    {[].map((booking: any) => (
+                    {[].map((booking: Booking) => (
                       <option key={booking.id} value={booking.id}>
                         {booking.serviceType} - {new Date(booking.date).toLocaleDateString()} at {booking.time}
                       </option>

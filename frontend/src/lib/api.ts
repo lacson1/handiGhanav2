@@ -147,7 +147,7 @@ export const providersApi = {
       })
     }
     const query = params.toString()
-    const response = await apiRequest<{ data: Provider[]; pagination?: any }>(`/providers${query ? `?${query}` : ''}`)
+    const response = await apiRequest<{ data: Provider[]; pagination?: { page: number; limit: number; total: number; totalPages: number } }>(`/providers${query ? `?${query}` : ''}`)
     // Handle both array response and object with data property
     return Array.isArray(response) ? response : (response.data || [])
   },
@@ -520,7 +520,7 @@ export const settingsApi = {
     showEmail?: boolean
     showPhone?: boolean
   }) => {
-    return apiRequest<{ message: string; settings: any }>('/settings', {
+    return apiRequest<{ message: string; settings: Record<string, unknown> }>('/settings', {
       method: 'PUT',
       body: JSON.stringify(data),
     })
@@ -545,16 +545,16 @@ export const adminApi = {
       })
     }
     const query = params.toString()
-    return apiRequest<{ providers: any[]; pagination: any }>(`/admin/providers${query ? `?${query}` : ''}`)
+    return apiRequest<{ providers: Provider[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/providers${query ? `?${query}` : ''}`)
   },
   verifyProvider: async (id: string, approved: boolean, reason?: string) => {
-    return apiRequest<any>(`/admin/providers/${id}/verify`, {
+    return apiRequest<{ message: string; provider: Provider }>(`/admin/providers/${id}/verify`, {
       method: 'PUT',
       body: JSON.stringify({ approved, reason }),
     })
   },
   suspendProvider: async (id: string, suspend: boolean, reason?: string) => {
-    return apiRequest<any>(`/admin/providers/${id}/suspend`, {
+    return apiRequest<{ message: string; provider: Provider }>(`/admin/providers/${id}/suspend`, {
       method: 'PUT',
       body: JSON.stringify({ suspend, reason }),
     })
@@ -574,10 +574,17 @@ export const adminApi = {
       })
     }
     const query = params.toString()
-    return apiRequest<{ bookings: any[]; pagination: any }>(`/admin/bookings${query ? `?${query}` : ''}`)
+    return apiRequest<{ bookings: Booking[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/bookings${query ? `?${query}` : ''}`)
   },
   getStats: async () => {
-    return apiRequest<any>('/admin/stats')
+    return apiRequest<{
+      totalProviders: number
+      totalCustomers: number
+      totalBookings: number
+      totalRevenue: number
+      pendingVerifications: number
+      activeDisputes: number
+    }>('/admin/stats')
   },
   getAnalytics: async (filters?: { startDate?: string; endDate?: string }) => {
     const params = new URLSearchParams()

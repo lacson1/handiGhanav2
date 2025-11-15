@@ -39,9 +39,10 @@ export default function BecomeProvider() {
       setShowVerification(true)
       setLoading(false) // Reset loading state on success
       // Don't navigate yet - show verification first
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Provider creation error:', err)
-      setError(err.message || 'Failed to create provider profile. Please try again.')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create provider profile. Please try again.'
+      setError(errorMessage)
       setLoading(false)
     }
   }

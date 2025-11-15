@@ -7,7 +7,7 @@ import { AuthRequest } from '../middleware/auth'
 import { prisma } from '../lib/prisma'
 
 const JWT_SECRET = process.env.JWT_SECRET
-if (!JWT_SECRET || JWT_SECRET === 'your-secret-key-change-in-production') {
+if (process.env.NODE_ENV !== 'production' && (!JWT_SECRET || JWT_SECRET === 'your-secret-key-change-in-production')) {
   console.warn('⚠️  WARNING: JWT_SECRET is not set or using default value. Please set a strong secret in production!')
 }
 

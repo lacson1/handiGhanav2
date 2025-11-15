@@ -67,8 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(response.token)
       localStorage.setItem('token', response.token)
       localStorage.setItem('user', JSON.stringify(user))
-    } catch (error: any) {
-      throw new Error(error.message || 'Invalid credentials')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Invalid credentials'
+      throw new Error(errorMessage)
     }
   }
 
@@ -93,8 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Registration successful - user will need to sign in
       // The component will handle redirect to sign in page
       void result
-    } catch (error: any) {
-      throw new Error(error.message || 'Registration failed')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed'
+      throw new Error(errorMessage)
     }
   }
 

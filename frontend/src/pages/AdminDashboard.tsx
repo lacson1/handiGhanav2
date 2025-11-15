@@ -12,7 +12,7 @@ import Button from '../components/ui/Button'
 import ProviderDetailModal from '../components/ProviderDetailModal'
 import DisputeManagement from '../components/DisputeManagement'
 import AnalyticsDashboard from '../components/AnalyticsDashboard'
-import { cn } from '../lib/utils'
+import { cn, isValidImageUrl } from '../lib/utils'
 import { providersApi, bookingsApi, adminApi } from '../lib/api'
 import type { Provider, Booking } from '../types'
 
@@ -94,9 +94,9 @@ function AdminDashboardContent() {
         providersApi.getAll().catch(() => []),
         bookingsApi.getAll().catch(() => [])
       ])
-      // Ensure providersData is always an array
+      // Ensure both are always arrays
       setProviders(Array.isArray(providersData) ? providersData : [])
-      setBookings(bookingsData)
+      setBookings(Array.isArray(bookingsData) ? bookingsData : [])
       setUsers([]) // TODO: Fetch users from API when endpoint is ready
     } catch (error) {
       console.error('Failed to load data:', error)
@@ -111,14 +111,19 @@ function AdminDashboardContent() {
 
   // Calculate stats from real data
   const stats = useMemo(() => {
-    const totalUsers = users.length
-    const totalProviders = providers.length
-    const pendingVerifications = providers.filter(p => !p.verified).length
-    const totalBookings = bookings.length
-    const activeBookings = bookings.filter(b =>
+    // Ensure all are arrays before processing
+    const safeUsers = Array.isArray(users) ? users : []
+    const safeProviders = Array.isArray(providers) ? providers : []
+    const safeBookings = Array.isArray(bookings) ? bookings : []
+    
+    const totalUsers = safeUsers.length
+    const totalProviders = safeProviders.length
+    const pendingVerifications = safeProviders.filter(p => !p.verified).length
+    const totalBookings = safeBookings.length
+    const activeBookings = safeBookings.filter(b =>
       b.status === 'Pending' || b.status === 'Confirmed'
     ).length
-    const monthlyBookings = bookings.filter(b => {
+    const monthlyBookings = safeBookings.filter(b => {
       const bookingDate = new Date(b.date)
       const now = new Date()
       return bookingDate.getMonth() === now.getMonth() &&
@@ -144,13 +149,17 @@ function AdminDashboardContent() {
   const recentActivity = useMemo(() => {
     const activities: Array<{ action: string; time: string }> = []
 
+    // Ensure all are arrays before processing
+    const safeBookings = Array.isArray(bookings) ? bookings : []
+    const safeProviders = Array.isArray(providers) ? providers : []
+
     // Recent bookings
-    const recentBookings = [...bookings]
+    const recentBookings = [...safeBookings]
       .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
       .slice(0, 3)
 
     recentBookings.forEach(booking => {
-      const provider = providers.find(p => p.id === booking.providerId)
+      const provider = safeProviders.find(p => p.id === booking.providerId)
       const timeAgo = getTimeAgo(new Date(booking.createdAt || booking.date))
       activities.push({
         action: `Booking ${booking.status.toLowerCase()}: ${booking.serviceType} with ${provider?.name || 'Provider'}`,
@@ -159,7 +168,7 @@ function AdminDashboardContent() {
     })
 
     // Recent provider verifications
-    const verifiedProviders = providers.filter(p => p.verified)
+    const verifiedProviders = safeProviders.filter(p => p.verified)
     if (verifiedProviders.length > 0) {
       activities.push({
         action: `${verifiedProviders.length} provider(s) verified`,
@@ -182,7 +191,8 @@ function AdminDashboardContent() {
 
   // Filter bookings by status
   const filteredBookings = useMemo(() => {
-    let filtered = bookings
+    const safeBookings = Array.isArray(bookings) ? bookings : []
+    let filtered = safeBookings
     if (statusFilter !== 'all') {
       filtered = filtered.filter(b => {
         const bookingStatus = b.status?.toLowerCase() || ''
@@ -193,17 +203,18 @@ function AdminDashboardContent() {
   }, [bookings, statusFilter])
 
   const handleVerifyProvider = async (providerId: string) => {
-    const provider = providers.find(p => p.id === providerId)
+    const safeProviders = Array.isArray(providers) ? providers : []
+    const provider = safeProviders.find(p => p.id === providerId)
     try {
       await providersApi.update(providerId, { verified: true })
-      setProviders(providers.map(p =>
+      setProviders(safeProviders.map(p =>
         p.id === providerId ? { ...p, verified: true } : p
       ))
       showToast(`${provider?.name || 'Provider'} verified successfully!`, 'success')
       // TODO: Send audit log to backend service
     } catch {
       // Update local state on error (for mock data)
-      setProviders(providers.map(p =>
+      setProviders(safeProviders.map(p =>
         p.id === providerId ? { ...p, verified: true } : p
       ))
       showToast(`${provider?.name || 'Provider'} verified successfully!`, 'success')
@@ -211,18 +222,19 @@ function AdminDashboardContent() {
   }
 
   const handleRejectProvider = async (providerId: string) => {
-    const provider = providers.find(p => p.id === providerId)
+    const safeProviders = Array.isArray(providers) ? providers : []
+    const provider = safeProviders.find(p => p.id === providerId)
     if (confirm('Are you sure you want to reject this provider?')) {
       try {
         await providersApi.update(providerId, { verified: false })
-        setProviders(providers.map(p =>
+        setProviders(safeProviders.map(p =>
           p.id === providerId ? { ...p, verified: false } : p
         ))
         showToast(`${provider?.name || 'Provider'} verification rejected`, 'warning')
         // TODO: Send audit log to backend service
       } catch {
         // Update local state on error (for mock data)
-        setProviders(providers.map(p =>
+        setProviders(safeProviders.map(p =>
           p.id === providerId ? { ...p, verified: false } : p
         ))
         showToast(`${provider?.name || 'Provider'} verification rejected`, 'warning')
@@ -236,7 +248,8 @@ function AdminDashboardContent() {
   }
 
   const handleDeleteProvider = async (providerId: string) => {
-    const provider = providers.find(p => p.id === providerId)
+    const safeProviders = Array.isArray(providers) ? providers : []
+    const provider = safeProviders.find(p => p.id === providerId)
     if (!provider) return
 
     const confirmed = window.confirm(
@@ -248,7 +261,7 @@ function AdminDashboardContent() {
 
     try {
       await adminApi.deleteProvider(providerId)
-      setProviders(providers.filter(p => p.id !== providerId))
+      setProviders(safeProviders.filter(p => p.id !== providerId))
       showToast(`${provider.name} has been deleted successfully`, 'success')
     } catch (error: unknown) {
       console.error('Failed to delete provider:', error)
@@ -281,11 +294,13 @@ function AdminDashboardContent() {
   }
 
   const handleExportBookings = () => {
+    const safeProviders = Array.isArray(providers) ? providers : []
+    const safeUsers = Array.isArray(users) ? users : []
     const csv = [
       ['ID', 'Service Type', 'Provider', 'Customer', 'Date', 'Time', 'Status', 'Notes'].join(','),
       ...filteredBookings.map(b => {
-        const provider = providers.find(p => p.id === b.providerId)
-        const customer = users.find(u => u.id === b.userId)
+        const provider = safeProviders.find(p => p.id === b.providerId)
+        const customer = safeUsers.find(u => u.id === b.userId)
         return [
           b.id,
           b.serviceType,
@@ -320,18 +335,19 @@ function AdminDashboardContent() {
       ? formattedStatus as Booking['status']
       : 'Pending'
 
+    const safeBookings = Array.isArray(bookings) ? bookings : []
     try {
       await bookingsApi.updateStatus(bookingId, status.toUpperCase())
-      setBookings(bookings.map(b =>
+      setBookings(safeBookings.map(b =>
         b.id === bookingId ? { ...b, status } : b
       ))
       showToast(`Booking status updated to ${status}`, 'success')
       // Log action for audit trail
-      bookings.find(b => b.id === bookingId)
+      safeBookings.find(b => b.id === bookingId)
       // TODO: Send audit log to backend service
     } catch {
       // Update local state on error
-      setBookings(bookings.map(b =>
+      setBookings(safeBookings.map(b =>
         b.id === bookingId ? { ...b, status } : b
       ))
       showToast(`Booking status updated to ${status}`, 'success')
@@ -339,16 +355,17 @@ function AdminDashboardContent() {
   }
 
   const handleDeleteUser = async (userId: string) => {
-    const userToDelete = users.find(u => u.id === userId)
+    const safeUsers = Array.isArray(users) ? users : []
+    const userToDelete = safeUsers.find(u => u.id === userId)
     if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       // In a real app, this would call an API
-      setUsers(users.filter(u => u.id !== userId))
+      setUsers(safeUsers.filter(u => u.id !== userId))
       showToast(`${userToDelete?.name || 'User'} deleted successfully`, 'success')
       // TODO: Send audit log to backend service
     }
   }
 
-  const filteredProviders = providers.filter(p =>
+  const filteredProviders = (Array.isArray(providers) ? providers : []).filter(p =>
     p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.location?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -610,8 +627,10 @@ function AdminDashboardContent() {
                 ) : (
                   <div className="space-y-4">
                     {filteredBookings.map((booking) => {
-                      const provider = providers.find(p => p.id === booking.providerId)
-                      const customer = users.find(u => u.id === booking.userId)
+                      const safeProviders = Array.isArray(providers) ? providers : []
+                      const safeUsers = Array.isArray(users) ? users : []
+                      const provider = safeProviders.find(p => p.id === booking.providerId)
+                      const customer = safeUsers.find(u => u.id === booking.userId)
                       return (
                         <div
                           key={booking.id}
@@ -704,30 +723,40 @@ function AdminDashboardContent() {
                   <p className="text-center text-gray-500 dark:text-gray-400 py-8">Loading users...</p>
                 ) : (
                   <div className="space-y-4">
-                    {users
+                    {(Array.isArray(users) ? users : [])
                       .filter(u =>
                         !userSearchQuery ||
                         u.name?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
                         u.email?.toLowerCase().includes(userSearchQuery.toLowerCase())
                       )
-                      .map((userItem) => (
-                        <div
-                          key={userItem.id}
-                          className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              {userItem.avatar ? (
-                                <img
-                                  src={userItem.avatar}
-                                  alt={userItem.name}
-                                  className="h-10 w-10 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-black">
+                      .map((userItem) => {
+                        const hasValidAvatar = isValidImageUrl(userItem.avatar)
+                        return (
+                          <div
+                            key={userItem.id}
+                            className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                {hasValidAvatar ? (
+                                  <img
+                                    src={userItem.avatar!}
+                                    alt={userItem.name}
+                                    className="h-10 w-10 rounded-full object-cover"
+                                    onError={(e) => {
+                                      // Hide broken image and show fallback
+                                      const target = e.target as HTMLImageElement
+                                      target.style.display = 'none'
+                                      const fallback = target.nextElementSibling as HTMLElement
+                                      if (fallback) fallback.style.display = 'flex'
+                                    }}
+                                  />
+                                ) : null}
+                                <div 
+                                  className={`h-10 w-10 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-black ${hasValidAvatar ? 'hidden' : ''}`}
+                                >
                                   {userItem.name?.charAt(0) || 'U'}
                                 </div>
-                              )}
                               <div>
                                 <p className="font-semibold text-gray-900 dark:text-white">
                                   {userItem.name}
@@ -764,7 +793,8 @@ function AdminDashboardContent() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                        )
+                      })}
                   </div>
                 )}
               </motion.div>

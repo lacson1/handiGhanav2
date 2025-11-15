@@ -5,6 +5,7 @@ import { useBookings } from '../hooks/useBookings'
 import { useProviders } from '../hooks/useProviders'
 import { Calendar, Clock, CheckCircle, XCircle, Phone, MessageCircle, MapPin, Star, Filter } from 'lucide-react'
 import Button from '../components/ui/Button'
+import type { Provider } from '../types'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -16,7 +17,7 @@ export default function Dashboard() {
   
   // Helper function to get provider by ID
   const getProviderById = (id: string) => {
-    return providers.find((p: any) => p.id === id)
+    return providers.find((p: Provider) => p.id === id)
   }
 
   if (!isAuthenticated) {

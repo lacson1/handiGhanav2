@@ -81,11 +81,15 @@ export function useWebSocket(roomId?: string) {
     })
     
     socket.on('reconnect_attempt', () => {
-      console.log('Attempting to reconnect WebSocket...')
+      if (import.meta.env.DEV) {
+        console.log('Attempting to reconnect WebSocket...')
+      }
     })
     
     socket.on('reconnect', (attemptNumber) => {
-      console.log(`WebSocket reconnected after ${attemptNumber} attempts`)
+      if (import.meta.env.DEV) {
+        console.log(`WebSocket reconnected after ${attemptNumber} attempts`)
+      }
     })
     
     socket.on('reconnect_failed', () => {

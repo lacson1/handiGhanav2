@@ -4,8 +4,8 @@ import { User } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 
 // Serialize user for the session
-// Note: Using 'any' here because passport has its own User type that conflicts with Prisma's User type
-passport.serializeUser((user: any, done) => {
+// Note: Using 'unknown' and type assertion because passport has its own User type that conflicts with Prisma's User type
+passport.serializeUser((user: unknown, done) => {
   done(null, (user as User).id)
 })
 
