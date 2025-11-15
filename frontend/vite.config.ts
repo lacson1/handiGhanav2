@@ -36,11 +36,28 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Use runtime caching instead of precaching to avoid glob issues
+        globPatterns: [],
+        globIgnores: ['**/*'],
         // Navigation route handling for SPA routing
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/_/, /^\/assets/],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+        // Use runtime caching for all assets
         runtimeCaching: [
+          {
+            urlPattern: /^https?:\/\/.*\/.*\.(js|css|html|ico|png|svg|woff2|woff|ttf|eot)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'static-assets',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              }
+            }
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
