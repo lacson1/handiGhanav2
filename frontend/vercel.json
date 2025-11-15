@@ -5,9 +5,19 @@
       "destination": "/index.html"
     }
   ],
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "framework": "vite",
-  "installCommand": "npm install",
-  "outputDirectory": "dist"
+  "headers": [
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    }
+  ]
 }
