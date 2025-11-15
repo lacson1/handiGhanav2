@@ -1,0 +1,1938 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Data Mapping &amp; Lawful Basis Documentation</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="data-mapping--lawful-basis-documentation">Data Mapping &amp; Lawful Basis Documentation</h1>
+<h2 id="handyghana-platform---ghana-data-protection-act-843-compliance">HandyGhana Platform - Ghana Data Protection Act 843 Compliance</h2>
+<p><strong>Document Version:</strong> 1.0<br>
+<strong>Last Updated:</strong> December 2024<br>
+<strong>Data Controller:</strong> HandyGhana Services Ltd<br>
+<strong>Data Protection Officer Contact:</strong> <a href="mailto:privacy@handyghana.com">privacy@handyghana.com</a></p>
+<hr>
+<h2 id="executive-summary">Executive Summary</h2>
+<p>This document provides a comprehensive mapping of all personal data flows in the HandyGhana platform, documenting:</p>
+<ul>
+<li>What data is collected</li>
+<li>How data is collected</li>
+<li>Why data is collected (purpose)</li>
+<li>How data is stored</li>
+<li>Who accesses the data</li>
+<li>Where data is stored (geographic location)</li>
+<li>Data retention periods</li>
+<li>External data transfers</li>
+<li>Lawful basis for each processing activity</li>
+<li>Special category data assessment</li>
+</ul>
+<p>This documentation is required for compliance with <strong>Ghana Data Protection Act, 2012 (Act 843)</strong>, Section 21 (Purpose Limitation and Minimality).</p>
+<hr>
+<h2 id="1-data-collection-inventory">1. Data Collection Inventory</h2>
+<h3 id="11-user-registration--authentication-data">1.1 User Registration &amp; Authentication Data</h3>
+<h4 id="111-standard-registration-emailpassword">1.1.1 Standard Registration (Email/Password)</h4>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Email Address</strong></td>
+<td>User input (registration form)</td>
+<td>Account creation, authentication, service communications, password reset</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days (grace period)</td>
+<td><strong>Contract</strong> - Necessary for service delivery</td>
+</tr>
+<tr>
+<td><strong>Name</strong></td>
+<td>User input (registration form)</td>
+<td>Account identification, personalization, service provider matching</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Necessary for service delivery</td>
+</tr>
+<tr>
+<td><strong>Phone Number</strong></td>
+<td>User input (registration form - optional)</td>
+<td>Service coordination, booking confirmations, SMS notifications</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Consent</strong> - Optional field, user provides consent by entering</td>
+</tr>
+<tr>
+<td><strong>Password (Hashed)</strong></td>
+<td>User input (registration form)</td>
+<td>Account security, authentication</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Necessary for account security</td>
+</tr>
+<tr>
+<td><strong>Consent Privacy</strong></td>
+<td>Checkbox (registration form)</td>
+<td>Legal compliance, record of consent</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years (legal record)</td>
+<td><strong>Legal Obligation</strong> - Required by Act 843</td>
+</tr>
+<tr>
+<td><strong>Consent Terms</strong></td>
+<td>Checkbox (registration form)</td>
+<td>Legal compliance, record of consent</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years (legal record)</td>
+<td><strong>Legal Obligation</strong> - Required by Act 843</td>
+</tr>
+<tr>
+<td><strong>Consent Marketing</strong></td>
+<td>Checkbox (registration form - optional)</td>
+<td>Marketing communications</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until consent withdrawn + 30 days</td>
+<td><strong>Consent</strong> - Explicit opt-in required</td>
+</tr>
+<tr>
+<td><strong>Consent Timestamps</strong></td>
+<td>System-generated</td>
+<td>Audit trail for consent</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years (legal record)</td>
+<td><strong>Legal Obligation</strong> - Required by Act 843</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimality Assessment:</strong> ✅ All fields are necessary for core service delivery. Phone is optional. Marketing consent is separate and optional.</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>Backend API (authentication)</li>
+<li>User (own account)</li>
+<li>Platform administrators (for support)</li>
+<li>Database administrators (technical maintenance)</li>
+</ul>
+<hr>
+<h4 id="112-google-oauth-registration">1.1.2 Google OAuth Registration</h4>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Google ID</strong></td>
+<td>OAuth callback (Google API)</td>
+<td>Account linking, authentication</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Necessary for OAuth authentication</td>
+</tr>
+<tr>
+<td><strong>Email Address</strong></td>
+<td>OAuth callback (Google API)</td>
+<td>Account creation, service communications</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Necessary for service delivery</td>
+</tr>
+<tr>
+<td><strong>Name</strong></td>
+<td>OAuth callback (Google API)</td>
+<td>Account identification, personalization</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Necessary for service delivery</td>
+</tr>
+<tr>
+<td><strong>Avatar URL</strong></td>
+<td>OAuth callback (Google API)</td>
+<td>User profile display</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Consent</strong> - User consents to Google OAuth which provides this</td>
+</tr>
+<tr>
+<td><strong>Auth Provider</strong></td>
+<td>System-generated</td>
+<td>Authentication method tracking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Legitimate Interest</strong> - Security and fraud prevention</td>
+</tr>
+</tbody>
+</table>
+<p><strong>External Transfer:</strong> Data flows from Google (USA) → Our Backend (USA) → Database (USA)</p>
+<p><strong>Minimality Assessment:</strong> ✅ Only essential OAuth profile data is collected. No additional Google data is requested.</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>Google OAuth service (initial authentication)</li>
+<li>Backend API (authentication)</li>
+<li>User (own account)</li>
+<li>Platform administrators (for support)</li>
+</ul>
+<hr>
+<h3 id="12-provider-profile-data">1.2 Provider Profile Data</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Provider Name</strong></td>
+<td>User input (provider registration)</td>
+<td>Service provider identification, search matching</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years (tax records)</td>
+<td><strong>Contract</strong> - Necessary for service marketplace</td>
+</tr>
+<tr>
+<td><strong>Service Category</strong></td>
+<td>User selection (provider registration)</td>
+<td>Service matching, search functionality</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Core marketplace functionality</td>
+</tr>
+<tr>
+<td><strong>Location</strong></td>
+<td>User input (provider registration)</td>
+<td>Geographic matching, service area determination</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Essential for location-based services</td>
+</tr>
+<tr>
+<td><strong>Description</strong></td>
+<td>User input (provider registration)</td>
+<td>Service information, customer decision-making</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Marketplace transparency</td>
+</tr>
+<tr>
+<td><strong>Phone Number</strong></td>
+<td>User input (provider registration - optional)</td>
+<td>Direct contact for service coordination</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Consent</strong> - Optional, user provides by entering</td>
+</tr>
+<tr>
+<td><strong>WhatsApp Number</strong></td>
+<td>User input (provider registration - optional)</td>
+<td>Communication channel</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Consent</strong> - Optional, user provides by entering</td>
+</tr>
+<tr>
+<td><strong>Service Areas</strong></td>
+<td>User input (array)</td>
+<td>Geographic service coverage</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Service delivery requirement</td>
+</tr>
+<tr>
+<td><strong>Skills</strong></td>
+<td>User input (array)</td>
+<td>Service matching, search optimization</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Marketplace functionality</td>
+</tr>
+<tr>
+<td><strong>Provider Image</strong></td>
+<td>User upload</td>
+<td>Visual identification, portfolio</td>
+<td>Cloudinary (Global CDN)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Consent</strong> - User uploads voluntarily</td>
+</tr>
+<tr>
+<td><strong>Provider Avatar</strong></td>
+<td>User upload</td>
+<td>Profile display</td>
+<td>Cloudinary (Global CDN)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Consent</strong> - User uploads voluntarily</td>
+</tr>
+<tr>
+<td><strong>Work Photos</strong></td>
+<td>User upload (array)</td>
+<td>Portfolio showcase, verification</td>
+<td>Cloudinary (Global CDN)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Consent</strong> - User uploads voluntarily</td>
+</tr>
+<tr>
+<td><strong>Work Videos</strong></td>
+<td>User upload (array)</td>
+<td>Portfolio showcase, verification</td>
+<td>Cloudinary (Global CDN)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Consent</strong> - User uploads voluntarily</td>
+</tr>
+<tr>
+<td><strong>References</strong></td>
+<td>User input (array of contact info)</td>
+<td>Provider verification, background checks</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Legitimate Interest</strong> - Platform trust and safety</td>
+</tr>
+<tr>
+<td><strong>Tax ID</strong></td>
+<td>User input (optional)</td>
+<td>Tax compliance, business verification</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years (tax legal requirement)</td>
+<td><strong>Legal Obligation</strong> - Tax record keeping</td>
+</tr>
+<tr>
+<td><strong>Bank Account</strong></td>
+<td>User input (payout setup)</td>
+<td>Provider payment processing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years (tax records)</td>
+<td><strong>Contract</strong> - Payment processing requirement</td>
+</tr>
+<tr>
+<td><strong>Mobile Money Number</strong></td>
+<td>User input (payout setup)</td>
+<td>Provider payment processing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years (tax records)</td>
+<td><strong>Contract</strong> - Payment processing requirement</td>
+</tr>
+<tr>
+<td><strong>Mobile Money Provider</strong></td>
+<td>User selection (payout setup)</td>
+<td>Payment routing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Payment processing requirement</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimality Assessment:</strong> ✅ All fields serve marketplace functionality. Optional fields (phone, WhatsApp, tax ID) are clearly marked.</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>Provider (own profile)</li>
+<li>Customers (public profile information)</li>
+<li>Platform administrators (verification, support)</li>
+<li>Payment processors (bank/mobile money for payouts)</li>
+</ul>
+<hr>
+<h3 id="13-provider-verification-data">1.3 Provider Verification Data</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ID Document</strong></td>
+<td>User upload (verification process)</td>
+<td>Identity verification, fraud prevention, legal compliance</td>
+<td>Cloudinary (Global CDN)</td>
+<td><strong>30 days after verification completion</strong> (then deleted)</td>
+<td><strong>Legal Obligation</strong> - Know Your Customer (KYC) requirements</td>
+</tr>
+<tr>
+<td><strong>Verification Status</strong></td>
+<td>System-generated</td>
+<td>Verification workflow tracking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Legitimate Interest</strong> - Platform trust and safety</td>
+</tr>
+<tr>
+<td><strong>Verified At Timestamp</strong></td>
+<td>System-generated</td>
+<td>Audit trail</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Legal Obligation</strong> - Compliance record keeping</td>
+</tr>
+</tbody>
+</table>
+<p><strong>⚠️ SPECIAL CATEGORY ASSESSMENT:</strong> ID documents may contain biometric data (photos). However, these are processed for <strong>identity verification purposes</strong> under <strong>Legal Obligation</strong> (KYC requirements), which is permitted under Act 843.</p>
+<p><strong>Security Measures:</strong></p>
+<ul>
+<li>ID documents encrypted at rest in Cloudinary</li>
+<li>Access restricted to verification administrators only</li>
+<li>Automatic deletion after 30 days post-verification</li>
+<li>Secure upload via HTTPS</li>
+</ul>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>Verification administrators only (limited access)</li>
+<li>Provider (cannot access own ID document after upload)</li>
+<li>Cloudinary (storage only, no access to content)</li>
+</ul>
+<p><strong>Minimality Assessment:</strong> ✅ ID document collection is necessary for platform trust and legal compliance. Deleted promptly after verification.</p>
+<hr>
+<h3 id="14-booking-data">1.4 Booking Data</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Booking ID</strong></td>
+<td>System-generated</td>
+<td>Booking identification, tracking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years (tax/legal records)</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Provider ID</strong></td>
+<td>System-generated (from selection)</td>
+<td>Service provider assignment</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Customer ID</strong></td>
+<td>System-generated (from auth)</td>
+<td>Customer identification</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Booking Date</strong></td>
+<td>User input (calendar selection)</td>
+<td>Service scheduling</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Booking Time</strong></td>
+<td>User input (time selection)</td>
+<td>Service scheduling</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Service Type</strong></td>
+<td>User input (service selection)</td>
+<td>Service matching, provider preparation</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Booking Notes</strong></td>
+<td>User input (optional)</td>
+<td>Service requirements, special instructions</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Service quality</td>
+</tr>
+<tr>
+<td><strong>Booking Status</strong></td>
+<td>System-generated/updated</td>
+<td>Workflow management</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Amount</strong></td>
+<td>System-calculated</td>
+<td>Payment processing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years (tax records)</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+<tr>
+<td><strong>Payment Status</strong></td>
+<td>System-generated/updated</td>
+<td>Payment tracking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+<tr>
+<td><strong>Payment Method</strong></td>
+<td>User selection</td>
+<td>Payment processing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+<tr>
+<td><strong>Estimated Duration</strong></td>
+<td>Provider input</td>
+<td>Service planning</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Actual Start Time</strong></td>
+<td>Provider input/system</td>
+<td>Service tracking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Actual End Time</strong></td>
+<td>Provider input/system</td>
+<td>Service tracking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Customer Satisfaction Rating</strong></td>
+<td>User input (post-service)</td>
+<td>Quality improvement, provider rating</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Legitimate Interest</strong> - Platform quality</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimality Assessment:</strong> ✅ All fields necessary for booking fulfillment and payment processing.</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>Customer (own bookings)</li>
+<li>Provider (assigned bookings)</li>
+<li>Platform administrators (support, dispute resolution)</li>
+<li>Payment processors (payment-related data only)</li>
+</ul>
+<p><strong>Retention Justification:</strong> 7 years retention for tax and legal compliance (Ghana Revenue Authority requirements).</p>
+<hr>
+<h3 id="15-payment-data">1.5 Payment Data</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Transaction ID</strong></td>
+<td>Payment processor (Paystack/MTN/Vodafone)</td>
+<td>Payment tracking, reconciliation</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years (tax/legal)</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+<tr>
+<td><strong>Payment Amount</strong></td>
+<td>System-calculated</td>
+<td>Payment processing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+<tr>
+<td><strong>Payment Status</strong></td>
+<td>Payment processor callback</td>
+<td>Payment confirmation</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+<tr>
+<td><strong>Payment Method</strong></td>
+<td>User selection</td>
+<td>Payment routing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+<tr>
+<td><strong>Mobile Money Number</strong></td>
+<td>User input (for mobile money payments)</td>
+<td>Payment processing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+<tr>
+<td><strong>Mobile Money Provider</strong></td>
+<td>User selection</td>
+<td>Payment routing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+<tr>
+<td><strong>Bank Account</strong></td>
+<td>User input (for bank transfer)</td>
+<td>Payment processing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+<tr>
+<td><strong>Paid At Timestamp</strong></td>
+<td>System-generated</td>
+<td>Payment confirmation</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>7 years</td>
+<td><strong>Contract</strong> - Payment processing</td>
+</tr>
+</tbody>
+</table>
+<p><strong>External Transfer:</strong> Payment data is sent to:</p>
+<ul>
+<li><strong>Paystack</strong> (Nigeria/Ghana) - Card payments</li>
+<li><strong>MTN Mobile Money API</strong> (Ghana) - Mobile money payments</li>
+<li><strong>Vodafone Cash API</strong> (Ghana) - Mobile money payments</li>
+</ul>
+<p><strong>⚠️ SENSITIVE DATA:</strong> Financial information (bank accounts, mobile money numbers) is sensitive personal data.</p>
+<p><strong>Security Measures:</strong></p>
+<ul>
+<li>Encrypted in transit (HTTPS)</li>
+<li>Encrypted at rest (database encryption)</li>
+<li>PCI DSS compliance (via Paystack)</li>
+<li>Access restricted to payment administrators</li>
+</ul>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>Payment processors (Paystack, MTN, Vodafone)</li>
+<li>Platform administrators (payment reconciliation)</li>
+<li>Customer (own payment records)</li>
+<li>Provider (payment receipts for their services)</li>
+</ul>
+<p><strong>Minimality Assessment:</strong> ✅ All payment data necessary for transaction processing and legal compliance.</p>
+<hr>
+<h3 id="16-review--rating-data">1.6 Review &amp; Rating Data</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Rating</strong></td>
+<td>User input (1-5 stars)</td>
+<td>Provider quality assessment, platform trust</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years (public reviews)</td>
+<td><strong>Contract</strong> - Service quality feedback</td>
+</tr>
+<tr>
+<td><strong>Review Comment</strong></td>
+<td>User input (text)</td>
+<td>Detailed feedback, provider improvement</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Service quality feedback</td>
+</tr>
+<tr>
+<td><strong>Review Photos</strong></td>
+<td>User upload (optional)</td>
+<td>Visual evidence of service quality</td>
+<td>Cloudinary (Global CDN)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Consent</strong> - User uploads voluntarily</td>
+</tr>
+<tr>
+<td><strong>Provider Response</strong></td>
+<td>Provider input (optional)</td>
+<td>Provider engagement, dispute resolution</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Service quality</td>
+</tr>
+<tr>
+<td><strong>Is Verified</strong></td>
+<td>System-generated</td>
+<td>Review authenticity (linked to booking)</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Legitimate Interest</strong> - Platform trust</td>
+</tr>
+<tr>
+<td><strong>Booking ID Link</strong></td>
+<td>System-generated</td>
+<td>Review verification</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Legitimate Interest</strong> - Review authenticity</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimality Assessment:</strong> ✅ Review data essential for marketplace trust and quality.</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>Public (ratings and reviews are public)</li>
+<li>Customer (own reviews)</li>
+<li>Provider (reviews about their services)</li>
+<li>Platform administrators (moderation, support)</li>
+</ul>
+<p><strong>Note:</strong> Reviews may remain public even after account deletion for historical accuracy (7-year retention for legal/tax purposes).</p>
+<hr>
+<h3 id="17-chat--messaging-data">1.7 Chat &amp; Messaging Data</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Chat ID</strong></td>
+<td>System-generated</td>
+<td>Conversation identification</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Service communication</td>
+</tr>
+<tr>
+<td><strong>Customer ID</strong></td>
+<td>System-generated (from auth)</td>
+<td>Participant identification</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Service communication</td>
+</tr>
+<tr>
+<td><strong>Provider ID</strong></td>
+<td>System-generated (from selection)</td>
+<td>Participant identification</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Service communication</td>
+</tr>
+<tr>
+<td><strong>Booking ID</strong></td>
+<td>System-generated (optional link)</td>
+<td>Context linking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Service communication</td>
+</tr>
+<tr>
+<td><strong>Message Content</strong></td>
+<td>User input (text)</td>
+<td>Service coordination, communication</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Service communication</td>
+</tr>
+<tr>
+<td><strong>Message Type</strong></td>
+<td>System-generated</td>
+<td>Content classification</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Service communication</td>
+</tr>
+<tr>
+<td><strong>File URL</strong></td>
+<td>User upload (optional)</td>
+<td>File sharing</td>
+<td>Cloudinary (Global CDN)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Consent</strong> - User uploads voluntarily</td>
+</tr>
+<tr>
+<td><strong>Is Read</strong></td>
+<td>System-generated</td>
+<td>Read receipt tracking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Communication functionality</td>
+</tr>
+<tr>
+<td><strong>Read At Timestamp</strong></td>
+<td>System-generated</td>
+<td>Read receipt</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 30 days</td>
+<td><strong>Contract</strong> - Communication functionality</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimality Assessment:</strong> ✅ All chat data necessary for service coordination.</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>Customer (own chats)</li>
+<li>Provider (own chats)</li>
+<li>Platform administrators (support, moderation, legal compliance)</li>
+</ul>
+<p><strong>Security Measures:</strong></p>
+<ul>
+<li>End-to-end encryption in transit (WebSocket over WSS)</li>
+<li>Messages stored encrypted at rest</li>
+<li>Access logs maintained</li>
+</ul>
+<hr>
+<h3 id="18-analytics--usage-data">1.8 Analytics &amp; Usage Data</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Event Type</strong></td>
+<td>System-generated</td>
+<td>Platform analytics, improvement</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform improvement</td>
+</tr>
+<tr>
+<td><strong>Event Data (JSON)</strong></td>
+<td>System-generated</td>
+<td>User behavior analysis</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform improvement</td>
+</tr>
+<tr>
+<td><strong>User ID</strong></td>
+<td>System-generated (optional)</td>
+<td>User behavior tracking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform improvement</td>
+</tr>
+<tr>
+<td><strong>Provider ID</strong></td>
+<td>System-generated (optional)</td>
+<td>Provider analytics</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform improvement</td>
+</tr>
+<tr>
+<td><strong>Search Queries</strong></td>
+<td>User input (search functionality)</td>
+<td>Search optimization, trending analysis</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform improvement</td>
+</tr>
+<tr>
+<td><strong>Search Category</strong></td>
+<td>User selection</td>
+<td>Search analytics</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform improvement</td>
+</tr>
+<tr>
+<td><strong>Search Location</strong></td>
+<td>User input</td>
+<td>Location-based analytics</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform improvement</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimality Assessment:</strong> ✅ Analytics data is anonymized where possible. User ID is optional. Short retention (90 days).</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>Platform administrators (analytics team)</li>
+<li>Data analysts (aggregated, anonymized data)</li>
+</ul>
+<p><strong>Note:</strong> Analytics data is aggregated and anonymized for reporting. Individual user tracking is limited to 90 days.</p>
+<hr>
+<h3 id="19-referral-program-data">1.9 Referral Program Data</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Referral Code</strong></td>
+<td>System-generated</td>
+<td>Referral tracking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Referral program participation</td>
+</tr>
+<tr>
+<td><strong>Referred By</strong></td>
+<td>User input (referral code entry)</td>
+<td>Referral attribution</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Consent</strong> - User enters referral code voluntarily</td>
+</tr>
+<tr>
+<td><strong>Referral Rewards</strong></td>
+<td>System-calculated</td>
+<td>Reward tracking</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Referral program</td>
+</tr>
+<tr>
+<td><strong>Total Referrals</strong></td>
+<td>System-calculated</td>
+<td>Referral statistics</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Referral program</td>
+</tr>
+<tr>
+<td><strong>Referral Status</strong></td>
+<td>System-generated</td>
+<td>Reward processing</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion + 7 years</td>
+<td><strong>Contract</strong> - Referral program</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimality Assessment:</strong> ✅ Referral data necessary for program functionality.</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>User (own referral data)</li>
+<li>Platform administrators (reward processing)</li>
+</ul>
+<hr>
+<h3 id="110-user-settings--preferences">1.10 User Settings &amp; Preferences</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Email Notifications</strong></td>
+<td>User selection</td>
+<td>Communication preferences</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion</td>
+<td><strong>Consent</strong> - User preference</td>
+</tr>
+<tr>
+<td><strong>SMS Notifications</strong></td>
+<td>User selection</td>
+<td>Communication preferences</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion</td>
+<td><strong>Consent</strong> - User preference</td>
+</tr>
+<tr>
+<td><strong>Push Notifications</strong></td>
+<td>User selection</td>
+<td>Communication preferences</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion</td>
+<td><strong>Consent</strong> - User preference</td>
+</tr>
+<tr>
+<td><strong>Booking Reminders</strong></td>
+<td>User selection</td>
+<td>Service functionality</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion</td>
+<td><strong>Contract</strong> - Service delivery</td>
+</tr>
+<tr>
+<td><strong>Promotions</strong></td>
+<td>User selection</td>
+<td>Marketing communications</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion</td>
+<td><strong>Consent</strong> - Marketing opt-in</td>
+</tr>
+<tr>
+<td><strong>Profile Visibility</strong></td>
+<td>User selection</td>
+<td>Privacy control</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion</td>
+<td><strong>Consent</strong> - User preference</td>
+</tr>
+<tr>
+<td><strong>Show Email</strong></td>
+<td>User selection</td>
+<td>Privacy control</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion</td>
+<td><strong>Consent</strong> - User preference</td>
+</tr>
+<tr>
+<td><strong>Show Phone</strong></td>
+<td>User selection</td>
+<td>Privacy control</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td>Until account deletion</td>
+<td><strong>Consent</strong> - User preference</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimality Assessment:</strong> ✅ All settings are user-controlled preferences.</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>User (own settings)</li>
+<li>Platform systems (to apply preferences)</li>
+</ul>
+<hr>
+<h3 id="111-password-reset-data">1.11 Password Reset Data</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Reset Token</strong></td>
+<td>System-generated</td>
+<td>Password reset functionality</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td><strong>24 hours</strong> (then auto-deleted)</td>
+<td><strong>Contract</strong> - Account security</td>
+</tr>
+<tr>
+<td><strong>Reset Token Expiry</strong></td>
+<td>System-generated</td>
+<td>Token expiration</td>
+<td>PostgreSQL (USA - <a href="http://Fly.io">Fly.io</a>)</td>
+<td><strong>24 hours</strong></td>
+<td><strong>Contract</strong> - Account security</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimality Assessment:</strong> ✅ Temporary tokens, minimal retention, auto-deleted.</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>User (via email link)</li>
+<li>Backend API (token validation)</li>
+</ul>
+<hr>
+<h3 id="112-error-tracking-data-sentry">1.12 Error Tracking Data (Sentry)</h3>
+<table>
+<thead>
+<tr>
+<th>Data Field</th>
+<th>Collection Method</th>
+<th>Purpose</th>
+<th>Storage Location</th>
+<th>Retention</th>
+<th>Lawful Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Error Messages</strong></td>
+<td>System-generated (error tracking)</td>
+<td>Platform debugging, improvement</td>
+<td>Sentry (Global)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform stability</td>
+</tr>
+<tr>
+<td><strong>Stack Traces</strong></td>
+<td>System-generated</td>
+<td>Error debugging</td>
+<td>Sentry (Global)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform stability</td>
+</tr>
+<tr>
+<td><strong>User Context</strong></td>
+<td>System-generated (optional)</td>
+<td>Error reproduction</td>
+<td>Sentry (Global)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform stability</td>
+</tr>
+<tr>
+<td><strong>Browser/Device Info</strong></td>
+<td>System-generated</td>
+<td>Error context</td>
+<td>Sentry (Global)</td>
+<td>90 days</td>
+<td><strong>Legitimate Interest</strong> - Platform stability</td>
+</tr>
+</tbody>
+</table>
+<p><strong>External Transfer:</strong> Error data sent to Sentry (Global CDN).</p>
+<p><strong>Minimality Assessment:</strong> ✅ Error tracking necessary for platform stability. User context is optional and anonymized where possible.</p>
+<p><strong>Who Accesses:</strong></p>
+<ul>
+<li>Development team (error debugging)</li>
+<li>Sentry (storage and processing)</li>
+</ul>
+<hr>
+<h2 id="2-data-flow-diagrams">2. Data Flow Diagrams</h2>
+<h3 id="21-user-registration-flow">2.1 User Registration Flow</h3>
+<pre><code>User (Ghana)
+  ↓ [HTTPS]
+Frontend (Vercel - Global CDN)
+  ↓ [HTTPS API]
+Backend (Fly.io - USA)
+  ↓ [Encrypted Connection]
+Database (PostgreSQL - USA)
+  ↓ [OAuth]
+Google (USA) [if OAuth]
+  ↓ [Callback]
+Backend (Fly.io - USA)
+  ↓
+Database (PostgreSQL - USA)
+</code></pre>
+<p><strong>Data Transferred:</strong></p>
+<ul>
+<li>Registration: Email, Name, Phone (optional), Password (hashed), Consents</li>
+<li>OAuth: Google ID, Email, Name, Avatar URL</li>
+</ul>
+<hr>
+<h3 id="22-booking--payment-flow">2.2 Booking &amp; Payment Flow</h3>
+<pre><code>Customer (Ghana)
+  ↓ [HTTPS]
+Frontend (Vercel)
+  ↓ [HTTPS API]
+Backend (Fly.io - USA)
+  ↓
+Database (PostgreSQL - USA) [Booking Created]
+  ↓ [Payment Request]
+Payment Processor:
+  - Paystack (Nigeria/Ghana) [Card Payments]
+  - MTN Mobile Money API (Ghana) [Mobile Money]
+  - Vodafone Cash API (Ghana) [Mobile Money]
+  ↓ [Payment Confirmation]
+Backend (Fly.io - USA)
+  ↓
+Database (PostgreSQL - USA) [Payment Status Updated]
+</code></pre>
+<p><strong>Data Transferred:</strong></p>
+<ul>
+<li>Booking: Customer ID, Provider ID, Date, Time, Service Type, Amount</li>
+<li>Payment: Amount, Payment Method, Mobile Money Number (if applicable), Transaction ID</li>
+</ul>
+<hr>
+<h3 id="23-image-upload-flow">2.3 Image Upload Flow</h3>
+<pre><code>User (Ghana)
+  ↓ [HTTPS - Multipart Form]
+Frontend (Vercel)
+  ↓ [HTTPS API]
+Backend (Fly.io - USA)
+  ↓ [HTTPS API]
+Cloudinary (Global CDN)
+  ↓ [URL Return]
+Backend (Fly.io - USA)
+  ↓
+Database (PostgreSQL - USA) [URL Stored]
+</code></pre>
+<p><strong>Data Transferred:</strong></p>
+<ul>
+<li>Image files (provider photos, avatars, work photos, ID documents)</li>
+<li>File metadata (size, type, dimensions)</li>
+</ul>
+<hr>
+<h2 id="3-data-storage-locations">3. Data Storage Locations</h2>
+<h3 id="31-primary-storage">3.1 Primary Storage</h3>
+<table>
+<thead>
+<tr>
+<th>Storage Type</th>
+<th>Provider</th>
+<th>Location</th>
+<th>Data Stored</th>
+<th>Encryption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Primary Database</strong></td>
+<td>PostgreSQL (<a href="http://Fly.io/Supabase/Neon">Fly.io/Supabase/Neon</a>)</td>
+<td>USA (Washington D.C. region)</td>
+<td>All structured data (users, bookings, payments, reviews, etc.)</td>
+<td>✅ Encrypted at rest</td>
+</tr>
+<tr>
+<td><strong>Image Storage</strong></td>
+<td>Cloudinary</td>
+<td>Global CDN (multiple regions)</td>
+<td>Images, photos, documents</td>
+<td>✅ Encrypted at rest</td>
+</tr>
+<tr>
+<td><strong>Error Tracking</strong></td>
+<td>Sentry</td>
+<td>Global CDN</td>
+<td>Error logs, stack traces</td>
+<td>✅ Encrypted at rest</td>
+</tr>
+<tr>
+<td><strong>Frontend Hosting</strong></td>
+<td>Vercel</td>
+<td>Global CDN</td>
+<td>Static assets, no personal data</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><strong>Backend Hosting</strong></td>
+<td><a href="http://Fly.io">Fly.io</a></td>
+<td>USA (Washington D.C.)</td>
+<td>API processing, temporary data</td>
+<td>✅ Encrypted in transit</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-data-transfer-locations">3.2 Data Transfer Locations</h3>
+<table>
+<thead>
+<tr>
+<th>Transfer Path</th>
+<th>Data Type</th>
+<th>Legal Basis for Transfer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ghana → USA (Backend/Database)</strong></td>
+<td>All personal data</td>
+<td><strong>Contract</strong> - Service delivery requires USA hosting. Standard Contractual Clauses (SCCs) in place with <a href="http://Fly.io">Fly.io</a>.</td>
+</tr>
+<tr>
+<td><strong>Ghana → Global (Cloudinary)</strong></td>
+<td>Images, photos</td>
+<td><strong>Contract</strong> - Image storage service. Data Processing Agreement (DPA) in place with Cloudinary.</td>
+</tr>
+<tr>
+<td><strong>Ghana → Nigeria/Ghana (Paystack)</strong></td>
+<td>Payment data</td>
+<td><strong>Contract</strong> - Payment processing. Paystack operates in Ghana.</td>
+</tr>
+<tr>
+<td><strong>Ghana → Global (Sentry)</strong></td>
+<td>Error logs</td>
+<td><strong>Legitimate Interest</strong> - Platform stability. DPA in place with Sentry.</td>
+</tr>
+<tr>
+<td><strong>Ghana → USA (Google OAuth)</strong></td>
+<td>OAuth profile data</td>
+<td><strong>Consent</strong> - User consents to Google OAuth. Google's Privacy Policy applies.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="4-data-retention-policies">4. Data Retention Policies</h2>
+<h3 id="41-retention-periods-by-data-type">4.1 Retention Periods by Data Type</h3>
+<table>
+<thead>
+<tr>
+<th>Data Category</th>
+<th>Retention Period</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>User Account Data</strong></td>
+<td>Until account deletion + 30 days (grace period)</td>
+<td>Account recovery, dispute resolution</td>
+</tr>
+<tr>
+<td><strong>Booking Records</strong></td>
+<td>7 years</td>
+<td>Tax records, legal compliance (Ghana Revenue Authority)</td>
+</tr>
+<tr>
+<td><strong>Payment Records</strong></td>
+<td>7 years</td>
+<td>Tax records, legal compliance</td>
+</tr>
+<tr>
+<td><strong>Provider Verification (ID Documents)</strong></td>
+<td>30 days after verification completion</td>
+<td>KYC compliance, then deleted</td>
+</tr>
+<tr>
+<td><strong>Provider Profile Data</strong></td>
+<td>Until account deletion + 7 years (business records)</td>
+<td>Tax and legal compliance</td>
+</tr>
+<tr>
+<td><strong>Reviews</strong></td>
+<td>Until account deletion + 7 years (public reviews may remain)</td>
+<td>Historical accuracy, legal records</td>
+</tr>
+<tr>
+<td><strong>Chat Messages</strong></td>
+<td>Until account deletion + 30 days</td>
+<td>Service coordination, then minimal retention</td>
+</tr>
+<tr>
+<td><strong>Analytics Data</strong></td>
+<td>90 days</td>
+<td>Platform improvement, then anonymized</td>
+</tr>
+<tr>
+<td><strong>Error Logs</strong></td>
+<td>90 days</td>
+<td>Platform stability, then deleted</td>
+</tr>
+<tr>
+<td><strong>Consent Records</strong></td>
+<td>7 years</td>
+<td>Legal compliance (Act 843)</td>
+</tr>
+<tr>
+<td><strong>Password Reset Tokens</strong></td>
+<td>24 hours</td>
+<td>Security, auto-deleted</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-deletion-procedures">4.2 Deletion Procedures</h3>
+<ol>
+<li>
+<p><strong>User-Initiated Deletion:</strong></p>
+<ul>
+<li>User requests account deletion via Settings</li>
+<li>30-day grace period for account recovery</li>
+<li>After 30 days: Permanent deletion of personal data</li>
+<li>Booking/payment records anonymized (retained for tax records)</li>
+</ul>
+</li>
+<li>
+<p><strong>Automatic Deletion:</strong></p>
+<ul>
+<li>Password reset tokens: 24 hours</li>
+<li>ID documents: 30 days after verification</li>
+<li>Analytics: 90 days</li>
+</ul>
+</li>
+<li>
+<p><strong>Legal Retention:</strong></p>
+<ul>
+<li>Tax records: 7 years (required by Ghana Revenue Authority)</li>
+<li>Consent records: 7 years (Act 843 compliance)</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="5-lawful-basis-for-processing">5. Lawful Basis for Processing</h2>
+<h3 id="51-lawful-bases-used">5.1 Lawful Bases Used</h3>
+<p>Under Ghana Data Protection Act 843, personal data processing must have a lawful basis. We use the following:</p>
+<ol>
+<li><strong>Contract</strong> - Processing necessary for service delivery</li>
+<li><strong>Consent</strong> - User has given explicit consent</li>
+<li><strong>Legal Obligation</strong> - Processing required by law</li>
+<li><strong>Legitimate Interest</strong> - Processing necessary for platform operation (with user rights respected)</li>
+</ol>
+<h3 id="52-lawful-basis-by-processing-activity">5.2 Lawful Basis by Processing Activity</h3>
+<table>
+<thead>
+<tr>
+<th>Processing Activity</th>
+<th>Lawful Basis</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>User Registration</strong></td>
+<td>Contract</td>
+<td>Necessary for account creation and service access</td>
+</tr>
+<tr>
+<td><strong>Authentication</strong></td>
+<td>Contract</td>
+<td>Necessary for account security</td>
+</tr>
+<tr>
+<td><strong>Booking Processing</strong></td>
+<td>Contract</td>
+<td>Core service delivery</td>
+</tr>
+<tr>
+<td><strong>Payment Processing</strong></td>
+<td>Contract</td>
+<td>Payment is part of service contract</td>
+</tr>
+<tr>
+<td><strong>Provider Verification</strong></td>
+<td>Legal Obligation</td>
+<td>KYC requirements, fraud prevention</td>
+</tr>
+<tr>
+<td><strong>Marketing Communications</strong></td>
+<td>Consent</td>
+<td>Explicit opt-in required</td>
+</tr>
+<tr>
+<td><strong>Analytics</strong></td>
+<td>Legitimate Interest</td>
+<td>Platform improvement, user experience</td>
+</tr>
+<tr>
+<td><strong>Error Tracking</strong></td>
+<td>Legitimate Interest</td>
+<td>Platform stability, security</td>
+</tr>
+<tr>
+<td><strong>Review Publication</strong></td>
+<td>Contract</td>
+<td>Service quality feedback (part of service)</td>
+</tr>
+<tr>
+<td><strong>Chat/Messaging</strong></td>
+<td>Contract</td>
+<td>Service coordination</td>
+</tr>
+<tr>
+<td><strong>Data Retention (Tax Records)</strong></td>
+<td>Legal Obligation</td>
+<td>Ghana Revenue Authority requirements</td>
+</tr>
+<tr>
+<td><strong>Consent Recording</strong></td>
+<td>Legal Obligation</td>
+<td>Act 843 compliance</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-special-category-data-assessment">6. Special Category Data Assessment</h2>
+<h3 id="61-special-categories-under-act-843">6.1 Special Categories Under Act 843</h3>
+<p>Ghana Data Protection Act 843 does not explicitly define &quot;special categories&quot; like GDPR, but we assess sensitive data:</p>
+<table>
+<thead>
+<tr>
+<th>Data Type</th>
+<th>Category</th>
+<th>Lawful Basis</th>
+<th>Additional Safeguards</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ID Documents</strong></td>
+<td>Biometric data (photos)</td>
+<td>Legal Obligation (KYC)</td>
+<td>✅ Encrypted at rest<br>✅ Limited access<br>✅ Auto-deletion after 30 days<br>✅ Secure upload (HTTPS)</td>
+</tr>
+<tr>
+<td><strong>Financial Information</strong></td>
+<td>Sensitive personal data</td>
+<td>Contract (payment processing)</td>
+<td>✅ Encrypted at rest<br>✅ PCI DSS compliance (via Paystack)<br>✅ Access restricted</td>
+</tr>
+<tr>
+<td><strong>Health Data</strong></td>
+<td>❌ Not Collected</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><strong>Religious/Philosophical Data</strong></td>
+<td>❌ Not Collected</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><strong>Political Opinions</strong></td>
+<td>❌ Not Collected</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><strong>Sexual Orientation</strong></td>
+<td>❌ Not Collected</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<h3 id="62-special-category-processing-requirements">6.2 Special Category Processing Requirements</h3>
+<p>For ID documents (biometric data):</p>
+<ul>
+<li>✅ <strong>Explicit consent</strong> obtained during verification process</li>
+<li>✅ <strong>Legal obligation</strong> basis (KYC requirements)</li>
+<li>✅ <strong>Minimal collection</strong> (only ID document, no additional biometric data)</li>
+<li>✅ <strong>Secure storage</strong> (encrypted at rest)</li>
+<li>✅ <strong>Limited retention</strong> (30 days after verification)</li>
+<li>✅ <strong>Access controls</strong> (verification administrators only)</li>
+</ul>
+<hr>
+<h2 id="7-data-access--sharing">7. Data Access &amp; Sharing</h2>
+<h3 id="71-who-accesses-personal-data">7.1 Who Accesses Personal Data</h3>
+<table>
+<thead>
+<tr>
+<th>Accessor</th>
+<th>Data Accessed</th>
+<th>Purpose</th>
+<th>Legal Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>User (Data Subject)</strong></td>
+<td>Own data</td>
+<td>Account management, service use</td>
+<td>Contract</td>
+</tr>
+<tr>
+<td><strong>Service Providers</strong></td>
+<td>Booking details (customer contact, service requirements)</td>
+<td>Service delivery</td>
+<td>Contract</td>
+</tr>
+<tr>
+<td><strong>Platform Administrators</strong></td>
+<td>All data (limited, role-based)</td>
+<td>Support, verification, dispute resolution</td>
+<td>Legitimate Interest, Legal Obligation</td>
+</tr>
+<tr>
+<td><strong>Payment Processors</strong></td>
+<td>Payment data (amount, method, transaction ID)</td>
+<td>Payment processing</td>
+<td>Contract</td>
+</tr>
+<tr>
+<td><strong>Database Administrators</strong></td>
+<td>Technical data access</td>
+<td>System maintenance</td>
+<td>Legitimate Interest (technical necessity)</td>
+</tr>
+<tr>
+<td><strong>Cloudinary</strong></td>
+<td>Images, photos</td>
+<td>Image storage</td>
+<td>Contract (DPA in place)</td>
+</tr>
+<tr>
+<td><strong>Sentry</strong></td>
+<td>Error logs</td>
+<td>Error tracking</td>
+<td>Legitimate Interest (DPA in place)</td>
+</tr>
+<tr>
+<td><strong>Google (OAuth)</strong></td>
+<td>OAuth profile data</td>
+<td>Authentication</td>
+<td>Consent (user consents to Google OAuth)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="72-data-sharing-principles">7.2 Data Sharing Principles</h3>
+<ul>
+<li>✅ <strong>No sale of personal data</strong> - We do not sell personal data to third parties</li>
+<li>✅ <strong>Limited sharing</strong> - Data shared only for service delivery or legal compliance</li>
+<li>✅ <strong>Data Processing Agreements</strong> - All third-party processors have DPAs</li>
+<li>✅ <strong>User consent</strong> - Marketing sharing requires explicit consent</li>
+<li>✅ <strong>Legal compliance</strong> - Sharing for legal obligations (court orders, tax authorities)</li>
+</ul>
+<hr>
+<h2 id="8-data-subject-rights-act-843">8. Data Subject Rights (Act 843)</h2>
+<h3 id="81-rights-implementation">8.1 Rights Implementation</h3>
+<table>
+<thead>
+<tr>
+<th>Right</th>
+<th>Implementation</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Right to Access</strong></td>
+<td>✅ Data export endpoint (<code>GET /api/users/:id/export</code>)</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><strong>Right to Rectification</strong></td>
+<td>✅ Profile update functionality</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><strong>Right to Erasure</strong></td>
+<td>✅ Account deletion endpoint (<code>DELETE /api/users/:id</code>)</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><strong>Right to Object</strong></td>
+<td>✅ Marketing opt-out in settings</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><strong>Right to Data Portability</strong></td>
+<td>✅ JSON export via data export endpoint</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><strong>Right to Withdraw Consent</strong></td>
+<td>✅ Settings page for consent management</td>
+<td>Implemented</td>
+</tr>
+</tbody>
+</table>
+<h3 id="82-how-to-exercise-rights">8.2 How to Exercise Rights</h3>
+<p>Users can exercise their rights by:</p>
+<ol>
+<li><strong>Account Settings</strong> - Most rights available in Settings page</li>
+<li><strong>Email Request</strong> - Contact <a href="mailto:privacy@handyghana.com">privacy@handyghana.com</a></li>
+<li><strong>API Endpoints</strong> - Programmatic access via API (for developers)</li>
+</ol>
+<p><strong>Response Time:</strong> Within 30 days (Act 843 requirement)</p>
+<hr>
+<h2 id="9-data-security-measures">9. Data Security Measures</h2>
+<h3 id="91-technical-measures">9.1 Technical Measures</h3>
+<ul>
+<li>✅ <strong>Encryption in Transit</strong> - All data transmitted via HTTPS/TLS</li>
+<li>✅ <strong>Encryption at Rest</strong> - Database and file storage encrypted</li>
+<li>✅ <strong>Password Hashing</strong> - bcrypt with salt (10 rounds)</li>
+<li>✅ <strong>JWT Tokens</strong> - Secure authentication tokens</li>
+<li>✅ <strong>Access Controls</strong> - Role-based access control (RBAC)</li>
+<li>✅ <strong>Input Validation</strong> - All user inputs validated and sanitized</li>
+<li>✅ <strong>SQL Injection Prevention</strong> - Prisma ORM prevents SQL injection</li>
+<li>✅ <strong>Rate Limiting</strong> - API rate limiting to prevent abuse</li>
+</ul>
+<h3 id="92-organizational-measures">9.2 Organizational Measures</h3>
+<ul>
+<li>✅ <strong>Data Processing Agreements</strong> - DPAs with all third-party processors</li>
+<li>✅ <strong>Access Logging</strong> - All data access logged and monitored</li>
+<li>✅ <strong>Staff Training</strong> - Data protection training for staff</li>
+<li>✅ <strong>Incident Response Plan</strong> - Breach notification procedures</li>
+<li>✅ <strong>Regular Audits</strong> - Security and compliance audits</li>
+</ul>
+<hr>
+<h2 id="10-compliance-checklist">10. Compliance Checklist</h2>
+<h3 id="101-act-843-requirements">10.1 Act 843 Requirements</h3>
+<ul>
+<li>✅ <strong>Purpose Limitation</strong> - All data collection has documented purpose</li>
+<li>✅ <strong>Minimality</strong> - Only necessary data collected</li>
+<li>✅ <strong>Consent Management</strong> - Explicit consent for marketing, optional fields</li>
+<li>✅ <strong>Data Subject Rights</strong> - All rights implemented</li>
+<li>✅ <strong>Data Security</strong> - Technical and organizational measures in place</li>
+<li>✅ <strong>Data Retention</strong> - Clear retention policies</li>
+<li>✅ <strong>Data Transfer Safeguards</strong> - DPAs and SCCs in place</li>
+<li>⚠️ <strong>DPC Registration</strong> - Register with Data Protection Commission (Ghana)</li>
+<li>✅ <strong>Privacy Policy</strong> - Comprehensive privacy policy published</li>
+<li>✅ <strong>Data Mapping</strong> - This document (data mapping completed)</li>
+</ul>
+<hr>
+<h2 id="11-contact-information">11. Contact Information</h2>
+<p><strong>Data Controller:</strong> HandyGhana Services Ltd</p>
+<p><strong>Data Protection Officer:</strong><br>
+Email: <a href="mailto:privacy@handyghana.com">privacy@handyghana.com</a><br>
+Phone: [To be added]</p>
+<p><strong>Data Protection Commission (Ghana):</strong><br>
+Website: <a href="https://www.dataprotection.org.gh">https://www.dataprotection.org.gh</a><br>
+Email: <a href="mailto:info@dataprotection.org.gh">info@dataprotection.org.gh</a></p>
+<hr>
+<h2 id="12-document-maintenance">12. Document Maintenance</h2>
+<p>This document is reviewed and updated:</p>
+<ul>
+<li><strong>Annually</strong> - Full review</li>
+<li><strong>When changes occur</strong> - Data collection changes, new features</li>
+<li><strong>After incidents</strong> - Security breaches, compliance issues</li>
+<li><strong>Upon request</strong> - Regulatory requests, user inquiries</li>
+</ul>
+<p><strong>Next Review Date:</strong> December 2025</p>
+<hr>
+<h2 id="appendix-a-third-party-processors">Appendix A: Third-Party Processors</h2>
+<table>
+<thead>
+<tr>
+<th>Processor</th>
+<th>Service</th>
+<th>Location</th>
+<th>Data Processed</th>
+<th>DPA Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><a href="http://Fly.io">Fly.io</a></strong></td>
+<td>Backend hosting, database</td>
+<td>USA</td>
+<td>All personal data</td>
+<td>✅ DPA in place</td>
+</tr>
+<tr>
+<td><strong>Vercel</strong></td>
+<td>Frontend hosting</td>
+<td>Global CDN</td>
+<td>No personal data (static assets)</td>
+<td>✅ Terms accepted</td>
+</tr>
+<tr>
+<td><strong>Cloudinary</strong></td>
+<td>Image storage</td>
+<td>Global CDN</td>
+<td>Images, photos, documents</td>
+<td>✅ DPA in place</td>
+</tr>
+<tr>
+<td><strong>Paystack</strong></td>
+<td>Payment processing</td>
+<td>Nigeria/Ghana</td>
+<td>Payment data</td>
+<td>✅ DPA in place</td>
+</tr>
+<tr>
+<td><strong>MTN Mobile Money</strong></td>
+<td>Payment processing</td>
+<td>Ghana</td>
+<td>Payment data, mobile money numbers</td>
+<td>⚠️ Terms of service</td>
+</tr>
+<tr>
+<td><strong>Vodafone Cash</strong></td>
+<td>Payment processing</td>
+<td>Ghana</td>
+<td>Payment data, mobile money numbers</td>
+<td>⚠️ Terms of service</td>
+</tr>
+<tr>
+<td><strong>Sentry</strong></td>
+<td>Error tracking</td>
+<td>Global CDN</td>
+<td>Error logs</td>
+<td>✅ DPA in place</td>
+</tr>
+<tr>
+<td><strong>Google (OAuth)</strong></td>
+<td>Authentication</td>
+<td>USA</td>
+<td>OAuth profile data</td>
+<td>✅ Google Privacy Policy</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="appendix-b-data-minimization-examples">Appendix B: Data Minimization Examples</h2>
+<h3 id="-good-practices-implemented">✅ Good Practices (Implemented)</h3>
+<ol>
+<li><strong>Optional Fields Clearly Marked</strong> - Phone, WhatsApp, marketing consent are optional</li>
+<li><strong>Short Retention for Temporary Data</strong> - Password reset tokens (24 hours), ID documents (30 days)</li>
+<li><strong>Anonymized Analytics</strong> - User ID optional in analytics, 90-day retention</li>
+<li><strong>Minimal OAuth Data</strong> - Only essential Google profile data collected</li>
+<li><strong>Auto-Deletion</strong> - Temporary data automatically deleted</li>
+</ol>
+<h3 id="️-areas-for-improvement">⚠️ Areas for Improvement</h3>
+<ol>
+<li><strong>Review Retention</strong> - Consider allowing users to delete their reviews (currently retained for 7 years for legal reasons)</li>
+<li><strong>Analytics Anonymization</strong> - Further anonymize analytics data where possible</li>
+<li><strong>Chat Message Retention</strong> - Consider shorter retention (currently 30 days after account deletion)</li>
+</ol>
+<hr>
+<p><strong>Document End</strong></p>
+
+            
+            
+        </body>
+        </html>
