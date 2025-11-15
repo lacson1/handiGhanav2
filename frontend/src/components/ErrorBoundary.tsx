@@ -33,9 +33,11 @@ export default class ErrorBoundary extends Component<Props, State> {
         error.name === 'ChunkLoadError') {
       console.warn('Dynamic import failed, attempting to reload page...')
       // Small delay to allow error state to render
-      setTimeout(() => {
-        window.location.reload()
-      }, 2000)
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
+      }
     }
     
     if (import.meta.env.PROD) {

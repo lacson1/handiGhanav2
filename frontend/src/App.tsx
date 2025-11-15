@@ -15,6 +15,26 @@ import WhatsAppWidget from './components/WhatsAppWidget'
 import CookieConsent from './components/CookieConsent'
 import './index.css'
 
+// Helper function to safely access sessionStorage
+const safeSessionStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      return typeof window !== 'undefined' && window.sessionStorage ? sessionStorage.getItem(key) : null
+    } catch {
+      return null
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        sessionStorage.setItem(key, value)
+      }
+    } catch {
+      // Ignore sessionStorage errors (e.g., in privacy mode)
+    }
+  }
+}
+
 // Helper function to retry failed dynamic imports
 const retryImport = (importFn: () => Promise<any>, retries = 2, delay = 1000): Promise<any> => {
   return new Promise((resolve, reject) => {
@@ -33,11 +53,15 @@ const retryImport = (importFn: () => Promise<any>, retries = 2, delay = 1000): P
           } else if (isChunkError && remaining === 0) {
             console.error('Import failed after all retries, reloading page...', error)
             // Only reload if we haven't reloaded recently (prevent infinite loop)
-            const lastReload = sessionStorage.getItem('lastChunkReload')
+            const lastReload = safeSessionStorage.getItem('lastChunkReload')
             const now = Date.now()
             if (!lastReload || (now - parseInt(lastReload)) > 5000) {
-              sessionStorage.setItem('lastChunkReload', now.toString())
-              window.location.reload()
+              safeSessionStorage.setItem('lastChunkReload', now.toString())
+              if (typeof window !== 'undefined') {
+                window.location.reload()
+              } else {
+                reject(new Error('Failed to load module after multiple attempts. Please clear your browser cache.'))
+              }
             } else {
               reject(new Error('Failed to load module after multiple attempts. Please clear your browser cache.'))
             }
