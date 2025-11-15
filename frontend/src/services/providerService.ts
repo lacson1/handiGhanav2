@@ -1,8 +1,15 @@
-import type { Provider } from '../types'
+import type { Provider, ServiceCategory, GhanaCity } from '../types'
 import { providersApi } from '../lib/api'
 
 class ProviderService {
-  async getAllProviders(filters?: any): Promise<Provider[]> {
+  async getAllProviders(filters?: {
+    category?: string
+    location?: string
+    verified?: boolean
+    availableNow?: boolean
+    minRating?: number
+    search?: string
+  }): Promise<Provider[]> {
     try {
       return await providersApi.getAll(filters)
     } catch (error) {
@@ -20,7 +27,13 @@ class ProviderService {
     }
   }
 
-  async searchProviders(query: string, filters?: any): Promise<Provider[]> {
+  async searchProviders(query: string, filters?: {
+    category?: string
+    location?: string
+    verified?: boolean
+    availableNow?: boolean
+    minRating?: number
+  }): Promise<Provider[]> {
     try {
       return await providersApi.getAll({ ...filters, search: query })
     } catch (error) {
@@ -38,23 +51,23 @@ class ProviderService {
     bio: string
   }): Promise<Provider> {
     try {
-      const providerData = {
+      const providerData: Partial<Provider> = {
         name: data.name,
-        email: data.email,
-        category: data.category,
-        location: data.location,
+        category: data.category as ServiceCategory,
+        location: data.location as GhanaCity,
         phone: data.contact,
         whatsapp: data.contact,
         description: data.bio,
       }
       const result = await providersApi.create(providerData)
-      if (result.provider) {
-        return result.provider as Provider
-      }
-      return result as Provider
-    } catch (error: any) {
+      return result
+    } catch (error: unknown) {
       console.error('Error creating provider:', error)
-      const errorMessage = error.message || error.response?.data?.message || 'Failed to create provider profile. Please try again.'
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data && typeof error.response.data.message === 'string')
+          ? error.response.data.message
+          : 'Failed to create provider profile. Please try again.'
       throw new Error(errorMessage)
     }
   }
@@ -62,13 +75,14 @@ class ProviderService {
   async updateProvider(id: string, data: Partial<Provider>): Promise<Provider> {
     try {
       const result = await providersApi.update(id, data)
-      if (result.provider) {
-        return result.provider as Provider
-      }
-      return result as Provider
-    } catch (error: any) {
+      return result
+    } catch (error: unknown) {
       console.error('Error updating provider:', error)
-      const errorMessage = error.message || error.response?.data?.message || 'Failed to update provider'
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data && typeof error.response.data.message === 'string')
+          ? error.response.data.message
+          : 'Failed to update provider'
       throw new Error(errorMessage)
     }
   }

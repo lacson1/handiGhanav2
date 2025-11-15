@@ -72,6 +72,8 @@ docker-compose up -d
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - Login user
 - `GET /api/auth/profile` - Get current user profile (protected)
+- `GET /api/auth/google` - Initiate Google OAuth login
+- `GET /api/auth/google/callback` - Google OAuth callback (handled automatically)
 
 ## 🔐 Authentication
 
@@ -105,4 +107,30 @@ Required environment variables (see `.env.example`):
 - `PORT` - Server port (default: 3001)
 - `JWT_SECRET` - Secret key for JWT tokens
 - `NODE_ENV` - Environment (development/production)
+- `FRONTEND_URL` - Frontend URL for OAuth redirects (default: http://localhost:5173)
+- `SESSION_SECRET` - Secret for session management (used for OAuth)
+
+### Google OAuth (Optional)
+
+To enable Google login, add these variables:
+
+- `GOOGLE_CLIENT_ID` - Google OAuth Client ID
+- `GOOGLE_CLIENT_SECRET` - Google OAuth Client Secret
+- `GOOGLE_CALLBACK_URL` - Google OAuth callback URL (default: http://localhost:3001/api/auth/google/callback)
+
+**Setting up Google OAuth:**
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Google+ API
+4. Go to "Credentials" → "Create Credentials" → "OAuth client ID"
+5. Choose "Web application"
+6. Add authorized redirect URIs:
+   - Development: `http://localhost:3001/api/auth/google/callback`
+   - Production: `https://yourdomain.com/api/auth/google/callback`
+7. Copy the Client ID and Client Secret to your `.env` file
+
+The Google login button will automatically appear on the sign-in page once these credentials are configured.
+
+**📖 For detailed setup instructions, see [GOOGLE_OAUTH_SETUP.md](../GOOGLE_OAUTH_SETUP.md)**
 

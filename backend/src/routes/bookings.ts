@@ -5,6 +5,8 @@ import {
   getBookingById, 
   updateBookingStatus 
 } from '../controllers/bookingController'
+import { validate } from '../middleware/validate'
+import { createBookingSchema, updateBookingStatusSchema } from '../validators/booking.validator'
 
 const router = express.Router()
 
@@ -15,10 +17,10 @@ router.get('/', getBookings)
 router.get('/:id', getBookingById)
 
 // POST /api/bookings - Create new booking
-router.post('/', createBooking)
+router.post('/', validate(createBookingSchema), createBooking)
 
 // PUT /api/bookings/:id/status - Update booking status
-router.put('/:id/status', updateBookingStatus)
+router.put('/:id/status', validate(updateBookingStatusSchema), updateBookingStatus)
 
 export default router
 

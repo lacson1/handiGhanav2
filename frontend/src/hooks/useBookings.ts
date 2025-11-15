@@ -15,8 +15,9 @@ export function useBookings() {
     try {
       const data = await bookingsApi.getAll({ userId: user?.id })
       setBookings(data as Booking[])
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch bookings')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch bookings'
+      setError(errorMessage)
       setBookings([])
     } finally {
       setLoading(false)
@@ -42,8 +43,9 @@ export function useBookings() {
       const newBooking = await bookingsApi.create(bookingData)
       setBookings([...bookings, newBooking as Booking])
       return newBooking
-    } catch (err: any) {
-      setError(err.message || 'Failed to create booking')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create booking'
+      setError(errorMessage)
       throw err
     } finally {
       setLoading(false)
@@ -57,8 +59,9 @@ export function useBookings() {
       const updatedBooking = await bookingsApi.updateStatus(bookingId, status)
       setBookings(bookings.map(b => b.id === bookingId ? updatedBooking as Booking : b))
       return updatedBooking
-    } catch (err: any) {
-      setError(err.message || 'Failed to update booking')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update booking'
+      setError(errorMessage)
       throw err
     } finally {
       setLoading(false)

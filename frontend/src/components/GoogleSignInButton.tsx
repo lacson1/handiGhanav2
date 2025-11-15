@@ -9,9 +9,9 @@ export default function GoogleSignInButton() {
   return (
     <button
       onClick={handleGoogleSignIn}
-      className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      className="w-full flex items-center justify-center gap-3 px-5 py-3.5 sm:py-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all focus:outline-none focus:ring-4 focus:ring-gray-300/30 dark:focus:ring-gray-600/30"
     >
-      <svg className="w-5 h-5" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24">
         <path
           fill="#4285F4"
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -29,7 +29,7 @@ export default function GoogleSignInButton() {
           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
         />
       </svg>
-      <span className="text-gray-700 dark:text-gray-300 font-medium">
+      <span className="text-base sm:text-lg text-gray-700 dark:text-gray-300 font-semibold">
         Continue with Google
       </span>
     </button>

@@ -23,15 +23,15 @@ export default function InstantSearchResults({ query, providers, onSelect, onClo
     const searchTerm = query.toLowerCase()
     const filtered = providers
       .filter(p =>
-        p.name.toLowerCase().includes(searchTerm) ||
-        p.category.toLowerCase().includes(searchTerm) ||
-        p.description.toLowerCase().includes(searchTerm) ||
-        p.location.toLowerCase().includes(searchTerm)
+        p.name?.toLowerCase().includes(searchTerm) ||
+        p.category?.toLowerCase().includes(searchTerm) ||
+        (p.description && p.description.toLowerCase().includes(searchTerm)) ||
+        p.location?.toLowerCase().includes(searchTerm)
       )
       .sort((a, b) => {
         // Prioritize verified and available providers
-        let scoreA = a.rating
-        let scoreB = b.rating
+        let scoreA = a.rating || 0
+        let scoreB = b.rating || 0
         if (a.verified) scoreA += 0.5
         if (a.availability === 'Available Now') scoreA += 0.5
         if (b.verified) scoreB += 0.5
@@ -82,7 +82,7 @@ export default function InstantSearchResults({ query, providers, onSelect, onClo
                 className="w-full text-left p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     {provider.avatar ? (
                       <img
                         src={provider.avatar}
@@ -101,7 +101,7 @@ export default function InstantSearchResults({ query, providers, onSelect, onClo
                         {provider.name}
                       </h4>
                       {provider.verified && (
-                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                        <CheckCircle className="h-4 w-4 text-primary shrink-0" />
                       )}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
@@ -110,7 +110,7 @@ export default function InstantSearchResults({ query, providers, onSelect, onClo
                     <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
                       <div className="flex items-center gap-1">
                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span>{provider.rating.toFixed(1)}</span>
+                        <span>{(provider.rating ?? 0).toFixed(1)}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />

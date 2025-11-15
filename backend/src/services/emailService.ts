@@ -33,8 +33,9 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
     await sgMail.send(msg)
     console.log(`✅ Email sent to ${options.to}: ${options.subject}`)
     return true
-  } catch (error: any) {
-    console.error('❌ Error sending email:', error.message)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('❌ Error sending email:', errorMessage)
     return false
   }
 }

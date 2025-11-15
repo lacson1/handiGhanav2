@@ -12,6 +12,15 @@ export interface ApiResponse<T = unknown> {
   error?: ApiError
 }
 
+// Prisma error type
+export interface PrismaError extends Error {
+  code?: string
+  meta?: {
+    target?: string[]
+    cause?: string
+  }
+}
+
 // Review types
 export interface Review {
   id: string

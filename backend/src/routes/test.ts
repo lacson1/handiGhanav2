@@ -48,11 +48,12 @@ router.post('/email', async (req, res) => {
         configured: true
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Test email error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: errorMessage,
       configured: !!process.env.SENDGRID_API_KEY
     })
   }
@@ -101,11 +102,12 @@ router.post('/booking-email', async (req, res) => {
         configured: true
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Test booking email error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: errorMessage,
       configured: !!process.env.SENDGRID_API_KEY
     })
   }
@@ -132,10 +134,11 @@ router.get('/sentry', (req, res) => {
       configured: true,
       timestamp: new Date().toISOString()
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: errorMessage,
       configured: !!process.env.SENTRY_DSN
     })
   }

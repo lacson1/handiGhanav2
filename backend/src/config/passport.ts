@@ -1,12 +1,12 @@
 import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { User } from '@prisma/client'
+import { prisma } from '../lib/prisma'
 
 // Serialize user for the session
+// Note: Using 'any' here because passport has its own User type that conflicts with Prisma's User type
 passport.serializeUser((user: any, done) => {
-  done(null, user.id)
+  done(null, (user as User).id)
 })
 
 // Deserialize user from the session

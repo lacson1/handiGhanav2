@@ -11,6 +11,7 @@ import ProtectedRoute from '../components/ProtectedRoute'
 import Button from '../components/ui/Button'
 import ProviderDetailModal from '../components/ProviderDetailModal'
 import DisputeManagement from '../components/DisputeManagement'
+import AnalyticsDashboard from '../components/AnalyticsDashboard'
 import { cn } from '../lib/utils'
 import { providersApi, bookingsApi, adminApi } from '../lib/api'
 import type { Provider, Booking } from '../types'
@@ -93,7 +94,8 @@ function AdminDashboardContent() {
         providersApi.getAll().catch(() => []),
         bookingsApi.getAll().catch(() => [])
       ])
-      setProviders(providersData)
+      // Ensure providersData is always an array
+      setProviders(Array.isArray(providersData) ? providersData : [])
       setBookings(bookingsData)
       setUsers([]) // TODO: Fetch users from API when endpoint is ready
     } catch (error) {
@@ -248,12 +250,10 @@ function AdminDashboardContent() {
       await adminApi.deleteProvider(providerId)
       setProviders(providers.filter(p => p.id !== providerId))
       showToast(`${provider.name} has been deleted successfully`, 'success')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete provider:', error)
-      showToast(
-        error.message || 'Failed to delete provider. They may have active bookings.',
-        'error'
-      )
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete provider. They may have active bookings.'
+      showToast(errorMessage, 'error')
     }
   }
 

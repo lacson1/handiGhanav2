@@ -1,3 +1,5 @@
+import type { User, Provider, Booking, Service, Subscription } from '../types'
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 class ApiRequestError extends Error {
@@ -96,24 +98,32 @@ function getErrorMessageForStatus(status: number): string {
 // Auth API
 export const authApi = {
   login: async (email: string, password: string) => {
-    return apiRequest<{ token: string; user: any }>('/auth/login', {
+    return apiRequest<{ token: string; user: User }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
   },
-  register: async (data: { email: string; password: string; name: string; phone?: string; role?: string }) => {
-    return apiRequest<{ message: string; user: any }>('/auth/register', {
+  register: async (data: { email: string; password: string; name: string; phone?: string; role?: string; consentPrivacy?: boolean; consentTerms?: boolean; consentMarketing?: boolean }) => {
+    return apiRequest<{ message: string; user: User }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   },
   getProfile: async () => {
-    return apiRequest<any>('/auth/profile')
+    return apiRequest<User>('/auth/profile')
   },
   updateProfile: async (data: { name?: string; phone?: string; avatar?: string }) => {
-    return apiRequest<any>('/auth/profile', {
+    return apiRequest<User>('/auth/profile', {
       method: 'PUT',
       body: JSON.stringify(data),
+    })
+  },
+  exportData: async () => {
+    return apiRequest<{ message: string; data: Record<string, unknown>; exportedAt: string }>('/auth/export')
+  },
+  deleteAccount: async () => {
+    return apiRequest<{ message: string }>('/auth/account', {
+      method: 'DELETE',
     })
   },
 }
@@ -137,19 +147,21 @@ export const providersApi = {
       })
     }
     const query = params.toString()
-    return apiRequest<any[]>(`/providers${query ? `?${query}` : ''}`)
+    const response = await apiRequest<{ data: Provider[]; pagination?: any }>(`/providers${query ? `?${query}` : ''}`)
+    // Handle both array response and object with data property
+    return Array.isArray(response) ? response : (response.data || [])
   },
   getById: async (id: string) => {
-    return apiRequest<any>(`/providers/${id}`)
+    return apiRequest<Provider>(`/providers/${id}`)
   },
-  create: async (data: any) => {
-    return apiRequest<any>('/providers', {
+  create: async (data: Partial<Provider>) => {
+    return apiRequest<Provider>('/providers', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   },
-  update: async (id: string, data: any) => {
-    return apiRequest<any>(`/providers/${id}`, {
+  update: async (id: string, data: Partial<Provider>) => {
+    return apiRequest<Provider>(`/providers/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
@@ -349,29 +361,29 @@ export const subscriptionsApi = {
     serviceId: string
     providerId: string
   }) => {
-    return apiRequest<any>('/subscriptions', {
+    return apiRequest<Subscription>('/subscriptions', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   },
-  update: async (id: string, data: any) => {
-    return apiRequest<any>(`/subscriptions/${id}`, {
+  update: async (id: string, data: Partial<Subscription>) => {
+    return apiRequest<Subscription>(`/subscriptions/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
   },
   cancel: async (id: string) => {
-    return apiRequest<any>(`/subscriptions/${id}/cancel`, {
+    return apiRequest<Subscription>(`/subscriptions/${id}/cancel`, {
       method: 'POST',
     })
   },
   pause: async (id: string) => {
-    return apiRequest<any>(`/subscriptions/${id}/pause`, {
+    return apiRequest<Subscription>(`/subscriptions/${id}/pause`, {
       method: 'POST',
     })
   },
   resume: async (id: string) => {
-    return apiRequest<any>(`/subscriptions/${id}/resume`, {
+    return apiRequest<Subscription>(`/subscriptions/${id}/resume`, {
       method: 'POST',
     })
   },
@@ -402,6 +414,33 @@ export const statsApi = {
     return apiRequest<{ message: string }>('/stats/track-search', {
       method: 'POST',
       body: JSON.stringify(data),
+    })
+  },
+}
+
+// Chat API
+export const chatApi = {
+  getOrCreateChat: async (providerId: string, bookingId?: string) => {
+    return apiRequest<any>('/chat', {
+      method: 'POST',
+      body: JSON.stringify({ providerId, bookingId }),
+    })
+  },
+  getUserChats: async () => {
+    return apiRequest<any>('/chat')
+  },
+  getChatMessages: async (chatId: string) => {
+    return apiRequest<any>(`/chat/${chatId}/messages`)
+  },
+  sendMessage: async (chatId: string, content: string, messageType: string = 'text', fileUrl?: string) => {
+    return apiRequest<any>(`/chat/${chatId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ content, messageType, fileUrl }),
+    })
+  },
+  markAsRead: async (chatId: string) => {
+    return apiRequest<any>(`/chat/${chatId}/read`, {
+      method: 'PUT',
     })
   },
 }
@@ -437,13 +476,13 @@ export const servicesApi = {
     subscriptionFeatures?: string[]
     visitsPerPeriod?: number
   }) => {
-    return apiRequest<any>('/services', {
+    return apiRequest<Service>('/services', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   },
-  update: async (id: string, data: any) => {
-    return apiRequest<any>(`/services/${id}`, {
+  update: async (id: string, data: Partial<Service>) => {
+    return apiRequest<Service>(`/services/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })

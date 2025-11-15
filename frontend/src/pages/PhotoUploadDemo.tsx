@@ -9,7 +9,6 @@ export default function PhotoUploadDemo() {
 
   const handlePhotoUpload = (urls: string[]) => {
     setUploadedPhotos(urls)
-    console.log('Uploaded photos:', urls)
   }
 
   const handleSubmit = () => {
@@ -19,7 +18,6 @@ export default function PhotoUploadDemo() {
     }
 
     // Here you can do something with the uploaded photos
-    console.log('Submitting photos:', uploadedPhotos)
     alert(`Successfully uploaded ${uploadedPhotos.length} photo(s)!`)
   }
 
@@ -116,7 +114,9 @@ export default function PhotoUploadDemo() {
               <h4 className="font-semibold mb-1">Basic Usage:</h4>
               <pre className="bg-white dark:bg-gray-800 p-3 rounded-lg overflow-x-auto text-xs">
 {`<PhotoUpload
-  onUpload={(urls) => console.log(urls)}
+  onUpload={(urls) => {
+    // Handle uploaded URLs
+  }}
   maxPhotos={5}
   folder="my-folder"
 />`}

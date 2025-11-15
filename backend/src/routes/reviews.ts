@@ -8,6 +8,8 @@ import {
   addProviderResponse,
   updateProviderResponse
 } from '../controllers/reviewController'
+import { validate } from '../middleware/validate'
+import { createReviewSchema, updateReviewSchema } from '../validators/review.validator'
 
 const router = express.Router()
 
@@ -18,10 +20,10 @@ router.get('/', getReviews)
 router.get('/:id', getReviewById)
 
 // POST /api/reviews - Create new review
-router.post('/', createReview)
+router.post('/', validate(createReviewSchema), createReview)
 
 // PUT /api/reviews/:id - Update review
-router.put('/:id', updateReview)
+router.put('/:id', validate(updateReviewSchema), updateReview)
 
 // DELETE /api/reviews/:id - Delete review
 router.delete('/:id', deleteReview)

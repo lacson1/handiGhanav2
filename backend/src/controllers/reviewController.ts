@@ -1,62 +1,87 @@
 import { Request, Response } from 'express'
+import { Prisma } from '@prisma/client'
 import { io } from '../server'
-import { Review } from '../types/controller.types'
-
-// Mock reviews data
-const mockReviews: Review[] = [
-  {
-    id: 'rev-001',
-    providerId: 'pt-001',
-    userId: 'user-1',
-    userName: 'Kwame Asante',
-    rating: 5,
-    comment: 'Excellent work! Very professional and completed the job on time. Highly recommend!',
-    isVerified: true,
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z'
-  },
-  {
-    id: 'rev-002',
-    providerId: 'pt-001',
-    userId: 'user-2',
-    userName: 'Ama Mensah',
-    rating: 5,
-    comment: 'Great service and fair pricing. Will definitely book again.',
-    isVerified: true,
-    createdAt: '2024-01-10T14:30:00Z',
-    updatedAt: '2024-01-10T14:30:00Z'
-  }
-]
+import { prisma } from '../lib/prisma'
 
 export const getReviews = async (req: Request, res: Response) => {
   try {
-    const { providerId, userId, limit, offset } = req.query
+    const { providerId, userId, limit, offset, isVerified, page, sortBy = 'createdAt', sortOrder = 'desc' } = req.query
 
-    let filtered = [...mockReviews]
+    const where: Prisma.ReviewWhereInput = {}
 
     if (providerId) {
-      filtered = filtered.filter(r => r.providerId === providerId)
+      where.providerId = providerId as string
     }
 
     if (userId) {
-      filtered = filtered.filter(r => r.userId === userId)
+      where.userId = userId as string
     }
 
-    // Sort by newest first
-    filtered.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    if (isVerified !== undefined) {
+      where.isVerified = isVerified === 'true'
+    }
 
-    // Pagination
-    const limitNum = limit ? Number(limit) : 10
-    const offsetNum = offset ? Number(offset) : 0
-    const paginated = filtered.slice(offsetNum, offsetNum + limitNum)
+    // Support both offset/limit and page/limit pagination
+    let limitNum: number
+    let skip: number
+
+    if (page) {
+      // Use page-based pagination
+      const pageNum = Math.max(1, parseInt(page as string, 10) || 1)
+      limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10) || 20))
+      skip = (pageNum - 1) * limitNum
+    } else {
+      // Use offset-based pagination (backward compatibility)
+      limitNum = limit ? Math.min(100, Number(limit)) : 20
+      skip = offset ? Number(offset) : 0
+    }
+
+    // Validate sortBy field
+    const validSortFields = ['createdAt', 'rating', 'updatedAt']
+    const sortField = validSortFields.includes(sortBy as string) ? sortBy as string : 'createdAt'
+    const orderBy = sortOrder === 'asc' ? 'asc' : 'desc'
+
+    const [reviews, total] = await Promise.all([
+      prisma.review.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true
+            }
+          },
+          provider: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        },
+        orderBy: {
+          [sortField]: orderBy
+        },
+        take: limitNum,
+        skip
+      }),
+      prisma.review.count({ where })
+    ])
 
     res.json({
-      reviews: paginated,
-      total: filtered.length,
-      limit: limitNum,
-      offset: offsetNum
+      data: reviews,
+      pagination: page ? {
+        page: Math.max(1, parseInt(page as string, 10) || 1),
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNextPage: (Math.max(1, parseInt(page as string, 10) || 1)) < Math.ceil(total / limitNum),
+        hasPreviousPage: (Math.max(1, parseInt(page as string, 10) || 1)) > 1,
+      } : {
+        total,
+        limit: limitNum,
+        offset: skip,
+      },
     })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
@@ -68,7 +93,33 @@ export const getReviews = async (req: Request, res: Response) => {
 export const getReviewById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
-    const review = mockReviews.find(r => r.id === id)
+    
+    const review = await prisma.review.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true
+          }
+        },
+        provider: {
+          select: {
+            id: true,
+            name: true,
+            category: true
+          }
+        },
+        booking: {
+          select: {
+            id: true,
+            serviceType: true,
+            date: true
+          }
+        }
+      }
+    })
 
     if (!review) {
       return res.status(404).json({ message: 'Review not found' })
@@ -110,30 +161,88 @@ export const createReview = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Booking ID is required for verified reviews' })
     }
 
-    const newReview: Review = {
-      id: `rev-${Date.now()}`,
-      providerId: String(providerId).trim(),
-      userId: String(userId).trim(),
-      userName: 'User', // TODO: Get from user data
-      rating: ratingNum,
-      comment: trimmedComment,
-      bookingId: bookingId || null,
-      photos: photos || [],
-      isVerified: isVerified || false,
-      verifiedAt: isVerified ? new Date().toISOString() : null,
-      providerResponse: null,
-      providerResponseAt: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    // Verify user and provider exist
+    const [user, provider] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.provider.findUnique({ where: { id: providerId } })
+    ])
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
     }
 
-    mockReviews.push(newReview)
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider not found' })
+    }
+
+    // If verified, verify booking exists and belongs to user
+    if (isVerified && bookingId) {
+      const booking = await prisma.booking.findUnique({
+        where: { id: bookingId }
+      })
+
+      if (!booking) {
+        return res.status(404).json({ message: 'Booking not found' })
+      }
+
+      if (booking.userId !== userId || booking.providerId !== providerId) {
+        return res.status(403).json({ message: 'Booking does not belong to this user or provider' })
+      }
+
+      if (booking.status !== 'COMPLETED') {
+        return res.status(400).json({ message: 'Can only review completed bookings' })
+      }
+    }
+
+    // Create review in database
+    const newReview = await prisma.review.create({
+      data: {
+        providerId: String(providerId).trim(),
+        userId: String(userId).trim(),
+        rating: ratingNum,
+        comment: trimmedComment,
+        bookingId: bookingId || null,
+        photos: photos || [],
+        isVerified: isVerified || false,
+        verifiedAt: isVerified ? new Date() : null
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true
+          }
+        },
+        provider: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    })
+
+    // Calculate and update provider rating
+    const allReviews = await prisma.review.findMany({
+      where: { providerId },
+      select: { rating: true }
+    })
+
+    const averageRating = allReviews.length > 0
+      ? allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length
+      : ratingNum
+
+    await prisma.provider.update({
+      where: { id: providerId },
+      data: {
+        rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
+        reviewCount: allReviews.length
+      }
+    })
 
     // Emit real-time notification
     io.to(`provider-${providerId}`).emit('new-review', newReview)
-
-    // TODO: Update provider rating in database
-    // Calculate new average rating
 
     res.status(201).json(newReview)
   } catch (error: unknown) {
@@ -148,19 +257,79 @@ export const updateReview = async (req: Request, res: Response) => {
     const { id } = req.params
     const { rating, comment } = req.body
 
-    const reviewIndex = mockReviews.findIndex(r => r.id === id)
-    if (reviewIndex === -1) {
+    // Check if review exists
+    const existingReview = await prisma.review.findUnique({
+      where: { id }
+    })
+
+    if (!existingReview) {
       return res.status(404).json({ message: 'Review not found' })
     }
 
-    mockReviews[reviewIndex] = {
-      ...mockReviews[reviewIndex],
-      rating: rating || mockReviews[reviewIndex].rating,
-      comment: comment || mockReviews[reviewIndex].comment,
-      updatedAt: new Date().toISOString()
+    // Prepare update data
+    const updateData: Prisma.ReviewUpdateInput = {}
+    
+    if (rating !== undefined) {
+      const ratingNum = Number(rating)
+      if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+        return res.status(400).json({ message: 'Rating must be a number between 1 and 5' })
+      }
+      updateData.rating = ratingNum
     }
 
-    res.json(mockReviews[reviewIndex])
+    if (comment !== undefined) {
+      const trimmedComment = String(comment).trim()
+      if (trimmedComment.length === 0) {
+        return res.status(400).json({ message: 'Comment cannot be empty' })
+      }
+      if (trimmedComment.length < 10) {
+        return res.status(400).json({ message: 'Comment must be at least 10 characters long' })
+      }
+      updateData.comment = trimmedComment
+    }
+
+    // Update review in database
+    const updatedReview = await prisma.review.update({
+      where: { id },
+      data: updateData,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true
+          }
+        },
+        provider: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    })
+
+    // Recalculate provider rating if rating changed
+    if (rating !== undefined) {
+      const allReviews = await prisma.review.findMany({
+        where: { providerId: existingReview.providerId },
+        select: { rating: true }
+      })
+
+      const averageRating = allReviews.length > 0
+        ? allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length
+        : 0
+
+      await prisma.provider.update({
+        where: { id: existingReview.providerId },
+        data: {
+          rating: Math.round(averageRating * 10) / 10,
+          reviewCount: allReviews.length
+        }
+      })
+    }
+
+    res.json(updatedReview)
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
     console.error('Get reviews error:', error)
@@ -171,13 +340,41 @@ export const updateReview = async (req: Request, res: Response) => {
 export const deleteReview = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
-    const reviewIndex = mockReviews.findIndex(r => r.id === id)
     
-    if (reviewIndex === -1) {
+    // Get review before deleting to update provider rating
+    const review = await prisma.review.findUnique({
+      where: { id }
+    })
+
+    if (!review) {
       return res.status(404).json({ message: 'Review not found' })
     }
 
-    mockReviews.splice(reviewIndex, 1)
+    const providerId = review.providerId
+
+    // Delete review from database
+    await prisma.review.delete({
+      where: { id }
+    })
+
+    // Recalculate provider rating
+    const allReviews = await prisma.review.findMany({
+      where: { providerId },
+      select: { rating: true }
+    })
+
+    const averageRating = allReviews.length > 0
+      ? allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length
+      : 0
+
+    await prisma.provider.update({
+      where: { id: providerId },
+      data: {
+        rating: Math.round(averageRating * 10) / 10,
+        reviewCount: allReviews.length
+      }
+    })
+
     res.json({ message: 'Review deleted successfully' })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
@@ -199,32 +396,51 @@ export const addProviderResponse = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Response must be at least 10 characters' })
     }
 
-    const reviewIndex = mockReviews.findIndex(r => r.id === id)
-    
-    if (reviewIndex === -1) {
+    // Check if review exists
+    const existingReview = await prisma.review.findUnique({
+      where: { id }
+    })
+
+    if (!existingReview) {
       return res.status(404).json({ message: 'Review not found' })
     }
 
     // Check if response already exists
-    if (mockReviews[reviewIndex].providerResponse) {
+    if (existingReview.providerResponse) {
       return res.status(400).json({ message: 'Response already exists. Use update endpoint to modify.' })
     }
 
-    // Add provider response
-    mockReviews[reviewIndex] = {
-      ...mockReviews[reviewIndex],
-      providerResponse: response.trim(),
-      providerResponseAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    // Add provider response in database
+    const updatedReview = await prisma.review.update({
+      where: { id },
+      data: {
+        providerResponse: response.trim(),
+        providerResponseAt: new Date()
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true
+          }
+        },
+        provider: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    })
 
     // Emit real-time notification
-    io.to(`user-${mockReviews[reviewIndex].userId}`).emit('review-response', {
+    io.to(`user-${existingReview.userId}`).emit('review-response', {
       reviewId: id,
       response: response.trim()
     })
 
-    res.json(mockReviews[reviewIndex])
+    res.json(updatedReview)
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
     console.error('Get reviews error:', error)
@@ -245,21 +461,40 @@ export const updateProviderResponse = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Response must be at least 10 characters' })
     }
 
-    const reviewIndex = mockReviews.findIndex(r => r.id === id)
-    
-    if (reviewIndex === -1) {
+    // Check if review exists
+    const existingReview = await prisma.review.findUnique({
+      where: { id }
+    })
+
+    if (!existingReview) {
       return res.status(404).json({ message: 'Review not found' })
     }
 
-    // Update provider response
-    mockReviews[reviewIndex] = {
-      ...mockReviews[reviewIndex],
-      providerResponse: response.trim(),
-      providerResponseAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    // Update provider response in database
+    const updatedReview = await prisma.review.update({
+      where: { id },
+      data: {
+        providerResponse: response.trim(),
+        providerResponseAt: new Date()
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true
+          }
+        },
+        provider: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    })
 
-    res.json(mockReviews[reviewIndex])
+    res.json(updatedReview)
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
     console.error('Get reviews error:', error)

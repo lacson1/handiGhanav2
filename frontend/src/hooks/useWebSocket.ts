@@ -57,7 +57,10 @@ export function useWebSocket(roomId?: string) {
     })
 
     socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error)
+      // Silently handle WebSocket errors - backend might not be running (normal in dev)
+      if (import.meta.env.DEV) {
+        console.error('WebSocket connection error:', error)
+      }
     })
 
     return () => {

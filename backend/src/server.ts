@@ -8,6 +8,7 @@ import { Server } from 'socket.io'
 import { initSentry } from './config/sentry'
 import Sentry from '@sentry/node'
 import passport from './config/passport'
+import { apiRateLimit } from './middleware/rateLimit'
 import providerRoutes from './routes/providers'
 import bookingRoutes from './routes/bookings'
 import authRoutes from './routes/auth'
@@ -22,6 +23,7 @@ import statsRoutes from './routes/stats'
 import testRoutes from './routes/test'
 import adminRoutes from './routes/admin'
 import settingsRoutes from './routes/settings'
+import chatRoutes from './routes/chat'
 
 dotenv.config()
 
@@ -103,6 +105,9 @@ app.use(
 app.use(passport.initialize())
 app.use(passport.session())
 
+// Apply general API rate limiting to all API routes
+app.use('/api', apiRateLimit)
+
 // Routes
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'HandyGhana API is running' })
@@ -122,6 +127,7 @@ app.use('/api/stats', statsRoutes)
 app.use('/api/test', testRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/chat', chatRoutes)
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
@@ -130,6 +136,11 @@ io.on('connection', (socket) => {
   socket.on('join-room', (roomId) => {
     socket.join(roomId)
     console.log(`Client ${socket.id} joined room: ${roomId}`)
+  })
+
+  socket.on('join-chat', (chatId) => {
+    socket.join(`chat-${chatId}`)
+    console.log(`Client ${socket.id} joined chat: ${chatId}`)
   })
 
   socket.on('disconnect', () => {
@@ -141,7 +152,7 @@ io.on('connection', (socket) => {
 export { io }
 
 // Error handling middleware (Sentry will catch errors automatically)
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error & { status?: number }, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack)
   // Sentry will automatically capture this error
   Sentry.captureException(err)

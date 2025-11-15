@@ -39,6 +39,14 @@ model User {
   hasCompletedFirstBooking Boolean @default(false)
   firstBookingDiscountUsed Boolean @default(false)
 
+  // Data protection consent (Ghana Act 843 compliance)
+  consentPrivacy     Boolean   @default(false)
+  consentTerms        Boolean   @default(false)
+  consentMarketing    Boolean   @default(false)
+  consentPrivacyAt    DateTime?
+  consentTermsAt      DateTime?
+  consentMarketingAt  DateTime?
+
   bookings      Booking[]
   reviews       Review[]
   subscriptions Subscription[]
@@ -46,6 +54,10 @@ model User {
   referred      Referral[]     @relation("Referee")
   provider      Provider?
   settings      UserSettings?
+  customerChats Chat[]          @relation("CustomerChats")
+  providerChats Chat[]          @relation("ProviderChats")
+  sentMessages  Message[]       @relation("SentMessages")
+  receivedMessages Message[]    @relation("ReceivedMessages")
 
   @@map("users")
 }
@@ -96,6 +108,7 @@ model Provider {
   reviews  Review[]
   services Service[]
   payouts  Payout[]
+  availabilitySlots AvailabilitySlot[]
 
   @@index([category])
   @@index([location])
@@ -432,4 +445,69 @@ model UserSettings {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
+}
+
+// Provider availability slots for calendar integration
+model AvailabilitySlot {
+  id          String   @id @default(cuid())
+  providerId  String
+  date        DateTime // Date only (time will be 00:00:00)
+  startTime   String   // "09:00" format
+  endTime     String   // "17:00" format
+  isAvailable Boolean  @default(true)
+  isRecurring Boolean  @default(false)
+  recurringPattern String? // "daily", "weekly", "weekdays", "weekends"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, date, startTime])
+  @@index([providerId, date])
+  @@index([providerId, isAvailable])
+  @@map("availability_slots")
+}
+
+// Real-time Chat System
+model Chat {
+  id          String   @id @default(cuid())
+  customerId  String
+  providerId  String
+  bookingId   String?  // Optional link to booking
+  lastMessage String?
+  lastMessageAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer User @relation("CustomerChats", fields: [customerId], references: [id], onDelete: Cascade)
+  provider User @relation("ProviderChats", fields: [providerId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([customerId, providerId])
+  @@index([customerId])
+  @@index([providerId])
+  @@index([bookingId])
+  @@map("chats")
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  chatId      String
+  senderId    String   // User ID
+  receiverId  String   // User ID
+  content     String
+  messageType String   @default("text") // "text", "image", "file"
+  fileUrl     String?
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@index([senderId, receiverId])
+  @@index([isRead])
+  @@map("messages")
 }

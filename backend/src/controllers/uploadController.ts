@@ -49,9 +49,10 @@ export const uploadImage = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'File too large. Maximum size is 10MB.' })
     }
 
-    // Development mode: Return mock URL if Cloudinary is not configured
-    if (isDemoMode && process.env.NODE_ENV !== 'production') {
-      console.warn('⚠️  Cloudinary is using demo credentials. Returning mock URL for development.')
+    // Fallback mode: Return data URL if Cloudinary is not configured
+    // This prevents 500 errors and allows the app to function
+    if (isDemoMode) {
+      console.warn('⚠️  Cloudinary is not configured. Using data URL fallback. Please configure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET for production.')
       
       // Create a data URL from the file buffer for preview
       const base64 = req.file.buffer.toString('base64')
@@ -59,14 +60,10 @@ export const uploadImage = async (req: Request, res: Response) => {
       
       return res.json({
         url: dataUrl,
-        publicId: `mock-${Date.now()}`,
-        message: 'Development mode: File uploaded as data URL. Configure Cloudinary for production.'
-      })
-    }
-
-    if (isDemoMode) {
-      return res.status(500).json({ 
-        message: 'Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.'
+        publicId: `fallback-${Date.now()}`,
+        message: process.env.NODE_ENV === 'production' 
+          ? 'Cloudinary not configured. File uploaded as data URL. Please configure Cloudinary for better performance.'
+          : 'Development mode: File uploaded as data URL. Configure Cloudinary for production.'
       })
     }
 
