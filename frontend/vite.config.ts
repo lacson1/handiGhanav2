@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/', // Ensure base path is set correctly
   plugins: [
     react(), 
     tailwindcss(),
@@ -36,6 +37,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Navigation route handling for SPA routing
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api/, /^\/_/, /^\/assets/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -78,6 +82,21 @@ export default defineConfig({
                 statuses: [0, 200]
               }
             }
+          },
+          {
+            // Navigation requests (page loads) - NetworkFirst strategy
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 1 day
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           }
         ]
       },
@@ -100,6 +119,10 @@ export default defineConfig({
     // Code splitting optimization
     rollupOptions: {
       output: {
+        // Ensure consistent asset paths
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
         manualChunks: {
           // Split vendor code into separate chunks
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
@@ -113,6 +136,8 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     // Enable source maps for debugging (disable in production)
     sourcemap: false,
+    // Ensure assets are properly handled
+    assetsInlineLimit: 4096,
   },
   // Performance optimizations
   server: {

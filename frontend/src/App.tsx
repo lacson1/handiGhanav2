@@ -15,26 +15,61 @@ import WhatsAppWidget from './components/WhatsAppWidget'
 import CookieConsent from './components/CookieConsent'
 import './index.css'
 
-// Lazy load pages for code splitting
-const Home = lazy(() => import('./pages/Home'))
-const SearchResults = lazy(() => import('./pages/SearchResults'))
-const ProviderProfile = lazy(() => import('./pages/ProviderProfile'))
-const SignIn = lazy(() => import('./pages/SignIn'))
-const SignUp = lazy(() => import('./pages/SignUp'))
-const OAuthCallback = lazy(() => import('./pages/OAuthCallback'))
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
-const ResetPassword = lazy(() => import('./pages/ResetPassword'))
-const BecomeProvider = lazy(() => import('./pages/BecomeProvider'))
-const Dashboard = lazy(() => import('./pages/Dashboard'))
-const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard'))
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
-const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard'))
-const Settings = lazy(() => import('./pages/Settings'))
-const PhotoUploadDemo = lazy(() => import('./pages/PhotoUploadDemo'))
-const FAQ = lazy(() => import('./pages/FAQ'))
-const Privacy = lazy(() => import('./pages/Privacy'))
-const Terms = lazy(() => import('./pages/Terms'))
-const Help = lazy(() => import('./pages/Help'))
+// Helper function to retry failed dynamic imports
+const retryImport = (importFn: () => Promise<any>, retries = 2, delay = 1000): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const attempt = (remaining: number) => {
+      importFn()
+        .then(resolve)
+        .catch((error) => {
+          const isChunkError = 
+            error?.message?.includes('Failed to fetch dynamically imported module') ||
+            error?.message?.includes('Loading chunk') ||
+            error?.name === 'ChunkLoadError'
+          
+          if (remaining > 0 && isChunkError) {
+            console.warn(`Import failed, retrying... (${retries - remaining + 1}/${retries})`, error)
+            setTimeout(() => attempt(remaining - 1), delay)
+          } else if (isChunkError && remaining === 0) {
+            console.error('Import failed after all retries, reloading page...', error)
+            // Only reload if we haven't reloaded recently (prevent infinite loop)
+            const lastReload = sessionStorage.getItem('lastChunkReload')
+            const now = Date.now()
+            if (!lastReload || (now - parseInt(lastReload)) > 5000) {
+              sessionStorage.setItem('lastChunkReload', now.toString())
+              window.location.reload()
+            } else {
+              reject(new Error('Failed to load module after multiple attempts. Please clear your browser cache.'))
+            }
+          } else {
+            reject(error)
+          }
+        })
+    }
+    attempt(retries)
+  })
+}
+
+// Lazy load pages for code splitting with retry logic
+const Home = lazy(() => retryImport(() => import('./pages/Home')))
+const SearchResults = lazy(() => retryImport(() => import('./pages/SearchResults')))
+const ProviderProfile = lazy(() => retryImport(() => import('./pages/ProviderProfile')))
+const SignIn = lazy(() => retryImport(() => import('./pages/SignIn')))
+const SignUp = lazy(() => retryImport(() => import('./pages/SignUp')))
+const OAuthCallback = lazy(() => retryImport(() => import('./pages/OAuthCallback')))
+const ForgotPassword = lazy(() => retryImport(() => import('./pages/ForgotPassword')))
+const ResetPassword = lazy(() => retryImport(() => import('./pages/ResetPassword')))
+const BecomeProvider = lazy(() => retryImport(() => import('./pages/BecomeProvider')))
+const Dashboard = lazy(() => retryImport(() => import('./pages/Dashboard')))
+const ProviderDashboard = lazy(() => retryImport(() => import('./pages/ProviderDashboard')))
+const AdminDashboard = lazy(() => retryImport(() => import('./pages/AdminDashboard')))
+const CustomerDashboard = lazy(() => retryImport(() => import('./pages/CustomerDashboard')))
+const Settings = lazy(() => retryImport(() => import('./pages/Settings')))
+const PhotoUploadDemo = lazy(() => retryImport(() => import('./pages/PhotoUploadDemo')))
+const FAQ = lazy(() => retryImport(() => import('./pages/FAQ')))
+const Privacy = lazy(() => retryImport(() => import('./pages/Privacy')))
+const Terms = lazy(() => retryImport(() => import('./pages/Terms')))
+const Help = lazy(() => retryImport(() => import('./pages/Help')))
 
 // Loading component for Suspense fallback
 function PageLoader() {
