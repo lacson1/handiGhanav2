@@ -23,15 +23,15 @@ export default function InstantSearchResults({ query, providers, onSelect, onClo
     const searchTerm = query.toLowerCase()
     const filtered = providers
       .filter(p =>
-        p.name.toLowerCase().includes(searchTerm) ||
-        p.category.toLowerCase().includes(searchTerm) ||
-        p.description.toLowerCase().includes(searchTerm) ||
-        p.location.toLowerCase().includes(searchTerm)
+        p.name?.toLowerCase().includes(searchTerm) ||
+        p.category?.toLowerCase().includes(searchTerm) ||
+        (p.description && p.description.toLowerCase().includes(searchTerm)) ||
+        p.location?.toLowerCase().includes(searchTerm)
       )
       .sort((a, b) => {
         // Prioritize verified and available providers
-        let scoreA = a.rating
-        let scoreB = b.rating
+        let scoreA = a.rating || 0
+        let scoreB = b.rating || 0
         if (a.verified) scoreA += 0.5
         if (a.availability === 'Available Now') scoreA += 0.5
         if (b.verified) scoreB += 0.5
