@@ -21,10 +21,11 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useToast } from '../context/ToastContext'
 import Button from '../components/ui/Button'
-import { settingsApi } from '../lib/api'
+import { settingsApi, authApi } from '../lib/api'
+import { Download, Trash2, AlertTriangle } from 'lucide-react'
 
 export default function Settings() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { showToast } = useToast()
   const navigate = useNavigate()
@@ -66,7 +67,7 @@ export default function Settings() {
         setProfileVisibility(settings.profileVisibility as 'public' | 'private')
         setShowEmail(settings.showEmail)
         setShowPhone(settings.showPhone)
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Failed to load settings:', error)
         showToast('Failed to load settings', 'error')
       } finally {
@@ -92,9 +93,10 @@ export default function Settings() {
       })
 
       showToast('Settings saved successfully!', 'success')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save settings:', error)
-      showToast(error.message || 'Failed to save settings', 'error')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save settings'
+      showToast(errorMessage, 'error')
     } finally {
       setIsSaving(false)
     }
@@ -124,9 +126,10 @@ export default function Settings() {
       setNewPassword('')
       setConfirmPassword('')
       showToast('Password changed successfully!', 'success')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to change password:', error)
-      showToast(error.message || 'Failed to change password', 'error')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to change password'
+      showToast(errorMessage, 'error')
     } finally {
       setIsSaving(false)
     }
@@ -496,17 +499,17 @@ export default function Settings() {
                     <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Account Type</span>
                     <span className="text-sm text-gray-900 dark:text-white capitalize">{user?.role?.toLowerCase() || 'Customer'}</span>
                   </div>
-                  {(user as any)?.authProvider && (
+                  {user?.authProvider && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Sign-in Method</span>
-                      <span className="text-sm text-gray-900 dark:text-white capitalize">{(user as any).authProvider}</span>
+                      <span className="text-sm text-gray-900 dark:text-white capitalize">{user.authProvider}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Change Password */}
-              {(!user || !(user as any).authProvider || (user as any).authProvider === 'local') && (
+              {(!user || !user.authProvider || user.authProvider === 'local') && (
                 <div className="space-y-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-3 mb-4">
                     <Lock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
@@ -609,13 +612,120 @@ export default function Settings() {
                 </div>
               )}
 
-              {user && (user as any).authProvider && (user as any).authProvider !== 'local' && (
+              {user && user.authProvider && user.authProvider !== 'local' && (
                 <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     This account uses social login. Password cannot be changed here.
                   </p>
                 </div>
               )}
+
+              {/* Data & Privacy Rights (Ghana Act 843 Compliance) */}
+              <div className="space-y-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3 mb-4">
+                  <Shield className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Data & Privacy Rights
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Under Ghana's Data Protection Act 843, you have the right to access, export, and delete your personal data.
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                        Export My Data
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Download a copy of all your personal data in JSON format
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          setIsSaving(true)
+                          const response = await authApi.exportData()
+                          
+                          // Download as JSON file
+                          const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' })
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url
+                          a.download = `my-data-export-${new Date().toISOString().split('T')[0]}.json`
+                          document.body.appendChild(a)
+                          a.click()
+                          document.body.removeChild(a)
+                          URL.revokeObjectURL(url)
+                          
+                          showToast('Data exported successfully!', 'success')
+                        } catch (error: unknown) {
+                          console.error('Export error:', error)
+                          const errorMessage = error instanceof Error ? error.message : 'Failed to export data'
+                          showToast(errorMessage, 'error')
+                        } finally {
+                          setIsSaving(false)
+                        }
+                      }}
+                      disabled={isSaving}
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-red-900 dark:text-red-200 mb-1 flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        Delete My Account
+                      </h4>
+                      <p className="text-xs text-red-700 dark:text-red-300">
+                        Permanently delete your account and all associated data. This action cannot be undone.
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        if (!confirm('Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.')) {
+                          return
+                        }
+                        
+                        const confirmation = prompt('Type "DELETE" to confirm account deletion:')
+                        if (confirmation !== 'DELETE') {
+                          showToast('Account deletion cancelled', 'info')
+                          return
+                        }
+
+                        try {
+                          setIsSaving(true)
+                          await authApi.deleteAccount()
+                          showToast('Account deleted successfully', 'success')
+                          // Logout and redirect
+                          logout()
+                          navigate('/')
+                        } catch (error: unknown) {
+                          console.error('Delete error:', error)
+                          const errorMessage = error instanceof Error ? error.message : 'Failed to delete account'
+                          showToast(errorMessage, 'error')
+                        } finally {
+                          setIsSaving(false)
+                        }
+                      }}
+                      disabled={isSaving}
+                      className="flex items-center gap-2 text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
 

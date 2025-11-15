@@ -29,7 +29,8 @@ export default function SearchResults() {
     const fetchProviders = async () => {
       try {
         const data = await providersApi.getAll()
-        setProviders(data as Provider[])
+        // Ensure data is always an array
+        setProviders(Array.isArray(data) ? data : [])
       } catch {
         // Error fetching providers - show empty state
         setProviders([])
@@ -142,7 +143,7 @@ export default function SearchResults() {
 
         {/* Search Bar for refinement */}
         <div className="mb-6">
-          <SearchBar 
+          <SearchBar
             onSearch={handleSearch}
             providers={providers}
             onProviderSelect={(provider) => {
@@ -161,28 +162,26 @@ export default function SearchResults() {
           <p className="text-gray-600 dark:text-gray-400 font-medium">
             Found {filteredProviders.length} provider{filteredProviders.length !== 1 ? 's' : ''}
           </p>
-          
+
           <div className="flex items-center gap-4">
             {/* View Toggle */}
             <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'grid'
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'grid'
                     ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
                     : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
+                  }`}
                 aria-label="Grid view"
               >
                 <Grid3x3 className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'list'
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'list'
                     ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
                     : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
+                  }`}
                 aria-label="List view"
               >
                 <List className="h-4 w-4" />
@@ -261,4 +260,3 @@ export default function SearchResults() {
     </div>
   )
 }
-

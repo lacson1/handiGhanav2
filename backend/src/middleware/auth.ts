@@ -8,6 +8,12 @@ export interface AuthRequest extends Request {
   userRole?: string
 }
 
+interface JwtPayload {
+  userId?: string
+  role?: string
+  [key: string]: unknown
+}
+
 export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization
@@ -17,13 +23,15 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
       return res.status(401).json({ message: 'Access token required' })
     }
 
-    jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+    jwt.verify(token, JWT_SECRET, (err: jwt.VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
       if (err) {
         return res.status(403).json({ message: 'Invalid or expired token' })
       }
 
-      req.userId = decoded.userId
-      req.userRole = decoded.role
+      if (decoded && typeof decoded === 'object' && 'userId' in decoded) {
+        req.userId = decoded.userId as string
+        req.userRole = decoded.role as string
+      }
       next()
     })
   } catch (error) {
@@ -42,11 +50,11 @@ export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction
       return next()
     }
 
-    jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
-      if (!err && decoded) {
+    jwt.verify(token, JWT_SECRET, (err: jwt.VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
+      if (!err && decoded && typeof decoded === 'object' && 'userId' in decoded) {
         // Token is valid - attach user info
-        req.userId = decoded.userId
-        req.userRole = decoded.role
+        req.userId = decoded.userId as string
+        req.userRole = decoded.role as string
       }
       // Continue regardless of token validity
       next()

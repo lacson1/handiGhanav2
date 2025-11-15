@@ -60,15 +60,15 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     return (
       <div className="relative">
         {label && (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="text-red-600 dark:text-red-400 ml-1">*</span>}
           </label>
         )}
-        
+
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          
+          <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+
           <input
             ref={ref}
             type={showPassword ? 'text' : 'password'}
@@ -80,13 +80,14 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             disabled={disabled}
             autoComplete="current-password"
             className={cn(
-              "w-full pl-10 pr-12 py-3 rounded-lg border-2 transition-colors",
+              "w-full pl-12 pr-14 py-4 rounded-xl border-2 transition-all text-base",
               "bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
-              "focus:outline-none focus:ring-2",
+              "focus:outline-none focus:ring-4",
               error
                 ? "border-red-500 focus:ring-red-500/20"
-                : "border-gray-200 dark:border-gray-600 focus:border-ghana-green focus:ring-ghana-green/20",
+                : "border-gray-300 dark:border-gray-600 focus:border-ghana-green focus:ring-ghana-green/20",
               disabled && "opacity-50 cursor-not-allowed",
+              "placeholder:text-gray-400 dark:placeholder:text-gray-500",
               className
             )}
           />
@@ -145,27 +146,28 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
 
             {/* Feedback */}
             {focused && strength.feedback.length > 0 && (
-              <motion.ul
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-xs text-gray-600 dark:text-gray-400 space-y-1 pl-4"
               >
-                {strength.feedback.slice(0, 3).map((feedback, index) => (
-                  <li key={index} className="list-disc">
-                    {feedback}
-                  </li>
-                ))}
-              </motion.ul>
+                <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 pl-4 list-disc">
+                  {strength.feedback.slice(0, 3).map((feedback, index) => (
+                    <li key={index}>
+                      {feedback}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
             )}
           </motion.div>
         )}
 
         {hint && !error && !showStrength && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{hint}</p>
+          <p className="text-base text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">{hint}</p>
         )}
-        
+
         {error && (
-          <p className="text-sm text-red-500 mt-1">{error}</p>
+          <p className="text-base text-red-600 dark:text-red-400 mt-2 font-medium">{error}</p>
         )}
       </div>
     )

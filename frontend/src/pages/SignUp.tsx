@@ -18,6 +18,9 @@ export default function SignUp() {
     password: '',
     confirmPassword: '',
     phone: '',
+    consentPrivacy: false,
+    consentTerms: false,
+    consentMarketing: false,
   })
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -57,6 +60,14 @@ export default function SignUp() {
       errors.confirmPassword = 'Passwords do not match'
     }
 
+    if (!formData.consentPrivacy) {
+      errors.consentPrivacy = 'You must accept the Privacy Policy to continue'
+    }
+
+    if (!formData.consentTerms) {
+      errors.consentTerms = 'You must accept the Terms of Service to continue'
+    }
+
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
   }
@@ -78,18 +89,20 @@ export default function SignUp() {
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
-        role: 'CUSTOMER'
+        role: 'CUSTOMER',
       })
-      
+      // Note: Consent fields (consentPrivacy, consentTerms, consentMarketing) 
+      // should be handled separately if needed for compliance
+
       // After successful registration, redirect to sign in
-      navigate('/signin', { 
-        state: { 
+      navigate('/signin', {
+        state: {
           message: 'Account created successfully! Please sign in.',
-          email: formData.email 
-        } 
+          email: formData.email
+        }
       })
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -113,26 +126,26 @@ export default function SignUp() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
         <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-center text-4xl font-bold text-gray-900 dark:text-white mb-3">
             Create Account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-center text-base text-gray-700 dark:text-gray-300 leading-relaxed">
             Sign up to start booking services
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-700 text-red-800 dark:text-red-300 px-5 py-4 rounded-xl text-base font-medium leading-relaxed">
               {error}
             </div>
           )}
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="name" className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
                 Full Name
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   id="name"
                   name="name"
@@ -140,15 +153,15 @@ export default function SignUp() {
                   required
                   value={formData.name}
                   onChange={(e) => handleChange('name', e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-ghana-green focus:ring-2 focus:ring-ghana-green/20 transition-colors"
+                  className="w-full pl-12 pr-5 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base focus:outline-none focus:border-ghana-green focus:ring-4 focus:ring-ghana-green/20 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   placeholder="Enter your full name"
                 />
                 {fieldErrors.name && (
-                  <p className="text-sm text-red-500 mt-1">{fieldErrors.name}</p>
+                  <p className="text-base text-red-600 dark:text-red-400 mt-2 font-medium">{fieldErrors.name}</p>
                 )}
               </div>
             </div>
-            
+
             <EmailInput
               value={formData.email}
               onChange={(value) => handleChange('email', value)}
@@ -187,6 +200,74 @@ export default function SignUp() {
               required
               placeholder="Confirm your password"
             />
+          </div>
+
+          {/* Consent Checkboxes */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-start space-x-2">
+              <input
+                type="checkbox"
+                id="consentPrivacy"
+                checked={formData.consentPrivacy}
+                onChange={(e) => {
+                  setFormData({ ...formData, consentPrivacy: e.target.checked })
+                  if (fieldErrors.consentPrivacy) {
+                    setFieldErrors({ ...fieldErrors, consentPrivacy: '' })
+                  }
+                }}
+                className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                required
+              />
+              <label htmlFor="consentPrivacy" className="text-sm text-gray-700 dark:text-gray-300">
+                I have read and agree to the{' '}
+                <Link to="/privacy" className="text-primary hover:underline font-medium" target="_blank">
+                  Privacy Policy
+                </Link>
+                {' '}*
+              </label>
+            </div>
+            {fieldErrors.consentPrivacy && (
+              <p className="text-sm text-red-500 ml-6">{fieldErrors.consentPrivacy}</p>
+            )}
+
+            <div className="flex items-start space-x-2">
+              <input
+                type="checkbox"
+                id="consentTerms"
+                checked={formData.consentTerms}
+                onChange={(e) => {
+                  setFormData({ ...formData, consentTerms: e.target.checked })
+                  if (fieldErrors.consentTerms) {
+                    setFieldErrors({ ...fieldErrors, consentTerms: '' })
+                  }
+                }}
+                className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                required
+              />
+              <label htmlFor="consentTerms" className="text-sm text-gray-700 dark:text-gray-300">
+                I agree to the{' '}
+                <Link to="/terms" className="text-primary hover:underline font-medium" target="_blank">
+                  Terms of Service
+                </Link>
+                {' '}*
+              </label>
+            </div>
+            {fieldErrors.consentTerms && (
+              <p className="text-sm text-red-500 ml-6">{fieldErrors.consentTerms}</p>
+            )}
+
+            <div className="flex items-start space-x-2">
+              <input
+                type="checkbox"
+                id="consentMarketing"
+                checked={formData.consentMarketing}
+                onChange={(e) => setFormData({ ...formData, consentMarketing: e.target.checked })}
+                className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <label htmlFor="consentMarketing" className="text-sm text-gray-600 dark:text-gray-400">
+                I consent to receive marketing communications and promotional offers (optional)
+              </label>
+            </div>
           </div>
 
           <div>

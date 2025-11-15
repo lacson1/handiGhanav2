@@ -141,8 +141,9 @@ export const getEarningsTrends = async (req: Request, res: Response) => {
         avgPerJob: monthlyData.map(m => ({ month: m.month, value: m.avgPerJob }))
       }
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to fetch earnings trends' })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch earnings trends'
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -166,8 +167,9 @@ export const getEarningsByCategory = async (req: Request, res: Response) => {
         percentage: Math.round((c.earnings / totalEarnings) * 100)
       }))
     })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to fetch category breakdown' })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch category breakdown'
+    res.status(500).json({ message: errorMessage })
   }
 }
 
@@ -204,8 +206,9 @@ export const exportEarningsReport = async (req: Request, res: Response) => {
         categoryBreakdown: categoryData
       })
     }
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to export earnings report' })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to export earnings report'
+    res.status(500).json({ message: errorMessage })
   }
 }
 

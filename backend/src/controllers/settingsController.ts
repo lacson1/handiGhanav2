@@ -1,9 +1,8 @@
 import { Response } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { AuthRequest } from '../middleware/auth'
-
-const prisma = new PrismaClient()
+import { prisma } from '../lib/prisma'
 
 // Get user settings
 export const getSettings = async (req: AuthRequest, res: Response) => {
@@ -34,10 +33,10 @@ export const getSettings = async (req: AuthRequest, res: Response) => {
             showPhone: false
           }
         })
-      } catch (createError: any) {
+      } catch (createError: unknown) {
         // If creation fails (e.g., user doesn't exist), return error
         console.error('Create settings error:', createError)
-        if (createError.code === 'P2003') {
+        if (createError instanceof Prisma.PrismaClientKnownRequestError && createError.code === 'P2003') {
           return res.status(404).json({ message: 'User not found' })
         }
         throw createError
@@ -45,31 +44,39 @@ export const getSettings = async (req: AuthRequest, res: Response) => {
     }
 
     res.json(settings)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get settings error:', error)
-    console.error('Error details:', {
-      code: error.code,
-      message: error.message,
-      meta: error.meta,
-      stack: error.stack
-    })
     
-    // Handle specific Prisma errors
-    if (error.code === 'P2002') {
-      return res.status(409).json({ message: 'Settings already exist for this user' })
-    }
-    if (error.code === 'P2003') {
-      return res.status(404).json({ message: 'User not found' })
-    }
-    if (error.code === 'P2025') {
-      return res.status(404).json({ message: 'Settings not found' })
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        meta: error.meta,
+        stack: error.stack
+      })
+      
+      // Handle specific Prisma errors
+      if (error.code === 'P2002') {
+        return res.status(409).json({ message: 'Settings already exist for this user' })
+      }
+      if (error.code === 'P2003') {
+        return res.status(404).json({ message: 'User not found' })
+      }
+      if (error.code === 'P2025') {
+        return res.status(404).json({ message: 'Settings not found' })
+      }
+      
+      return res.status(500).json({ 
+        message: error.message || 'Failed to get settings',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        code: error.code
+      })
     }
     
-    const errorMessage = error.message || 'Failed to get settings'
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get settings'
     res.status(500).json({ 
       message: errorMessage,
-      error: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-      code: error.code
+      error: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
     })
   }
 }
@@ -100,7 +107,16 @@ export const updateSettings = async (req: AuthRequest, res: Response) => {
     }
 
     // Build update object - only include fields that are provided (not undefined)
-    const updateData: any = {}
+    const updateData: {
+      emailNotifications?: boolean
+      smsNotifications?: boolean
+      pushNotifications?: boolean
+      bookingReminders?: boolean
+      promotions?: boolean
+      profileVisibility?: 'public' | 'private'
+      showEmail?: boolean
+      showPhone?: boolean
+    } = {}
     if (emailNotifications !== undefined) updateData.emailNotifications = emailNotifications
     if (smsNotifications !== undefined) updateData.smsNotifications = smsNotifications
     if (pushNotifications !== undefined) updateData.pushNotifications = pushNotifications
@@ -155,21 +171,23 @@ export const updateSettings = async (req: AuthRequest, res: Response) => {
     })
 
     res.json({ message: 'Settings updated successfully', settings })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update settings error:', error)
     
-    // Handle specific Prisma errors
-    if (error.code === 'P2003') {
-      return res.status(404).json({ message: 'User not found' })
-    }
-    if (error.code === 'P2002') {
-      return res.status(409).json({ message: 'Settings conflict. Please try again.' })
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // Handle specific Prisma errors
+      if (error.code === 'P2003') {
+        return res.status(404).json({ message: 'User not found' })
+      }
+      if (error.code === 'P2002') {
+        return res.status(409).json({ message: 'Settings conflict. Please try again.' })
+      }
     }
     
-    const errorMessage = error.message || 'Failed to update settings'
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update settings'
     res.status(500).json({ 
       message: errorMessage,
-      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
     })
   }
 }
@@ -225,18 +243,20 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     })
 
     res.json({ message: 'Password changed successfully' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Change password error:', error)
     
-    // Handle specific Prisma errors
-    if (error.code === 'P2025') {
-      return res.status(404).json({ message: 'User not found' })
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // Handle specific Prisma errors
+      if (error.code === 'P2025') {
+        return res.status(404).json({ message: 'User not found' })
+      }
     }
     
-    const errorMessage = error.message || 'Failed to change password'
+    const errorMessage = error instanceof Error ? error.message : 'Failed to change password'
     res.status(500).json({ 
       message: errorMessage,
-      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
     })
   }
 }

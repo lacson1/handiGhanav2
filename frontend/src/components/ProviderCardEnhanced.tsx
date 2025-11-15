@@ -1,7 +1,10 @@
 import { Star, MapPin, CheckCircle, Clock, Phone, MessageCircle, Award, TrendingUp, Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import type { Provider } from '../types'
+import { useState, useEffect } from 'react'
+import type { Provider, Review } from '../types'
 import Button from './ui/Button'
+import ReviewSnippet from './ReviewSnippet'
+import { reviewsApi } from '../lib/api'
 import { formatAvailability, isAvailableNow } from '../lib/utils'
 
 interface ProviderCardEnhancedProps {
@@ -17,19 +20,28 @@ export default function ProviderCardEnhanced({
   onViewProfile,
   viewMode = 'grid'
 }: ProviderCardEnhancedProps) {
-  // Debug: Log avatar for provider ID 1
-  if (provider.id === '1') {
-    console.log('ProviderCardEnhanced - Provider 1 data:', {
-      id: provider.id,
-      name: provider.name,
-      avatar: provider.avatar,
-      image: (provider as any).image,
-      hasAvatar: !!provider.avatar
-    })
-  }
   
   // Support both avatar and image fields
-  const avatarUrl = provider.avatar || (provider as any).image
+  const avatarUrl = provider.avatar || (provider as Provider & { image?: string }).image
+  const [recentReview, setRecentReview] = useState<Review | null>(null)
+  const [loadingReview, setLoadingReview] = useState(false)
+
+  // Load most recent review
+  useEffect(() => {
+    if (provider.id && provider.reviewCount > 0) {
+      setLoadingReview(true)
+      reviewsApi.getByProvider(provider.id, 1)
+        .then((response) => {
+          if (response.reviews && response.reviews.length > 0) {
+            setRecentReview(response.reviews[0] as Review)
+          }
+        })
+        .catch(() => {
+          // Silently fail - reviews are optional on cards
+        })
+        .finally(() => setLoadingReview(false))
+    }
+  }, [provider.id, provider.reviewCount])
   const handleWhatsApp = () => {
     if (provider.whatsapp) {
       window.open(`https://wa.me/${provider.whatsapp.replace(/[^0-9]/g, '')}`, '_blank')
@@ -133,6 +145,13 @@ export default function ProviderCardEnhanced({
             <p className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2 mb-3 leading-relaxed font-medium">
               {provider.description}
             </p>
+
+            {/* Recent Review Snippet */}
+            {recentReview && !loadingReview && (
+              <div className="mb-3">
+                <ReviewSnippet review={recentReview} />
+              </div>
+            )}
 
             {/* Skills */}
             {provider.skills && provider.skills.length > 0 && (
@@ -311,6 +330,13 @@ export default function ProviderCardEnhanced({
         <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2 mb-3 min-h-[2.5rem] leading-relaxed font-semibold">
           {provider.description}
         </p>
+
+        {/* Recent Review Snippet */}
+        {recentReview && !loadingReview && (
+          <div className="mb-3">
+            <ReviewSnippet review={recentReview} />
+          </div>
+        )}
 
         {/* Skills Tags */}
         {provider.skills && provider.skills.length > 0 && (

@@ -59,7 +59,7 @@ export default function Home() {
       <KentePattern variant="background" colors="ghana" />
 
       {/* Hero Section - Clean with Ghanaian Accent */}
-      <section className="relative bg-linear-to-b from-gray-50 to-white border-b border-gray-100">
+      <section className="relative bg-gradient-to-b from-gray-50 to-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
           <div className="text-center max-w-4xl mx-auto">
             {/* Kente Divider at Top */}
@@ -253,7 +253,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section - Enhanced with Icons and Animations */}
-      <section className="py-16 md:py-20 bg-linear-to-r from-ghana-red via-primary to-ghana-green relative overflow-hidden">
+      <section className="py-16 md:py-20 bg-gradient-to-r from-ghana-red via-primary to-ghana-green relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,white_1px,transparent_0)] bg-size-[40px_40px]"></div>

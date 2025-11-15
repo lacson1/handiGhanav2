@@ -1,15 +1,19 @@
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
-import { PrismaClient } from '@prisma/client'
+import { User } from '@prisma/client'
+import { prisma } from '../lib/prisma'
 
-const prisma = new PrismaClient()
+interface AuthenticatedRequest extends Request {
+  user?: User
+}
 
 export const googleCallback = async (req: Request, res: Response) => {
   try {
-    const user = req.user as any
+    const authReq = req as AuthenticatedRequest
+    const user = authReq.user
 
     if (!user) {
-      return res.redirect(`${process.env.FRONTEND_URL}/signin?error=authentication_failed`)
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/signin?error=authentication_failed`)
     }
 
     // Generate JWT token
@@ -31,16 +35,26 @@ export const googleCallback = async (req: Request, res: Response) => {
       },
     })
 
+    // If user not found (shouldn't happen, but handle gracefully)
+    if (!fullUser) {
+      console.error('OAuth callback error: User not found after authentication', user.id)
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+      return res.redirect(`${frontendUrl}/signin?error=user_not_found`)
+    }
+
     // Redirect to frontend with token
-    const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(fullUser))}`
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+    const redirectUrl = `${frontendUrl}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(fullUser))}`
     res.redirect(redirectUrl)
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('OAuth callback error:', error)
-    res.redirect(`${process.env.FRONTEND_URL}/signin?error=authentication_failed`)
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+    res.redirect(`${frontendUrl}/signin?error=authentication_failed`)
   }
 }
 
 export const googleAuthFailure = (req: Request, res: Response) => {
-  res.redirect(`${process.env.FRONTEND_URL}/signin?error=authentication_failed`)
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+  res.redirect(`${frontendUrl}/signin?error=authentication_failed`)
 }
 

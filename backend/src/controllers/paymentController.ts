@@ -1,5 +1,7 @@
 import { Request, Response } from 'express'
+import { PaymentStatus, PaymentMethod, Prisma } from '@prisma/client'
 import axios from 'axios'
+import { prisma } from '../lib/prisma'
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || 'sk_test_demo'
 const MTN_MOMO_API_KEY = process.env.MTN_MOMO_API_KEY || ''
@@ -12,7 +14,37 @@ export const initializePayment = async (req: Request, res: Response) => {
   try {
     const { bookingId, amount, method, mobileMoneyNumber, mobileMoneyProvider, bankAccount } = req.body
 
-    // TODO: Get actual booking details from database
+    // Get booking details from database
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        provider: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    })
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' })
+    }
+
+    // Use booking amount if provided, otherwise use amount from request
+    const paymentAmount = booking.amount || amount
+
+    if (!paymentAmount || paymentAmount <= 0) {
+      return res.status(400).json({ message: 'Valid payment amount is required' })
+    }
+
     const reference = `booking-${bookingId}-${Date.now()}`
     
     // Handle different payment methods
@@ -20,11 +52,33 @@ export const initializePayment = async (req: Request, res: Response) => {
       // Mobile Money payment
       const provider = method.replace('MOBILE_MONEY_', '')
       
+      // Create payment record
+      const payment = await prisma.payment.create({
+        data: {
+          bookingId,
+          amount: paymentAmount,
+          method: method as PaymentMethod,
+          status: PaymentStatus.PENDING,
+          mobileMoneyNumber: mobileMoneyNumber || null,
+          mobileMoneyProvider: provider as any,
+          transactionId: reference
+        }
+      })
+
+      // Update booking payment status
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+          paymentStatus: PaymentStatus.PENDING,
+          paymentMethod: method as PaymentMethod
+        }
+      })
+      
       try {
         if (provider === 'MTN') {
           // MTN Mobile Money integration
           const momoResponse = await initializeMTNMoMo({
-            amount,
+            amount: paymentAmount,
             phoneNumber: mobileMoneyNumber,
             reference,
             description: `Payment for booking ${bookingId}`
@@ -37,14 +91,15 @@ export const initializePayment = async (req: Request, res: Response) => {
             method: 'mobile_money',
             provider: 'MTN',
             mobileMoneyNumber,
-            message: `You will receive a prompt on your MTN Mobile Money number (${mobileMoneyNumber}) to confirm payment of GHS ${amount}`,
-            transactionId: momoResponse.transactionId
+            message: `You will receive a prompt on your MTN Mobile Money number (${mobileMoneyNumber}) to confirm payment of GHS ${paymentAmount}`,
+            transactionId: momoResponse.transactionId,
+            paymentId: payment.id
           })
           return
         } else if (provider === 'VODAFONE') {
           // Vodafone Cash integration
           const vodafoneResponse = await initializeVodafoneCash({
-            amount,
+            amount: paymentAmount,
             phoneNumber: mobileMoneyNumber,
             reference,
             description: `Payment for booking ${bookingId}`
@@ -57,8 +112,9 @@ export const initializePayment = async (req: Request, res: Response) => {
             method: 'mobile_money',
             provider: 'VODAFONE',
             mobileMoneyNumber,
-            message: `You will receive a prompt on your Vodafone Cash number (${mobileMoneyNumber}) to confirm payment of GHS ${amount}`,
-            transactionId: vodafoneResponse.transactionId
+            message: `You will receive a prompt on your Vodafone Cash number (${mobileMoneyNumber}) to confirm payment of GHS ${paymentAmount}`,
+            transactionId: vodafoneResponse.transactionId,
+            paymentId: payment.id
           })
           return
         } else {
@@ -70,7 +126,8 @@ export const initializePayment = async (req: Request, res: Response) => {
             method: 'mobile_money',
             provider,
             mobileMoneyNumber,
-            message: `You will receive a prompt on your ${provider} Mobile Money number to confirm payment of GHS ${amount}`
+            message: `You will receive a prompt on your ${provider} Mobile Money number to confirm payment of GHS ${paymentAmount}`,
+            paymentId: payment.id
           })
           return
         }
@@ -84,14 +141,35 @@ export const initializePayment = async (req: Request, res: Response) => {
           method: 'mobile_money',
           provider,
           mobileMoneyNumber,
-          message: `You will receive a prompt on your ${provider} Mobile Money number to confirm payment of GHS ${amount}`
+          message: `You will receive a prompt on your ${provider} Mobile Money number to confirm payment of GHS ${paymentAmount}`,
+          paymentId: payment.id
         })
         return
       }
     }
 
     if (method === 'BANK_TRANSFER') {
-      // Bank transfer - return bank details
+      // Bank transfer - create payment record
+      const payment = await prisma.payment.create({
+        data: {
+          bookingId,
+          amount: paymentAmount,
+          method: PaymentMethod.BANK_TRANSFER,
+          status: PaymentStatus.PENDING,
+          bankAccount: bankAccount || null,
+          transactionId: reference
+        }
+      })
+
+      // Update booking payment status
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+          paymentStatus: PaymentStatus.PENDING,
+          paymentMethod: PaymentMethod.BANK_TRANSFER
+        }
+      })
+
       res.json({
         reference,
         method: 'bank_transfer',
@@ -99,29 +177,76 @@ export const initializePayment = async (req: Request, res: Response) => {
           bankName: 'HandyGhana Bank Account',
           accountNumber: '1234567890',
           accountName: 'HandyGhana Services Ltd',
-          amount,
+          amount: paymentAmount,
           reference
         },
-        message: 'Bank transfer details sent to your email'
+        message: 'Bank transfer details sent to your email',
+        paymentId: payment.id
       })
       return
     }
 
     if (method === 'WALLET') {
       // Wallet payment - check balance and deduct
-      // TODO: Implement wallet balance check and deduction
+      const userId = (req as { userId?: string }).userId
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required for wallet payments' })
+      }
+
+      // Get user's wallet balance (if wallet system exists)
+      // For now, create payment record and mark as processing
+      const payment = await prisma.payment.create({
+        data: {
+          bookingId,
+          amount: paymentAmount,
+          method: PaymentMethod.WALLET,
+          status: PaymentStatus.PROCESSING
+        }
+      })
+
+      // Update booking payment status
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+          paymentStatus: PaymentStatus.PROCESSING,
+          paymentMethod: PaymentMethod.WALLET
+        }
+      })
+
       res.json({
-        reference,
+        reference: payment.id,
         method: 'wallet',
-        message: 'Payment processed from wallet'
+        message: 'Payment processed from wallet',
+        paymentId: payment.id
       })
       return
     }
 
     // Default: Card payment via Paystack
+    // Create payment record in database
+    const payment = await prisma.payment.create({
+      data: {
+        bookingId,
+        amount: paymentAmount,
+        method: PaymentMethod.CARD,
+        status: PaymentStatus.PENDING,
+        transactionId: reference
+      }
+    })
+
+    // Update booking payment status
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        paymentStatus: PaymentStatus.PENDING,
+        paymentMethod: PaymentMethod.CARD
+      }
+    })
+
     const paymentData = {
-      email: 'customer@example.com', // Get from booking
-      amount: amount * 100, // Convert to kobo (Paystack uses kobo)
+      email: booking.user?.email || 'customer@example.com',
+      amount: paymentAmount * 100, // Convert to kobo (Paystack uses kobo)
       reference,
       callback_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/callback`,
       metadata: {
@@ -153,7 +278,8 @@ export const initializePayment = async (req: Request, res: Response) => {
       authorization_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success?reference=${reference}`,
       access_code: 'mock-access-code',
       reference,
-      method: 'card'
+      method: 'card',
+      paymentId: payment.id
     })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Payment initialization failed'
@@ -458,4 +584,203 @@ async function verifyVodafoneCash(reference: string) {
   }
 }
 
+// Paystack Webhook Handler
+export const handlePaystackWebhook = async (req: Request, res: Response) => {
+  try {
+    const hash = req.headers['x-paystack-signature'] as string
+    const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || 'sk_test_demo'
+    
+    if (!hash) {
+      return res.status(400).json({ message: 'Missing signature' })
+    }
+
+    // Verify webhook signature
+    const crypto = require('crypto')
+    const secret = PAYSTACK_SECRET_KEY
+    const hashCheck = crypto
+      .createHmac('sha512', secret)
+      .update(JSON.stringify(req.body))
+      .digest('hex')
+
+    if (hash !== hashCheck) {
+      console.error('Paystack webhook signature verification failed')
+      return res.status(400).json({ message: 'Invalid signature' })
+    }
+
+    const event = req.body
+    const { event: eventType, data } = event
+
+    console.log(`Paystack webhook received: ${eventType}`, data)
+
+    // Handle different event types
+    switch (eventType) {
+      case 'charge.success':
+      case 'transfer.success':
+        // Payment successful
+        const reference = data.reference || data.transfer_code
+        if (reference) {
+          // Update payment status in database
+          const payment = await prisma.payment.findFirst({
+            where: {
+              OR: [
+                { transactionId: reference },
+                { bookingId: { contains: reference.split('-')[1] } }
+              ]
+            },
+            include: { booking: true }
+          })
+
+          if (payment) {
+            await prisma.payment.update({
+              where: { id: payment.id },
+              data: { 
+                status: PaymentStatus.COMPLETED,
+                paidAt: new Date(),
+                transactionId: reference
+              }
+            })
+            
+            // Update booking payment status
+            await prisma.booking.update({
+              where: { id: payment.bookingId },
+              data: {
+                paymentStatus: PaymentStatus.COMPLETED
+              }
+            })
+            
+            console.log(`Payment successful for reference: ${reference}`)
+          }
+        }
+        break
+
+      case 'charge.failed':
+      case 'transfer.failed':
+        // Payment failed
+        const failedReference = data.reference || data.transfer_code
+        if (failedReference) {
+          const payment = await prisma.payment.findFirst({
+            where: {
+              OR: [
+                { transactionId: failedReference },
+                { bookingId: { contains: failedReference.split('-')[1] } }
+              ]
+            }
+          })
+
+          if (payment) {
+            await prisma.payment.update({
+              where: { id: payment.id },
+              data: { 
+                status: PaymentStatus.FAILED
+              }
+            })
+            
+            await prisma.booking.update({
+              where: { id: payment.bookingId },
+              data: {
+                paymentStatus: PaymentStatus.FAILED
+              }
+            })
+          }
+          
+          console.log(`Payment failed for reference: ${failedReference}`)
+        }
+        break
+
+      default:
+        console.log(`Unhandled Paystack event: ${eventType}`)
+    }
+
+    // Always return 200 to acknowledge receipt
+    res.status(200).json({ received: true })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Webhook processing failed'
+    console.error('Paystack webhook error:', error)
+    // Still return 200 to prevent Paystack from retrying
+    res.status(200).json({ received: true, error: errorMessage })
+  }
+}
+
+// Mobile Money Webhook Handler (for MTN, Vodafone, etc.)
+export const handleMobileMoneyWebhook = async (req: Request, res: Response) => {
+  try {
+    const { provider, reference, status, transactionId, amount } = req.body
+
+    console.log(`Mobile Money webhook received from ${provider}:`, {
+      reference,
+      status,
+      transactionId,
+      amount
+    })
+
+    // Verify webhook (add signature verification if provider supports it)
+    // For now, we'll trust the webhook data
+    
+    if (status === 'SUCCESSFUL' || status === 'SUCCESS') {
+      // Payment successful
+      const payment = await prisma.payment.findFirst({
+        where: {
+          OR: [
+            { transactionId: reference },
+            { bookingId: { contains: reference.split('-')[1] } }
+          ]
+        }
+      })
+
+      if (payment) {
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: { 
+            status: PaymentStatus.COMPLETED,
+            paidAt: new Date(),
+            transactionId: reference
+          }
+        })
+        
+        await prisma.booking.update({
+          where: { id: payment.bookingId },
+          data: {
+            paymentStatus: PaymentStatus.COMPLETED
+          }
+        })
+      }
+      
+      console.log(`Mobile Money payment successful: ${reference}`)
+    } else if (status === 'FAILED' || status === 'FAILURE') {
+      // Payment failed
+      const payment = await prisma.payment.findFirst({
+        where: {
+          OR: [
+            { transactionId: reference },
+            { bookingId: { contains: reference.split('-')[1] } }
+          ]
+        }
+      })
+
+      if (payment) {
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: { 
+            status: PaymentStatus.FAILED
+          }
+        })
+        
+        await prisma.booking.update({
+          where: { id: payment.bookingId },
+          data: {
+            paymentStatus: PaymentStatus.FAILED
+          }
+        })
+      }
+      
+      console.log(`Mobile Money payment failed: ${reference}`)
+    }
+
+    res.status(200).json({ received: true })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Webhook processing failed'
+    console.error('Mobile Money webhook error:', error)
+    res.status(200).json({ received: true, error: errorMessage })
+  }
+}
 

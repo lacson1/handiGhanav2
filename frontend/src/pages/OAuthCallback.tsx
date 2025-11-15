@@ -26,7 +26,21 @@ export default function OAuthCallback() {
 
       try {
         // Parse user data
-        const user = JSON.parse(decodeURIComponent(userStr))
+        const userData = JSON.parse(decodeURIComponent(userStr))
+
+        // Validate required fields
+        if (!userData || !userData.id || !userData.email || !userData.name || !userData.role) {
+          throw new Error('Invalid user data received from authentication')
+        }
+
+        // Map to User type (only include fields that match User interface)
+        const user = {
+          id: userData.id,
+          email: userData.email,
+          name: userData.name,
+          role: userData.role,
+          avatar: userData.avatar || null
+        }
 
         // Use loginWithToken to update auth context
         loginWithToken(token, user)
@@ -39,9 +53,10 @@ export default function OAuthCallback() {
         } else {
           navigate('/my-bookings')
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error processing OAuth callback:', error)
-        navigate('/signin?error=Authentication failed')
+        const errorMessage = error instanceof Error ? error.message : 'Authentication failed'
+        navigate(`/signin?error=${encodeURIComponent(errorMessage)}`)
       }
     }
 

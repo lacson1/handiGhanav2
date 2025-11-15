@@ -23,7 +23,8 @@ export function ProviderProvider({ children }: { children: ReactNode }) {
     const fetchProviders = async () => {
       try {
         const data = await providersApi.getAll()
-        setProviders(data as Provider[])
+        // Ensure data is always an array
+        setProviders(Array.isArray(data) ? data : [])
       } catch (error) {
         console.error('Failed to fetch providers:', error)
         setProviders([])

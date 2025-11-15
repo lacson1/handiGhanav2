@@ -11,6 +11,7 @@ import { providerService } from '../services/providerService'
 import BookingModal from '../components/BookingModal'
 import BookingSuccessModal from '../components/BookingSuccessModal'
 import ReviewList from '../components/ReviewList'
+import ChatButton from '../components/ChatButton'
 import Button from '../components/ui/Button'
 import { useAuth } from '../context/AuthContext'
 import { servicesApi } from '../lib/api'
@@ -172,7 +173,7 @@ export default function ProviderProfile() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Enhanced Header with Image */}
-      <div className="relative h-80 bg-linear-to-br from-primary via-primary/80 to-blue-600 overflow-hidden">
+      <div className="relative h-80 bg-gradient-to-br from-primary via-primary/80 to-blue-600 overflow-hidden">
         {provider.image && (
           <img
             src={provider.image}
@@ -180,7 +181,7 @@ export default function ProviderProfile() {
             className="absolute inset-0 w-full h-full object-cover opacity-20"
           />
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10">
           <Button
             variant="ghost"
@@ -207,7 +208,7 @@ export default function ProviderProfile() {
                     className="h-32 w-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg"
                   />
                 ) : (
-                  <div className="h-32 w-32 rounded-full bg-linear-to-br from-primary to-blue-600 flex items-center justify-center text-4xl font-bold text-white border-4 border-white dark:border-gray-800 shadow-lg">
+                  <div className="h-32 w-32 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-4xl font-bold text-white border-4 border-white dark:border-gray-800 shadow-lg">
                     {provider.name.charAt(0)}
                   </div>
                 )}
@@ -257,7 +258,7 @@ export default function ProviderProfile() {
                       <Star className="h-6 w-6 fill-yellow-400 text-yellow-400 shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
-                          {provider.rating.toFixed(1)}
+                          {(provider.rating ?? 0).toFixed(1)}
                         </p>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 leading-tight">
                           {provider.reviewCount} {provider.reviewCount === 1 ? 'review' : 'reviews'}
@@ -309,6 +310,10 @@ export default function ProviderProfile() {
                   <Calendar className="h-5 w-5 mr-2" />
                   Book Service
                 </Button>
+                <ChatButton
+                  providerId={provider.id}
+                  providerName={provider.name}
+                />
                 {provider.whatsapp && (
                   <Button
                     variant="outline"
@@ -416,7 +421,7 @@ export default function ProviderProfile() {
               </div>
 
               {/* Trust Indicators */}
-              <div className="grid md:grid-cols-2 gap-4 p-6 md:p-8 bg-linear-to-r from-blue-50 to-primary/10 dark:from-blue-900/20 dark:to-primary/20 rounded-xl border border-primary/20">
+              <div className="grid md:grid-cols-2 gap-4 p-6 md:p-8 bg-gradient-to-r from-blue-50 to-primary/10 dark:from-blue-900/20 dark:to-primary/20 rounded-xl border border-primary/20">
                 <div className="flex items-start gap-4">
                   <Shield className="h-7 w-7 text-primary shrink-0 mt-0.5" />
                   <div>
@@ -498,7 +503,7 @@ export default function ProviderProfile() {
                       </p>
 
                       {/* Pricing */}
-                      <div className="mb-4 p-4 bg-linear-to-r from-primary/5 to-blue-50 dark:from-primary/10 dark:to-blue-900/20 rounded-lg border border-primary/10">
+                      <div className="mb-4 p-4 bg-gradient-to-r from-primary/5 to-blue-50 dark:from-primary/10 dark:to-blue-900/20 rounded-lg border border-primary/10">
                         {service.pricingModel === 'pay-as-you-go' ? (
                           <div>
                             <div className="flex items-baseline gap-2">
@@ -592,7 +597,7 @@ export default function ProviderProfile() {
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   <span className="text-lg font-bold text-gray-900 dark:text-white">
-                    {provider.rating.toFixed(1)}
+                    {(provider.rating ?? 0).toFixed(1)}
                   </span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
                     ({provider.reviewCount} {provider.reviewCount === 1 ? 'review' : 'reviews'})

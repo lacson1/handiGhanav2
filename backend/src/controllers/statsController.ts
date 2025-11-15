@@ -1,7 +1,6 @@
 import { Request, Response } from 'express'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { Prisma } from '@prisma/client'
+import { prisma } from '../lib/prisma'
 
 export const getPlatformStats = async (req: Request, res: Response) => {
   try {
@@ -49,9 +48,10 @@ export const getPlatformStats = async (req: Request, res: Response) => {
       totalCategories: serviceCategories.length,
       totalLocations: locations.length
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching platform stats:', error)
-    res.status(500).json({ message: 'Failed to fetch stats', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch stats'
+    res.status(500).json({ message: 'Failed to fetch stats', error: errorMessage })
   }
 }
 
@@ -76,9 +76,10 @@ export const getRecentReviews = async (req: Request, res: Response) => {
     })
 
     res.json(reviews)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching recent reviews:', error)
-    res.status(500).json({ message: 'Failed to fetch reviews', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reviews'
+    res.status(500).json({ message: 'Failed to fetch reviews', error: errorMessage })
   }
 }
 
@@ -108,7 +109,7 @@ export const getTrendingSearches = async (req: Request, res: Response) => {
     const searchCounts: Record<string, number> = {}
     
     searchEvents.forEach(event => {
-      const eventData = event.eventData as any
+      const eventData = event.eventData as Record<string, unknown> | null
       // Try multiple fields to extract search term
       let searchTerm = eventData?.searchTerm || eventData?.query || eventData?.term || eventData?.search
       
@@ -144,16 +145,17 @@ export const getTrendingSearches = async (req: Request, res: Response) => {
       .slice(0, limit)
 
     res.json(trending)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching trending searches:', error)
-    res.status(500).json({ message: 'Failed to fetch trending searches', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch trending searches'
+    res.status(500).json({ message: 'Failed to fetch trending searches', error: errorMessage })
   }
 }
 
 export const trackSearch = async (req: Request, res: Response) => {
   try {
     const { query, category, location } = req.body
-    const userId = (req as any).user?.id // Optional: track which user searched
+    const userId = (req as { user?: { id?: string } }).user?.id // Optional: track which user searched
 
     if (!query && !category && !location) {
       return res.status(400).json({ message: 'At least one search parameter is required' })
@@ -183,9 +185,10 @@ export const trackSearch = async (req: Request, res: Response) => {
     })
 
     res.status(201).json({ message: 'Search tracked successfully' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error tracking search:', error)
-    res.status(500).json({ message: 'Failed to track search', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to track search'
+    res.status(500).json({ message: 'Failed to track search', error: errorMessage })
   }
 }
 

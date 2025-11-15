@@ -1,9 +1,11 @@
 import { Star, MapPin, CheckCircle, Clock, Phone, MessageCircle, MessageSquare } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
-import type { Provider } from '../types'
+import { useState, useEffect } from 'react'
+import type { Provider, Review } from '../types'
 import Button from './ui/Button'
 import QuoteRequestModal from './QuoteRequestModal'
+import ReviewSnippet from './ReviewSnippet'
+import { reviewsApi } from '../lib/api'
 import { formatAvailability, isAvailableNow } from '../lib/utils'
 
 interface ProviderCardProps {
@@ -14,6 +16,25 @@ interface ProviderCardProps {
 
 export default function ProviderCard({ provider, onBook, onViewProfile }: ProviderCardProps) {
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false)
+  const [recentReview, setRecentReview] = useState<Review | null>(null)
+  const [loadingReview, setLoadingReview] = useState(false)
+
+  // Load most recent review
+  useEffect(() => {
+    if (provider.id && provider.reviewCount > 0) {
+      setLoadingReview(true)
+      reviewsApi.getByProvider(provider.id, 1)
+        .then((response) => {
+          if (response.reviews && response.reviews.length > 0) {
+            setRecentReview(response.reviews[0] as Review)
+          }
+        })
+        .catch(() => {
+          // Silently fail - reviews are optional on cards
+        })
+        .finally(() => setLoadingReview(false))
+    }
+  }, [provider.id, provider.reviewCount])
 
   const handleWhatsApp = () => {
     if (provider.whatsapp) {
@@ -68,45 +89,52 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
 
       {/* Content */}
       <div className="p-6">
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 leading-tight">
               {provider.name}
             </h3>
-            <p className="text-sm text-gray-800 dark:text-gray-200 font-semibold mb-2">
+            <p className="text-base text-gray-800 dark:text-gray-200 font-semibold mb-3">
               {provider.category}
             </p>
           </div>
         </div>
 
         {/* Rating */}
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-3 mb-4">
           <div className="flex items-center">
-            <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-            <span className="ml-1 text-base font-bold text-gray-900 dark:text-white">
+            <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
+            <span className="ml-1.5 text-lg font-bold text-gray-900 dark:text-white">
               {provider.rating.toFixed(1)}
             </span>
           </div>
-          <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">
+          <span className="text-base text-gray-700 dark:text-gray-300 font-semibold">
             ({provider.reviewCount} reviews)
           </span>
           {provider.completionRate && (
-            <span className="text-sm text-gray-800 dark:text-gray-200 font-semibold">
+            <span className="text-base text-gray-800 dark:text-gray-200 font-semibold">
               • {Math.round(provider.completionRate * 100)}% completion
             </span>
           )}
         </div>
 
         {/* Location */}
-        <div className="flex items-center text-sm text-gray-800 dark:text-gray-200 mb-3 font-semibold">
-          <MapPin className="h-4 w-4 mr-1 text-gray-600 dark:text-gray-400" />
+        <div className="flex items-center text-base text-gray-800 dark:text-gray-200 mb-4 font-semibold">
+          <MapPin className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
           {provider.location}
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2 mb-4 leading-relaxed font-medium">
+        <p className="text-base text-gray-800 dark:text-gray-200 line-clamp-2 mb-5 leading-relaxed font-medium">
           {provider.description}
         </p>
+
+        {/* Recent Review Snippet */}
+        {recentReview && !loadingReview && (
+          <div className="mb-4">
+            <ReviewSnippet review={recentReview} />
+          </div>
+        )}
 
         {/* Quick Slots */}
         {provider.quickSlots && provider.quickSlots.length > 0 && (
