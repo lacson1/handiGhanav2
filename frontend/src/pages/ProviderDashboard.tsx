@@ -284,7 +284,7 @@ function DashboardContent() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left",
                     activeTab === tab.id
@@ -927,8 +927,8 @@ function ProfileEditForm() {
           description: provider.description || 'Expert in electrical appliances and home wiring.',
           phone: provider.phone || '+233241234567',
           whatsapp: provider.whatsapp || provider.phone || '+233241234567',
-          serviceAreas: (provider as any).serviceAreas || ['Cape Coast', 'Elmina', 'Saltpond'],
-          skills: (provider as any).skills || ['Wiring', 'Appliance Repair', 'Panel Installation']
+          serviceAreas: provider.serviceAreas || ['Cape Coast', 'Elmina', 'Saltpond'],
+          skills: provider.skills || ['Wiring', 'Appliance Repair', 'Panel Installation']
         })
         // Load existing avatar if available
         if (provider.avatar) {

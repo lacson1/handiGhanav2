@@ -496,17 +496,17 @@ export default function Settings() {
                     <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Account Type</span>
                     <span className="text-sm text-gray-900 dark:text-white capitalize">{user?.role?.toLowerCase() || 'Customer'}</span>
                   </div>
-                  {(user as any)?.authProvider && (
+                  {user?.authProvider && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Sign-in Method</span>
-                      <span className="text-sm text-gray-900 dark:text-white capitalize">{(user as any).authProvider}</span>
+                      <span className="text-sm text-gray-900 dark:text-white capitalize">{user.authProvider}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Change Password */}
-              {(!user || !(user as any).authProvider || (user as any).authProvider === 'local') && (
+              {(!user || !user.authProvider || user.authProvider === 'local') && (
                 <div className="space-y-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-3 mb-4">
                     <Lock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
@@ -609,7 +609,7 @@ export default function Settings() {
                 </div>
               )}
 
-              {user && (user as any).authProvider && (user as any).authProvider !== 'local' && (
+              {user && user.authProvider && user.authProvider !== 'local' && (
                 <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     This account uses social login. Password cannot be changed here.

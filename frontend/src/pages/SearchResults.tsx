@@ -6,7 +6,7 @@ import ProviderCard from '../components/ProviderCard'
 import BookingModal from '../components/BookingModal'
 import ProviderDetailsDrawer from '../components/ProviderDetailsDrawer'
 import SearchBar from '../components/SearchBar'
-import type { Provider, FilterState } from '../types'
+import type { Provider, FilterState, ServiceCategory, GhanaCity } from '../types'
 import { providersApi } from '../lib/api'
 
 type SortOption = 'relevance' | 'rating-high' | 'rating-low' | 'name-asc' | 'name-desc' | 'reviews-high'
@@ -40,13 +40,13 @@ export default function SearchResults() {
 
   useEffect(() => {
     // Initialize filters from URL params
-    const category = searchParams.get('category') || undefined
-    const location = searchParams.get('location') || undefined
+    const category = searchParams.get('category')
+    const location = searchParams.get('location')
     const query = searchParams.get('q') || undefined
 
     setFilters({
-      category: category as any,
-      location: location as any,
+      category: category as ServiceCategory | undefined,
+      location: location as GhanaCity | undefined,
       searchQuery: query,
     })
   }, [searchParams])
@@ -79,7 +79,7 @@ export default function SearchResults() {
       result = result.filter(p =>
         p.name.toLowerCase().includes(query) ||
         p.category.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query)
+        (p.description && p.description.toLowerCase().includes(query))
       )
     }
 
