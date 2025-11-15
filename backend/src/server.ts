@@ -48,6 +48,11 @@ const io = new Server(httpServer, {
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  transports: ['websocket', 'polling'], // Allow both transports
+  allowEIO3: true, // Support older Socket.io clients
+  pingTimeout: 60000, // Increase ping timeout for production
+  pingInterval: 25000,
+  upgradeTimeout: 30000,
 })
 
 const PORT = Number(process.env.PORT) || 3001
@@ -131,7 +136,7 @@ app.use('/api/chat', chatRoutes)
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id)
+  console.log('Client connected:', socket.id, 'Transport:', socket.conn.transport.name)
 
   socket.on('join-room', (roomId) => {
     socket.join(roomId)
@@ -143,9 +148,18 @@ io.on('connection', (socket) => {
     console.log(`Client ${socket.id} joined chat: ${chatId}`)
   })
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id)
+  socket.on('disconnect', (reason) => {
+    console.log('Client disconnected:', socket.id, 'Reason:', reason)
   })
+
+  socket.on('error', (error) => {
+    console.error('Socket error:', socket.id, error)
+  })
+})
+
+// Handle connection errors
+io.engine.on('connection_error', (err) => {
+  console.error('Socket.io connection error:', err.req?.headers?.origin, err.message)
 })
 
 // Export io for use in controllers

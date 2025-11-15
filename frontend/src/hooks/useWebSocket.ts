@@ -2,7 +2,21 @@ import { useEffect, useRef } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuth } from '../context/AuthContext'
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001'
+// Construct WebSocket URL from API URL or use explicit WebSocket URL
+const getSocketUrl = () => {
+  // Use explicit WebSocket URL if provided
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL
+  }
+  
+  // Otherwise, construct from API URL
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+  // Remove /api suffix if present and convert http/https to ws/wss
+  const baseUrl = apiUrl.replace(/\/api$/, '').replace(/^http:/, 'ws:').replace(/^https:/, 'wss:')
+  return baseUrl
+}
+
+const SOCKET_URL = getSocketUrl()
 
 export function useWebSocket(roomId?: string) {
   const socketRef = useRef<Socket | null>(null)
@@ -25,12 +39,16 @@ export function useWebSocket(roomId?: string) {
     }
 
     // Initialize socket connection with error handling
+    // Allow both websocket and polling transports for better compatibility
     socketRef.current = io(SOCKET_URL, {
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'], // Allow polling as fallback
       reconnection: true,
-      reconnectionAttempts: 3,
+      reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      timeout: 5000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000, // Increase timeout for production
+      forceNew: false,
+      upgrade: true, // Allow transport upgrades
     })
 
     const socket = socketRef.current
@@ -57,10 +75,21 @@ export function useWebSocket(roomId?: string) {
     })
 
     socket.on('connect_error', (error) => {
-      // Silently handle WebSocket errors - backend might not be running (normal in dev)
-      if (import.meta.env.DEV) {
-        console.error('WebSocket connection error:', error)
-      }
+      // Log connection errors for debugging
+      console.error('WebSocket connection error:', error.message)
+      // Don't spam console in production, but log for debugging
+    })
+    
+    socket.on('reconnect_attempt', () => {
+      console.log('Attempting to reconnect WebSocket...')
+    })
+    
+    socket.on('reconnect', (attemptNumber) => {
+      console.log(`WebSocket reconnected after ${attemptNumber} attempts`)
+    })
+    
+    socket.on('reconnect_failed', () => {
+      console.error('WebSocket reconnection failed after all attempts')
     })
 
     return () => {
