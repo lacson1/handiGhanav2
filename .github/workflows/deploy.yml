@@ -1,0 +1,96 @@
+name: Deploy Application
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      deploy_frontend:
+        description: 'Deploy Frontend'
+        required: false
+        default: 'true'
+        type: boolean
+      deploy_backend:
+        description: 'Deploy Backend'
+        required: false
+        default: 'true'
+        type: boolean
+
+jobs:
+  deploy-frontend:
+    if: github.event.inputs.deploy_frontend != 'false' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy frontend]') || contains(github.event.head_commit.message, '[deploy all]'))
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://handighana-backend.fly.dev/api' }}
+          VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL || 'https://handighana-backend.fly.dev' }}
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://handighana-backend.fly.dev/api' }}
+          VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL || 'https://handighana-backend.fly.dev' }}
+
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  deploy-backend:
+    if: github.event.inputs.deploy_backend != 'false' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy backend]') || contains(github.event.head_commit.message, '[deploy all]'))
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Fly.io CLI
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Deploy to Fly.io
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
