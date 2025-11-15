@@ -31,8 +31,9 @@ export const bookingService = {
     try {
       const result = await bookingsApi.create(data)
       return result as Booking
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to create booking')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking'
+      throw new Error(errorMessage)
     }
   },
 
@@ -40,8 +41,9 @@ export const bookingService = {
     try {
       const result = await bookingsApi.updateStatus(id, status)
       return result as Booking
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to update booking status')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update booking status'
+      throw new Error(errorMessage)
     }
   },
 }

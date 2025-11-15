@@ -1,57 +1,51 @@
 import { Request, Response } from 'express'
-import { Subscription } from '../types/controller.types'
-
-// Mock subscriptions data - in production, this would come from Prisma
-let mockSubscriptions: Subscription[] = [
-  {
-    id: 'sub-1',
-    userId: 'customer-1',
-    serviceId: 'service-3',
-    providerId: '1',
-    status: 'ACTIVE',
-    startDate: new Date('2024-01-01').toISOString(),
-    nextBillingDate: new Date('2024-02-01').toISOString(),
-    lastBillingDate: new Date('2024-01-01').toISOString(),
-    visitsUsed: 1,
-    visitsRemaining: 1, // 2 total, 1 used
-    autoRenew: true,
-    createdAt: new Date('2024-01-01').toISOString(),
-    updatedAt: new Date('2024-01-15').toISOString()
-  },
-  {
-    id: 'sub-2',
-    userId: 'customer-1',
-    serviceId: 'service-4',
-    providerId: '4',
-    status: 'ACTIVE',
-    startDate: new Date('2024-01-10').toISOString(),
-    nextBillingDate: new Date('2024-02-10').toISOString(),
-    lastBillingDate: new Date('2024-01-10').toISOString(),
-    visitsUsed: 3,
-    visitsRemaining: undefined, // Unlimited
-    autoRenew: true,
-    createdAt: new Date('2024-01-10').toISOString(),
-    updatedAt: new Date('2024-01-20').toISOString()
-  }
-]
+import { SubscriptionStatus, Prisma } from '@prisma/client'
+import { prisma } from '../lib/prisma'
 
 export const getSubscriptions = async (req: Request, res: Response) => {
   try {
-    const { userId, status } = req.query
+    const { userId, status, providerId } = req.query
 
-    let filtered = [...mockSubscriptions]
+    const where: Prisma.SubscriptionWhereInput = {}
 
-    // Filter by user
     if (userId) {
-      filtered = filtered.filter(s => s.userId === userId)
+      where.userId = userId as string
     }
 
-    // Filter by status
+    if (providerId) {
+      where.providerId = providerId as string
+    }
+
     if (status) {
-      filtered = filtered.filter(s => s.status === status)
+      where.status = status as SubscriptionStatus
     }
 
-    res.json(filtered)
+    const subscriptions = await prisma.subscription.findMany({
+      where,
+      include: {
+        service: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            basePrice: true,
+            monthlyPrice: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    res.json(subscriptions)
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Operation failed'
     console.error('Subscription operation error:', error)
@@ -62,7 +56,20 @@ export const getSubscriptions = async (req: Request, res: Response) => {
 export const getSubscriptionById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
-    const subscription = mockSubscriptions.find(s => s.id === id)
+    
+    const subscription = await prisma.subscription.findUnique({
+      where: { id },
+      include: {
+        service: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+      }
+    })
 
     if (!subscription) {
       return res.status(404).json({ message: 'Subscription not found' })
@@ -90,35 +97,76 @@ export const createSubscription = async (req: Request, res: Response) => {
       })
     }
 
-    // Calculate next billing date based on service billing cycle
-    // For now, default to monthly
-    const nextBillingDate = new Date()
-    nextBillingDate.setMonth(nextBillingDate.getMonth() + 1)
+    // Verify service exists and get billing cycle
+    const service = await prisma.service.findUnique({
+      where: { id: serviceId }
+    })
 
-    const newSubscription: Subscription = {
-      id: `sub-${Date.now()}`,
-      userId: String(userId).trim(),
-      serviceId: String(serviceId).trim(),
-      providerId: String(providerId).trim(),
-      status: 'ACTIVE',
-      startDate: new Date().toISOString(),
-      nextBillingDate: nextBillingDate.toISOString(),
-      lastBillingDate: new Date().toISOString(),
-      visitsUsed: 0,
-      visitsRemaining: undefined, // Will be set based on service
-      autoRenew: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' })
     }
 
-    mockSubscriptions.push(newSubscription)
+    if (service.pricingModel !== 'SUBSCRIPTION') {
+      return res.status(400).json({ message: 'Service must be a subscription service' })
+    }
 
-    // TODO: Save to database with Prisma
-    // const subscription = await prisma.subscription.create({ data: { ... } })
+    // Verify user and provider exist
+    const [user, provider] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.provider.findUnique({ where: { id: providerId } })
+    ])
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider not found' })
+    }
+
+    // Calculate next billing date based on service billing cycle
+    const nextBillingDate = new Date()
+    if (service.billingCycle === 'WEEKLY') {
+      nextBillingDate.setDate(nextBillingDate.getDate() + 7)
+    } else if (service.billingCycle === 'MONTHLY') {
+      nextBillingDate.setMonth(nextBillingDate.getMonth() + 1)
+    } else if (service.billingCycle === 'QUARTERLY') {
+      nextBillingDate.setMonth(nextBillingDate.getMonth() + 3)
+    } else if (service.billingCycle === 'YEARLY') {
+      nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1)
+    } else {
+      // Default to monthly
+      nextBillingDate.setMonth(nextBillingDate.getMonth() + 1)
+    }
+
+    // Create subscription in database
+    const subscription = await prisma.subscription.create({
+      data: {
+        userId: String(userId).trim(),
+        serviceId: String(serviceId).trim(),
+        providerId: String(providerId).trim(),
+        status: SubscriptionStatus.ACTIVE,
+        nextBillingDate,
+        lastBillingDate: new Date(),
+        visitsUsed: 0,
+        visitsRemaining: service.visitsPerPeriod,
+        autoRenew: true
+      },
+      include: {
+        service: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+      }
+    })
 
     res.status(201).json({
       message: 'Subscription created successfully',
-      subscription: newSubscription
+      subscription
     })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Operation failed'
@@ -132,24 +180,41 @@ export const updateSubscription = async (req: Request, res: Response) => {
     const { id } = req.params
     const updates = req.body
 
-    const subscriptionIndex = mockSubscriptions.findIndex(s => s.id === id)
-    
-    if (subscriptionIndex === -1) {
+    // Check if subscription exists
+    const existingSubscription = await prisma.subscription.findUnique({
+      where: { id }
+    })
+
+    if (!existingSubscription) {
       return res.status(404).json({ message: 'Subscription not found' })
     }
 
-    // Update subscription
-    const updatedSubscription = {
-      ...mockSubscriptions[subscriptionIndex],
-      ...updates,
-      id, // Don't allow ID changes
-      updatedAt: new Date().toISOString()
-    }
+    // Prepare update data
+    const updateData: Prisma.SubscriptionUpdateInput = {}
 
-    mockSubscriptions[subscriptionIndex] = updatedSubscription
+    if (updates.status !== undefined) updateData.status = updates.status as SubscriptionStatus
+    if (updates.nextBillingDate !== undefined) updateData.nextBillingDate = new Date(updates.nextBillingDate)
+    if (updates.lastBillingDate !== undefined) updateData.lastBillingDate = updates.lastBillingDate ? new Date(updates.lastBillingDate) : null
+    if (updates.visitsUsed !== undefined) updateData.visitsUsed = Number(updates.visitsUsed)
+    if (updates.visitsRemaining !== undefined) updateData.visitsRemaining = updates.visitsRemaining ? Number(updates.visitsRemaining) : null
+    if (updates.autoRenew !== undefined) updateData.autoRenew = Boolean(updates.autoRenew)
+    if (updates.cancelledAt !== undefined) updateData.cancelledAt = updates.cancelledAt ? new Date(updates.cancelledAt) : null
 
-    // TODO: Update in database with Prisma
-    // const subscription = await prisma.subscription.update({ where: { id }, data: updates })
+    // Update subscription in database
+    const updatedSubscription = await prisma.subscription.update({
+      where: { id },
+      data: updateData,
+      include: {
+        service: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+      }
+    })
 
     res.json({
       message: 'Subscription updated successfully',
@@ -166,24 +231,34 @@ export const cancelSubscription = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
 
-    const subscriptionIndex = mockSubscriptions.findIndex(s => s.id === id)
-    
-    if (subscriptionIndex === -1) {
+    // Check if subscription exists
+    const subscription = await prisma.subscription.findUnique({
+      where: { id }
+    })
+
+    if (!subscription) {
       return res.status(404).json({ message: 'Subscription not found' })
     }
 
-    const updatedSubscription: Subscription = {
-      ...mockSubscriptions[subscriptionIndex],
-      status: 'CANCELLED',
-      cancelledAt: new Date().toISOString(),
-      autoRenew: false,
-      updatedAt: new Date().toISOString()
-    }
-
-    mockSubscriptions[subscriptionIndex] = updatedSubscription
-
-    // TODO: Update in database with Prisma
-    // await prisma.subscription.update({ where: { id }, data: { status: 'CANCELLED', cancelledAt: new Date() } })
+    // Update subscription in database
+    const updatedSubscription = await prisma.subscription.update({
+      where: { id },
+      data: {
+        status: SubscriptionStatus.CANCELLED,
+        cancelledAt: new Date(),
+        autoRenew: false
+      },
+      include: {
+        service: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+      }
+    })
 
     res.json({
       message: 'Subscription cancelled successfully',
@@ -200,19 +275,32 @@ export const pauseSubscription = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
 
-    const subscriptionIndex = mockSubscriptions.findIndex(s => s.id === id)
-    
-    if (subscriptionIndex === -1) {
+    // Check if subscription exists
+    const subscription = await prisma.subscription.findUnique({
+      where: { id }
+    })
+
+    if (!subscription) {
       return res.status(404).json({ message: 'Subscription not found' })
     }
 
-    const updatedSubscription: Subscription = {
-      ...mockSubscriptions[subscriptionIndex],
-      status: 'PAUSED',
-      updatedAt: new Date().toISOString()
-    }
-
-    mockSubscriptions[subscriptionIndex] = updatedSubscription
+    // Update subscription in database
+    const updatedSubscription = await prisma.subscription.update({
+      where: { id },
+      data: {
+        status: SubscriptionStatus.PAUSED
+      },
+      include: {
+        service: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+      }
+    })
 
     res.json({
       message: 'Subscription paused successfully',
@@ -229,19 +317,32 @@ export const resumeSubscription = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
 
-    const subscriptionIndex = mockSubscriptions.findIndex(s => s.id === id)
-    
-    if (subscriptionIndex === -1) {
+    // Check if subscription exists
+    const subscription = await prisma.subscription.findUnique({
+      where: { id }
+    })
+
+    if (!subscription) {
       return res.status(404).json({ message: 'Subscription not found' })
     }
 
-    const updatedSubscription: Subscription = {
-      ...mockSubscriptions[subscriptionIndex],
-      status: 'ACTIVE',
-      updatedAt: new Date().toISOString()
-    }
-
-    mockSubscriptions[subscriptionIndex] = updatedSubscription
+    // Update subscription in database
+    const updatedSubscription = await prisma.subscription.update({
+      where: { id },
+      data: {
+        status: SubscriptionStatus.ACTIVE
+      },
+      include: {
+        service: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+      }
+    })
 
     res.json({
       message: 'Subscription resumed successfully',

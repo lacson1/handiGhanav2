@@ -7,6 +7,8 @@ import {
   exportEarningsReport 
 } from '../controllers/earningsController'
 import { authenticateToken, optionalAuth } from '../middleware/auth'
+import { validate } from '../middleware/validate'
+import { createProviderSchema, updateProviderSchema } from '../validators/provider.validator'
 
 const router = express.Router()
 
@@ -17,7 +19,7 @@ router.get('/', getProviders)
 router.get('/counts/by-city', getProviderCountsByCity)
 
 // POST /api/providers - Create new provider (authentication optional - handles both cases)
-router.post('/', optionalAuth, createProvider)
+router.post('/', optionalAuth, validate(createProviderSchema), createProvider)
 
 // Earnings Analytics Routes (must come before /:id route)
 // GET /api/providers/:id/earnings/analytics?period=30d
@@ -36,7 +38,7 @@ router.get('/:id/earnings/export', exportEarningsReport)
 router.get('/:id', getProviderById)
 
 // PUT /api/providers/:id - Update provider (protected)
-router.put('/:id', updateProvider)
+router.put('/:id', validate(updateProviderSchema), updateProvider)
 
 export default router
 

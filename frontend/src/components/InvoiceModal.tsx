@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Plus, Trash2, DollarSign, Calendar, Printer } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { Invoice, InvoiceItem } from '../types'
+import type { Invoice, InvoiceItem, Booking } from '../types'
 // Mock data removed
 import Button from './ui/Button'
 import { cn } from '../lib/utils'
@@ -51,15 +51,17 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice }: Invoi
 
   useEffect(() => {
     if (formData.bookingId) {
-      const booking = null // TODO: Fetch from bookingsApi.getById(formData.bookingId)
-      if (booking) {
-        const customer: any = null // TODO: Fetch from usersApi.getById(booking.userId)
-        setFormData(prev => ({
-          ...prev,
-          customerName: customer?.name || '',
-          serviceType: (booking as any)?.serviceType || ''
-        }))
-      }
+      // TODO: Fetch from bookingsApi.getById(formData.bookingId)
+      // const booking: Booking | null = await bookingsApi.getById(formData.bookingId)
+      // if (booking) {
+      //   // TODO: Fetch from usersApi.getById(booking.userId)
+      //   const customer: { name?: string } | null = await usersApi.getById(booking.userId)
+      //   setFormData(prev => ({
+      //     ...prev,
+      //     customerName: customer?.name || '',
+      //     serviceType: booking?.serviceType || ''
+      //   }))
+      // }
     }
   }, [formData.bookingId])
 

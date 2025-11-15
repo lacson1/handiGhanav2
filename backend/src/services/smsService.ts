@@ -1,7 +1,7 @@
 import twilio from 'twilio'
 
 // Initialize Twilio client
-let twilioClient: any = null
+let twilioClient: ReturnType<typeof twilio> | null = null
 
 if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
   twilioClient = twilio(
@@ -44,8 +44,9 @@ export const sendSMS = async (options: SMSOptions): Promise<boolean> => {
 
     console.log(`✅ SMS sent to ${toPhone}: ${result.sid}`)
     return true
-  } catch (error: any) {
-    console.error('❌ Error sending SMS:', error.message)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('❌ Error sending SMS:', errorMessage)
     return false
   }
 }

@@ -1,103 +1,42 @@
 import { Request, Response } from 'express'
-import { Service } from '../types/controller.types'
-
-// Mock services data - in production, this would come from Prisma
-// For now, we'll use a simple in-memory store
-let mockServices: Service[] = [
-  {
-    id: 'service-1',
-    providerId: '1',
-    name: 'Electrical Repair',
-    description: 'Expert repair for all electrical issues including wiring, outlets, and panels',
-    category: 'Electrician',
-    pricingModel: 'pay-as-you-go',
-    basePrice: 200,
-    duration: 120,
-    isActive: true
-  },
-  {
-    id: 'service-2',
-    providerId: '1',
-    name: 'Panel Installation',
-    description: 'Professional installation of electrical panels and circuit breakers',
-    category: 'Electrician',
-    pricingModel: 'pay-as-you-go',
-    basePrice: 500,
-    duration: 240,
-    isActive: true
-  },
-  {
-    id: 'service-3',
-    providerId: '1',
-    name: 'Monthly Maintenance Plan',
-    description: 'Regular monthly maintenance and inspection service for your electrical systems',
-    category: 'Electrician',
-    pricingModel: 'subscription',
-    basePrice: 50,
-    monthlyPrice: 150,
-    billingCycle: 'monthly',
-    duration: 90,
-    visitsPerPeriod: 2,
-    subscriptionFeatures: [
-      'Priority Support',
-      'Monthly Inspection',
-      'Preventive Maintenance',
-      '10% Discount on Repairs'
-    ],
-    isActive: true
-  },
-  {
-    id: 'service-4',
-    providerId: '4',
-    name: 'Furniture Assembly',
-    description: 'Professional assembly of furniture including IKEA, flat-pack, and custom pieces',
-    category: 'Handyman',
-    pricingModel: 'pay-as-you-go',
-    basePrice: 150,
-    duration: 90,
-    isActive: true
-  },
-  {
-    id: 'service-5',
-    providerId: '4',
-    name: 'Mounting & Installation',
-    description: 'Wall mounting for TVs, shelves, pictures, and other fixtures',
-    category: 'Handyman',
-    pricingModel: 'pay-as-you-go',
-    basePrice: 100,
-    duration: 60,
-    isActive: true
-  },
-  {
-    id: 'service-6',
-    providerId: '4',
-    name: 'General Home Repairs',
-    description: 'Versatile handyman service for all your home repair needs',
-    category: 'Handyman',
-    pricingModel: 'pay-as-you-go',
-    basePrice: 120,
-    duration: 120,
-    isActive: true
-  }
-]
+import { ServiceCategory, PricingModel, BillingCycle, Prisma } from '@prisma/client'
+import { prisma } from '../lib/prisma'
 
 export const getServices = async (req: Request, res: Response) => {
   try {
-    const { providerId, isActive } = req.query
+    const { providerId, isActive, category } = req.query
 
-    let filtered = [...mockServices]
+    const where: Prisma.ServiceWhereInput = {}
 
-    // Filter by provider
     if (providerId) {
-      filtered = filtered.filter(s => s.providerId === providerId)
+      where.providerId = providerId as string
     }
 
-    // Filter by active status
     if (isActive !== undefined) {
-      filtered = filtered.filter(s => s.isActive === (isActive === 'true'))
+      where.isActive = isActive === 'true'
     }
 
-    res.json(filtered)
+    if (category) {
+      where.category = category as ServiceCategory
+    }
+
+    const services = await prisma.service.findMany({
+      where,
+      include: {
+        provider: {
+          select: {
+            id: true,
+            name: true,
+            category: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    res.json(services)
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Operation failed'
     console.error('Service operation error:', error)
@@ -108,7 +47,20 @@ export const getServices = async (req: Request, res: Response) => {
 export const getServiceById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
-    const service = mockServices.find(s => s.id === id)
+    
+    const service = await prisma.service.findUnique({
+      where: { id },
+      include: {
+        provider: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            location: true
+          }
+        }
+      }
+    })
 
     if (!service) {
       return res.status(404).json({ message: 'Service not found' })
@@ -178,30 +130,53 @@ export const createService = async (req: Request, res: Response) => {
       })
     }
 
-    const newService: Service = {
-      id: `service-${Date.now()}`,
-      providerId: String(providerId).trim(),
-      name: trimmedName,
-      description: trimmedDescription,
-      category: trimmedCategory,
-      pricingModel,
-      basePrice: basePriceNum,
-      duration: duration ? Number(duration) : 60,
-      isActive: isActive !== undefined ? Boolean(isActive) : true,
-      monthlyPrice: monthlyPriceNum > 0 ? monthlyPriceNum : undefined,
-      billingCycle: billingCycle ? String(billingCycle).trim() : undefined,
-      subscriptionFeatures: Array.isArray(subscriptionFeatures) ? subscriptionFeatures.map(f => String(f).trim()) : [],
-      visitsPerPeriod: visitsPerPeriod ? Number(visitsPerPeriod) : undefined
+    // Verify provider exists
+    const provider = await prisma.provider.findUnique({
+      where: { id: providerId }
+    })
+
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider not found' })
     }
 
-    mockServices.push(newService)
+    // Validate category
+    const validCategories = Object.values(ServiceCategory)
+    if (!validCategories.includes(trimmedCategory as ServiceCategory)) {
+      return res.status(400).json({ 
+        message: `Category must be one of: ${validCategories.join(', ')}` 
+      })
+    }
 
-    // TODO: Save to database with Prisma
-    // const service = await prisma.service.create({ data: { ... } })
+    // Create service in database
+    const service = await prisma.service.create({
+      data: {
+        providerId: String(providerId).trim(),
+        name: trimmedName,
+        description: trimmedDescription,
+        category: trimmedCategory as ServiceCategory,
+        pricingModel: pricingModel as PricingModel,
+        basePrice: basePriceNum,
+        duration: duration ? Number(duration) : 60,
+        isActive: isActive !== undefined ? Boolean(isActive) : true,
+        monthlyPrice: pricingModel === 'subscription' && monthlyPriceNum > 0 ? monthlyPriceNum : null,
+        billingCycle: billingCycle ? billingCycle as BillingCycle : null,
+        subscriptionFeatures: Array.isArray(subscriptionFeatures) ? subscriptionFeatures.map(f => String(f).trim()) : [],
+        visitsPerPeriod: visitsPerPeriod ? Number(visitsPerPeriod) : null
+      },
+      include: {
+        provider: {
+          select: {
+            id: true,
+            name: true,
+            category: true
+          }
+        }
+      }
+    })
 
     res.status(201).json({
       message: 'Service created successfully',
-      service: newService
+      service
     })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Operation failed'
@@ -215,23 +190,48 @@ export const updateService = async (req: Request, res: Response) => {
     const { id } = req.params
     const updates = req.body
 
-    const serviceIndex = mockServices.findIndex(s => s.id === id)
-    
-    if (serviceIndex === -1) {
+    // Check if service exists
+    const existingService = await prisma.service.findUnique({
+      where: { id }
+    })
+
+    if (!existingService) {
       return res.status(404).json({ message: 'Service not found' })
     }
 
-    // Update service
-    const updatedService = {
-      ...mockServices[serviceIndex],
-      ...updates,
-      id // Don't allow ID changes
+    // Prepare update data
+    const updateData: Prisma.ServiceUpdateInput = {}
+
+    if (updates.name !== undefined) updateData.name = String(updates.name).trim()
+    if (updates.description !== undefined) updateData.description = String(updates.description).trim()
+    if (updates.category !== undefined) updateData.category = updates.category as ServiceCategory
+    if (updates.pricingModel !== undefined) updateData.pricingModel = updates.pricingModel as PricingModel
+    if (updates.basePrice !== undefined) updateData.basePrice = Number(updates.basePrice)
+    if (updates.duration !== undefined) updateData.duration = Number(updates.duration)
+    if (updates.isActive !== undefined) updateData.isActive = Boolean(updates.isActive)
+    if (updates.monthlyPrice !== undefined) updateData.monthlyPrice = updates.monthlyPrice ? Number(updates.monthlyPrice) : null
+    if (updates.billingCycle !== undefined) updateData.billingCycle = updates.billingCycle ? updates.billingCycle as BillingCycle : null
+    if (updates.subscriptionFeatures !== undefined) {
+      updateData.subscriptionFeatures = Array.isArray(updates.subscriptionFeatures) 
+        ? updates.subscriptionFeatures.map((f: string) => String(f).trim()) 
+        : []
     }
+    if (updates.visitsPerPeriod !== undefined) updateData.visitsPerPeriod = updates.visitsPerPeriod ? Number(updates.visitsPerPeriod) : null
 
-    mockServices[serviceIndex] = updatedService
-
-    // TODO: Update in database with Prisma
-    // const service = await prisma.service.update({ where: { id }, data: updates })
+    // Update service in database
+    const updatedService = await prisma.service.update({
+      where: { id },
+      data: updateData,
+      include: {
+        provider: {
+          select: {
+            id: true,
+            name: true,
+            category: true
+          }
+        }
+      }
+    })
 
     res.json({
       message: 'Service updated successfully',
@@ -248,16 +248,33 @@ export const deleteService = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
 
-    const serviceIndex = mockServices.findIndex(s => s.id === id)
-    
-    if (serviceIndex === -1) {
+    // Check if service exists
+    const service = await prisma.service.findUnique({
+      where: { id },
+      include: {
+        subscriptions: {
+          where: {
+            status: 'ACTIVE'
+          }
+        }
+      }
+    })
+
+    if (!service) {
       return res.status(404).json({ message: 'Service not found' })
     }
 
-    mockServices.splice(serviceIndex, 1)
+    // Check if service has active subscriptions
+    if (service.subscriptions.length > 0) {
+      return res.status(400).json({ 
+        message: `Cannot delete service with ${service.subscriptions.length} active subscription(s). Please cancel subscriptions first.` 
+      })
+    }
 
-    // TODO: Delete from database with Prisma
-    // await prisma.service.delete({ where: { id } })
+    // Delete service from database
+    await prisma.service.delete({
+      where: { id }
+    })
 
     res.json({ message: 'Service deleted successfully' })
   } catch (error: unknown) {

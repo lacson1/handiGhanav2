@@ -1,14 +1,14 @@
-import { 
-  Menu, 
-  X, 
-  Search, 
-  Info, 
-  LayoutDashboard, 
-  Calendar, 
-  LogOut, 
-  Shield, 
-  Star, 
-  User, 
+import {
+  Menu,
+  X,
+  Search,
+  Info,
+  LayoutDashboard,
+  Calendar,
+  LogOut,
+  Shield,
+  Star,
+  User,
   Settings,
   ChevronDown,
   UserCircle,
@@ -54,7 +54,7 @@ export default function Navbar() {
       <div className="container mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex h-16 items-center justify-between gap-2">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-1.5 sm:space-x-2 hover:opacity-80 transition-opacity flex-shrink-0" aria-label="Handighana home">
+          <Link to="/" className="flex items-center space-x-1.5 sm:space-x-2 hover:opacity-80 transition-opacity shrink-0" aria-label="Handighana home">
             <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-linear-to-br from-ghana-red via-primary to-ghana-green flex items-center justify-center shadow-md">
               <span className="text-black font-bold text-lg sm:text-xl">H</span>
             </div>
@@ -65,7 +65,7 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-4 xl:gap-6">
-            <button 
+            <button
               onClick={() => {
                 if (window.location.pathname === '/') {
                   document.getElementById('providers')?.scrollIntoView({ behavior: 'smooth' })
@@ -75,18 +75,18 @@ export default function Navbar() {
               }}
               className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-primary dark:text-gray-300 dark:hover:text-primary transition-colors group whitespace-nowrap"
             >
-              <Search className="h-4 w-4 group-hover:scale-110 transition-transform flex-shrink-0" />
+              <Search className="h-4 w-4 group-hover:scale-110 transition-transform shrink-0" />
               <span className="hidden xl:inline">Find Providers</span>
               <span className="xl:hidden">Providers</span>
             </button>
-            <Link 
-              to="/search" 
+            <Link
+              to="/search"
               className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-primary dark:text-gray-300 dark:hover:text-primary transition-colors group whitespace-nowrap"
             >
-              <Briefcase className="h-4 w-4 group-hover:scale-110 transition-transform flex-shrink-0" />
+              <Briefcase className="h-4 w-4 group-hover:scale-110 transition-transform shrink-0" />
               <span>Services</span>
             </Link>
-            <button 
+            <button
               onClick={() => {
                 if (window.location.pathname === '/') {
                   document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })
@@ -96,7 +96,7 @@ export default function Navbar() {
               }}
               className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-primary dark:text-gray-300 dark:hover:text-primary transition-colors group whitespace-nowrap"
             >
-              <Info className="h-4 w-4 group-hover:scale-110 transition-transform flex-shrink-0" />
+              <Info className="h-4 w-4 group-hover:scale-110 transition-transform shrink-0" />
               <span className="hidden xl:inline">How It Works</span>
               <span className="xl:hidden">How</span>
             </button>
@@ -104,7 +104,7 @@ export default function Navbar() {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-1.5 sm:p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+              className="p-1.5 sm:p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors shrink-0"
               aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
             >
@@ -119,7 +119,7 @@ export default function Navbar() {
               <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2.5 ml-2 lg:ml-3">
                 {/* User Name Display - Hidden on smaller screens */}
                 <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                  <UserCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                  <UserCircle className="h-4 w-4 text-primary shrink-0" />
                   <span className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[100px]">
                     {user?.name || 'User'}
                   </span>
@@ -129,39 +129,39 @@ export default function Navbar() {
                 {user?.role === 'ADMIN' && (
                   <Link to="/admin">
                     <Button variant="outline" size="sm" className="flex items-center gap-1.5 px-2.5 py-1.5">
-                      <Shield className="h-4 w-4 flex-shrink-0" />
+                      <Shield className="h-4 w-4 shrink-0" />
                       <span className="hidden 2xl:inline">Admin</span>
                     </Button>
                   </Link>
                 )}
-                
+
                 {/* Dashboard/Bookings Button */}
                 {isProvider ? (
                   <Link to="/provider-dashboard">
                     <Button variant="outline" size="sm" className="flex items-center gap-1.5 px-2.5 py-1.5">
-                      <LayoutDashboard className="h-4 w-4 flex-shrink-0" />
+                      <LayoutDashboard className="h-4 w-4 shrink-0" />
                       <span className="hidden xl:inline">Dashboard</span>
                     </Button>
                   </Link>
                 ) : (
                   <Link to="/my-bookings">
                     <Button variant="outline" size="sm" className="flex items-center gap-1.5 px-2.5 py-1.5">
-                      <Calendar className="h-4 w-4 flex-shrink-0" />
+                      <Calendar className="h-4 w-4 shrink-0" />
                       <span className="hidden xl:inline">Bookings</span>
                     </Button>
                   </Link>
                 )}
-                
+
                 {/* User Profile Dropdown */}
-                <div className="relative flex-shrink-0" ref={dropdownRef}>
+                <div className="relative shrink-0" ref={dropdownRef}>
                   <button
                     onClick={() => setShowProfileDropdown(!showProfileDropdown)}
                     className="flex items-center gap-1.5 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
-                    <div className="h-8 w-8 rounded-full bg-linear-to-br from-primary to-ghana-green flex items-center justify-center text-sm font-bold text-black shadow-md flex-shrink-0">
+                    <div className="h-8 w-8 rounded-full bg-linear-to-br from-primary to-ghana-green flex items-center justify-center text-sm font-bold text-black shadow-md shrink-0">
                       {user?.name?.charAt(0).toUpperCase() || 'U'}
                     </div>
-                    <ChevronDown className={`h-3.5 w-3.5 text-gray-500 transition-transform flex-shrink-0 ${showProfileDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-3.5 w-3.5 text-gray-500 transition-transform shrink-0 ${showProfileDropdown ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Dropdown Menu */}
@@ -175,27 +175,27 @@ export default function Navbar() {
                           {user?.email || ''}
                         </p>
                       </div>
-                      
-                      <Link 
-                        to="/profile" 
+
+                      <Link
+                        to="/profile"
                         className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         onClick={() => setShowProfileDropdown(false)}
                       >
                         <UserCircle className="h-4 w-4" />
                         <span>My Profile</span>
                       </Link>
-                      
-                      <Link 
-                        to="/settings" 
+
+                      <Link
+                        to="/settings"
                         className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         onClick={() => setShowProfileDropdown(false)}
                       >
                         <Settings className="h-4 w-4" />
                         <span>Settings</span>
                       </Link>
-                      
+
                       <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-                      
+
                       <button
                         onClick={() => {
                           logout()
@@ -213,14 +213,14 @@ export default function Navbar() {
             ) : (
               <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2.5 ml-2 lg:ml-3">
                 {/* Auth Dropdown */}
-                <div className="relative flex-shrink-0" ref={authDropdownRef}>
+                <div className="relative shrink-0" ref={authDropdownRef}>
                   <button
                     onClick={() => setShowAuthDropdown(!showAuthDropdown)}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
-                    <UserCircle className="h-4 w-4 text-gray-700 dark:text-gray-300 flex-shrink-0" />
+                    <UserCircle className="h-4 w-4 text-gray-700 dark:text-gray-300 shrink-0" />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden xl:inline">Account</span>
-                    <ChevronDown className={`h-3.5 w-3.5 text-gray-500 transition-transform flex-shrink-0 ${showAuthDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-3.5 w-3.5 text-gray-500 transition-transform shrink-0 ${showAuthDropdown ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Dropdown Menu */}
@@ -236,9 +236,9 @@ export default function Navbar() {
                         <LogIn className="h-4 w-4" />
                         <span>Sign In</span>
                       </button>
-                      
-                      <Link 
-                        to="/signup" 
+
+                      <Link
+                        to="/signup"
                         className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         onClick={() => setShowAuthDropdown(false)}
                       >
@@ -248,10 +248,10 @@ export default function Navbar() {
                     </div>
                   )}
                 </div>
-                
-                <Link to="/become-provider" className="flex-shrink-0">
+
+                <Link to="/become-provider" className="shrink-0">
                   <Button size="sm" className="flex items-center gap-1.5 px-2.5 py-1.5 bg-linear-to-r from-primary to-ghana-green hover:from-ghana-yellow hover:to-primary whitespace-nowrap">
-                    <Star className="h-4 w-4 flex-shrink-0" />
+                    <Star className="h-4 w-4 shrink-0" />
                     <span className="hidden xl:inline">Become a Provider</span>
                     <span className="xl:hidden">Join</span>
                   </Button>
@@ -275,7 +275,7 @@ export default function Navbar() {
                 <Sun className="h-4 w-4 text-gray-700 dark:text-gray-300" />
               )}
             </button>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -292,8 +292,8 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div id="mobile-menu" className="lg:hidden py-4 space-y-1 border-t border-gray-200 dark:border-gray-800 animate-in slide-in-from-top duration-200" role="menu">
-            <button 
+          <div id="mobile-menu" className="lg:hidden py-4 space-y-1 border-t border-gray-200 dark:border-gray-800 animate-in slide-in-from-top duration-200">
+            <button
               onClick={() => {
                 setMobileMenuOpen(false)
                 if (window.location.pathname === '/') {
@@ -307,15 +307,15 @@ export default function Navbar() {
               <Search className="h-5 w-5" />
               <span>Find Providers</span>
             </button>
-            <Link 
-              to="/search" 
+            <Link
+              to="/search"
               className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               <Briefcase className="h-5 w-5" />
               <span>Services</span>
             </Link>
-            <button 
+            <button
               onClick={() => {
                 setMobileMenuOpen(false)
                 if (window.location.pathname === '/') {
@@ -329,7 +329,7 @@ export default function Navbar() {
               <Info className="h-5 w-5" />
               <span>How It Works</span>
             </button>
-            
+
             {isAuthenticated ? (
               <div className="px-2 space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800 mt-2">
                 {/* User Name Display */}
@@ -389,10 +389,10 @@ export default function Navbar() {
                     <span>Settings</span>
                   </Button>
                 </Link>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full flex items-center justify-center gap-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" 
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full flex items-center justify-center gap-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                   onClick={logout}
                 >
                   <LogOut className="h-4 w-4" />
@@ -401,10 +401,10 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="px-2 space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800 mt-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full flex items-center justify-center gap-2" 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full flex items-center justify-center gap-2"
                   onClick={() => {
                     setIsLoginModalOpen(true)
                     setMobileMenuOpen(false)

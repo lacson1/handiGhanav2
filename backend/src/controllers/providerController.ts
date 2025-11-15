@@ -1,21 +1,36 @@
 import { Request, Response } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { Prisma, ServiceCategory } from '@prisma/client'
 import { io } from '../server'
 import { AuthRequest } from '../middleware/auth'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
-
-const prisma = new PrismaClient()
+import { prisma } from '../lib/prisma'
 
 export const getProviders = async (req: Request, res: Response) => {
   try {
-    const { category, location, verified, availableNow, minRating, search } = req.query
+    const {
+      category,
+      location,
+      verified,
+      availableNow,
+      minRating,
+      search,
+      page = '1',
+      limit = '20',
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = req.query
+
+    // Parse pagination parameters
+    const pageNum = Math.max(1, parseInt(page as string, 10) || 1)
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10) || 20)) // Max 100 per page
+    const skip = (pageNum - 1) * limitNum
 
     // Build filter object for Prisma
-    const where: any = {}
+    const where: Prisma.ProviderWhereInput = {}
 
     if (category) {
-      where.category = category
+      where.category = category as ServiceCategory
     }
 
     if (location) {
@@ -39,15 +54,51 @@ export const getProviders = async (req: Request, res: Response) => {
       ]
     }
 
-    const providers = await prisma.provider.findMany({
-      where,
-      orderBy: { createdAt: 'desc' }
-    })
+    // Validate sortBy field
+    const validSortFields = ['createdAt', 'rating', 'name', 'location']
+    const sortField = validSortFields.includes(sortBy as string) ? sortBy as string : 'createdAt'
+    const orderBy = sortOrder === 'asc' ? 'asc' : 'desc'
 
-    res.json(providers)
-  } catch (error: any) {
+    // Execute queries in parallel for better performance
+    const [providers, total] = await Promise.all([
+      prisma.provider.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { [sortField]: orderBy },
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          location: true,
+          rating: true,
+          verified: true,
+          description: true,
+          phone: true,
+          whatsapp: true,
+          avatar: true,
+          createdAt: true,
+          // Only select needed fields to reduce payload size
+        },
+      }),
+      prisma.provider.count({ where }),
+    ])
+
+    res.json({
+      data: providers,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNextPage: pageNum < Math.ceil(total / limitNum),
+        hasPreviousPage: pageNum > 1,
+      },
+    })
+  } catch (error: unknown) {
     console.error('Error fetching providers:', error)
-    res.status(500).json({ message: 'Failed to fetch providers', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch providers'
+    res.status(500).json({ message: 'Failed to fetch providers', error: errorMessage })
   }
 }
 
@@ -74,9 +125,10 @@ export const getProviderById = async (req: Request, res: Response) => {
     }
 
     res.json(provider)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching provider:', error)
-    res.status(500).json({ message: 'Failed to fetch provider', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch provider'
+    res.status(500).json({ message: 'Failed to fetch provider', error: errorMessage })
   }
 }
 
@@ -185,9 +237,15 @@ export const createProvider = async (req: AuthRequest, res: Response) => {
       provider,
       requiresPasswordSetup: !req.userId && !email ? false : true
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating provider:', error)
-    res.status(500).json({ message: 'Failed to create provider', error: error.message })
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return res.status(400).json({ message: 'Provider already exists' })
+      }
+    }
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create provider'
+    res.status(500).json({ message: 'Failed to create provider', error: errorMessage })
   }
 }
 
@@ -205,9 +263,10 @@ export const updateProvider = async (req: Request, res: Response) => {
     io.emit('provider:updated', provider)
 
     res.json({ message: 'Provider updated successfully', provider })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating provider:', error)
-    res.status(500).json({ message: 'Failed to update provider', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update provider'
+    res.status(500).json({ message: 'Failed to update provider', error: errorMessage })
   }
 }
 
@@ -223,9 +282,10 @@ export const deleteProvider = async (req: Request, res: Response) => {
     io.emit('provider:deleted', { id })
 
     res.json({ message: 'Provider deleted successfully' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting provider:', error)
-    res.status(500).json({ message: 'Failed to delete provider', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to delete provider'
+    res.status(500).json({ message: 'Failed to delete provider', error: errorMessage })
   }
 }
 
@@ -246,9 +306,10 @@ export const verifyProvider = async (req: Request, res: Response) => {
     io.emit('provider:verified', provider)
 
     res.json({ message: 'Provider verified successfully', provider })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error verifying provider:', error)
-    res.status(500).json({ message: 'Failed to verify provider', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to verify provider'
+    res.status(500).json({ message: 'Failed to verify provider', error: errorMessage })
   }
 }
 
@@ -279,8 +340,9 @@ export const getProviderCountsByCity = async (req: Request, res: Response) => {
     })
 
     res.json(cityCounts)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching provider counts by city:', error)
-    res.status(500).json({ message: 'Failed to fetch provider counts by city', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch provider counts by city'
+    res.status(500).json({ message: 'Failed to fetch provider counts by city', error: errorMessage })
   }
 }

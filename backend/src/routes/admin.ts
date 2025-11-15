@@ -7,14 +7,22 @@ import {
   getAllBookings,
   getAnalytics,
   deleteProvider,
+  updateUserRole,
+  updateUserRoleByEmail,
 } from '../controllers/adminController'
 import { authenticateToken } from '../middleware/auth'
 
 const router = express.Router()
 
-// All admin routes require authentication
-// TODO: Add admin role check middleware
+// All admin routes require authentication and admin role
 router.use(authenticateToken)
+router.use((req, res, next) => {
+  const authReq = req as { userRole?: string }
+  if (authReq.userRole !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' })
+  }
+  next()
+})
 
 // Dashboard stats
 router.get('/stats', getDashboardStats)
@@ -30,6 +38,10 @@ router.delete('/providers/:id', deleteProvider)
 
 // Booking management
 router.get('/bookings', getAllBookings)
+
+// User management
+router.put('/users/:userId/role', updateUserRole)
+router.put('/users/role', updateUserRoleByEmail)
 
 export default router
 

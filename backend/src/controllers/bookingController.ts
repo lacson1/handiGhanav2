@@ -1,16 +1,15 @@
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
+import { BookingStatus, Prisma } from '@prisma/client'
 import { io } from '../server'
 import { sendBookingConfirmation, sendBookingNotification } from '../utils/emailService'
-import { mockBookings, getMockUserById, getProviderById, MockBooking } from '../data/mockData'
+import { AuthRequest } from '../middleware/auth'
+import { prisma } from '../lib/prisma'
 
 const JWT_SECRET = process.env.JWT_SECRET
 if (!JWT_SECRET || JWT_SECRET === 'your-secret-key-change-in-production') {
   console.warn('⚠️  WARNING: JWT_SECRET is not set or using default value. Please set a strong secret in production!')
 }
-
-// In-memory store for bookings (in production, use database)
-let bookingsStore = [...mockBookings]
 
 export const createBooking = async (req: Request, res: Response) => {
   try {
@@ -55,37 +54,62 @@ export const createBooking = async (req: Request, res: Response) => {
       })
     }
 
-    // Create new booking
-    const booking: MockBooking = {
-      id: `booking-${Date.now()}`,
-      providerId,
-      userId,
-      date,
-      time,
-      serviceType,
-      notes: notes || '',
-      status: 'Pending' as const,
-      createdAt: new Date().toISOString()
+    // Verify provider exists
+    const provider = await prisma.provider.findUnique({
+      where: { id: providerId },
+      include: { user: true }
+    })
+
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider not found' })
     }
 
-    // Add to store
-    bookingsStore.push(booking)
+    // Verify user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    })
 
-    // TODO: Save to database with Prisma
-    // const booking = await prisma.booking.create({ data: { ... } })
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+
+    // Create booking in database
+    const booking = await prisma.booking.create({
+      data: {
+        providerId,
+        userId,
+        date: new Date(date),
+        time,
+        serviceType,
+        notes: notes || null,
+        status: BookingStatus.PENDING
+      },
+      include: {
+        provider: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            location: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    })
 
     // Send real-time notification via WebSocket
     io.to(`provider-${providerId}`).emit('new-booking', booking)
     io.to(`user-${userId}`).emit('booking-created', booking)
 
-    // Get user and provider info for email
-    const user = getMockUserById(userId)
-    const provider = getProviderById(providerId)
-
     // Send email notifications (async, don't wait)
-    // Note: In production, get provider's email from user account
-    if (provider && user) {
-      sendBookingNotification('provider@example.com', user.name, {
+    if (provider.user?.email && user.email) {
+      sendBookingNotification(provider.user.email, user.name || 'Customer', {
         date,
         time,
         serviceType,
@@ -102,25 +126,71 @@ export const createBooking = async (req: Request, res: Response) => {
 
 export const getBookings = async (req: Request, res: Response) => {
   try {
-    const { userId, providerId } = req.query
+    const { userId, providerId, status, page = '1', limit = '20', sortBy = 'createdAt', sortOrder = 'desc' } = req.query
 
-    let filtered = [...bookingsStore]
+    // Parse pagination parameters
+    const pageNum = Math.max(1, parseInt(page as string, 10) || 1)
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10) || 20)) // Max 100 per page
+    const skip = (pageNum - 1) * limitNum
 
-    // Filter by userId
+    const where: Prisma.BookingWhereInput = {}
+
     if (userId) {
-      filtered = filtered.filter(b => b.userId === userId)
+      where.userId = userId as string
     }
 
-    // Filter by providerId
     if (providerId) {
-      filtered = filtered.filter(b => b.providerId === providerId)
+      where.providerId = providerId as string
     }
 
-    // If no filters, return all (or empty in production)
-    // TODO: Implement with Prisma
-    // const bookings = await prisma.booking.findMany({ where: { ... } })
+    if (status) {
+      where.status = status as BookingStatus
+    }
 
-    res.json(filtered)
+    // Validate sortBy field
+    const validSortFields = ['createdAt', 'date', 'status', 'amount']
+    const sortField = validSortFields.includes(sortBy as string) ? sortBy as string : 'createdAt'
+    const orderBy = sortOrder === 'asc' ? 'asc' : 'desc'
+
+    // Execute queries in parallel
+    const [bookings, total] = await Promise.all([
+      prisma.booking.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { [sortField]: orderBy },
+        include: {
+          provider: {
+            select: {
+              id: true,
+              name: true,
+              category: true,
+              location: true
+            }
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          }
+        }
+      }),
+      prisma.booking.count({ where }),
+    ])
+
+    res.json({
+      data: bookings,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNextPage: pageNum < Math.ceil(total / limitNum),
+        hasPreviousPage: pageNum > 1,
+      },
+    })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Operation failed'
     console.error('Booking operation error:', error)
@@ -132,14 +202,34 @@ export const getBookingById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
 
-    const booking = bookingsStore.find(b => b.id === id)
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        provider: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            location: true,
+            phone: true,
+            whatsapp: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true
+          }
+        },
+        payment: true
+      }
+    })
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' })
     }
-
-    // TODO: Implement with Prisma
-    // const booking = await prisma.booking.findUnique({ where: { id } })
 
     res.json(booking)
   } catch (error: unknown) {
@@ -154,28 +244,57 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
     const { id } = req.params
     const { status } = req.body
 
-    const validStatuses = ['Pending', 'Confirmed', 'Completed', 'Cancelled']
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: `Status must be one of: ${validStatuses.join(', ')}` })
+    const validStatuses = Object.values(BookingStatus)
+    if (!validStatuses.includes(status as BookingStatus)) {
+      return res.status(400).json({ 
+        message: `Status must be one of: ${validStatuses.join(', ')}` 
+      })
     }
 
-    const bookingIndex = bookingsStore.findIndex(b => b.id === id)
+    // Get existing booking
+    const existingBooking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        provider: {
+          include: {
+            user: true
+          }
+        },
+        user: true
+      }
+    })
 
-    if (bookingIndex === -1) {
+    if (!existingBooking) {
       return res.status(404).json({ message: 'Booking not found' })
     }
 
-    // Update booking
-    const updatedBooking = {
-      ...bookingsStore[bookingIndex],
-      status,
-      updatedAt: new Date().toISOString()
-    }
-
-    bookingsStore[bookingIndex] = updatedBooking
-
-    // TODO: Update in database with Prisma
-    // const booking = await prisma.booking.update({ where: { id }, data: { status } })
+    // Update booking in database
+    const updatedBooking = await prisma.booking.update({
+      where: { id },
+      data: { 
+        status: status as BookingStatus,
+        ...(status === BookingStatus.COMPLETED && !existingBooking.actualEndTime && {
+          actualEndTime: new Date()
+        })
+      },
+      include: {
+        provider: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            location: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    })
 
     // Send real-time notification
     io.emit('booking-status-updated', updatedBooking)
@@ -183,17 +302,12 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
     io.to(`user-${updatedBooking.userId}`).emit('booking-status-updated', updatedBooking)
 
     // Send confirmation email if status is CONFIRMED
-    if (status === 'Confirmed') {
-      const user = getMockUserById(updatedBooking.userId)
-      const provider = getProviderById(updatedBooking.providerId)
-
-      if (user && provider) {
-        sendBookingConfirmation(user.email || 'customer@example.com', provider.name, {
-          date: updatedBooking.date,
-          time: updatedBooking.time,
-          serviceType: updatedBooking.serviceType,
-        }).catch(console.error)
-      }
+    if (status === BookingStatus.CONFIRMED && existingBooking.user?.email && existingBooking.provider?.name) {
+      sendBookingConfirmation(existingBooking.user.email, existingBooking.provider.name, {
+        date: existingBooking.date.toISOString(),
+        time: existingBooking.time,
+        serviceType: existingBooking.serviceType,
+      }).catch(console.error)
     }
 
     res.json({ 

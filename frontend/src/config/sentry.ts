@@ -21,9 +21,11 @@ export const initSentry = () => {
       replaysOnErrorSampleRate: 1.0,
     })
 
-    console.log('✅ Sentry initialized for error tracking')
+    // Sentry initialized successfully
   } else {
-    console.warn('⚠️  Sentry DSN not configured')
+    if (import.meta.env.DEV) {
+      console.warn('⚠️  Sentry DSN not configured')
+    }
   }
 }
 

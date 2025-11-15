@@ -12,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import WhatsAppWidget from './components/WhatsAppWidget'
+import CookieConsent from './components/CookieConsent'
 import './index.css'
 
 // Lazy load pages for code splitting
@@ -112,6 +113,7 @@ function AppContent() {
         </main>
         <Footer />
         <WhatsAppWidget />
+        <CookieConsent />
         <ToastContainer toasts={toasts} onClose={removeToast} />
       </div>
     </Router>

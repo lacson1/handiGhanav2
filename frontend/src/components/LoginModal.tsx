@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Button from './ui/Button'
+import GoogleSignInButton from './GoogleSignInButton'
 
 interface LoginModalProps {
   isOpen: boolean
@@ -27,6 +28,21 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
 
     try {
       await login(email, password)
+      // Get user from localStorage to determine redirect
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        const user = JSON.parse(storedUser)
+        // Redirect based on role after closing modal
+        setTimeout(() => {
+          if (user.role === 'PROVIDER') {
+            window.location.href = '/provider-dashboard'
+          } else if (user.role === 'ADMIN') {
+            window.location.href = '/admin'
+          } else {
+            window.location.href = '/my-bookings'
+          }
+        }, 100)
+      }
       onClose()
       setEmail('')
       setPassword('')
@@ -162,6 +178,19 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                     {isLoading ? 'Signing in...' : 'Sign In'}
                   </Button>
                 </form>
+
+                <div className="relative py-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="px-3 bg-white dark:bg-gray-800 text-sm text-gray-600 dark:text-gray-400 font-medium">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
+                <GoogleSignInButton />
 
                 {onSwitchToRegister && (
                   <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">

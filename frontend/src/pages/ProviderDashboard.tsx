@@ -16,7 +16,7 @@ import ProtectedRoute from '../components/ProtectedRoute'
 import Button from '../components/ui/Button'
 import { cn } from '../lib/utils'
 // Mock data removed
-import type { ServiceCategory, GhanaCity } from '../types'
+import type { ServiceCategory, GhanaCity, Booking, Provider } from '../types'
 import FinanceManagement from '../components/FinanceManagement'
 import WorkflowManagement from '../components/WorkflowManagement'
 import ServicesManagement from '../components/ServicesManagement'
@@ -24,6 +24,7 @@ import CustomerManagement from '../components/CustomerManagement'
 import ProviderBusinessTools from '../components/ProviderBusinessTools'
 import PremiumListing from '../components/PremiumListing'
 import ProviderReviewsManagement from '../components/ProviderReviewsManagement'
+import AnalyticsDashboard from '../components/AnalyticsDashboard'
 
 function DashboardContent() {
   const { user, logout } = useAuth()
@@ -105,7 +106,7 @@ function DashboardContent() {
   useEffect(() => {
     if (!socket) return
 
-    socket.on('new-booking', (newBooking: any) => {
+    socket.on('new-booking', (newBooking: Booking) => {
       if (newBooking.providerId === providerId) {
         showToast(`New booking received: ${newBooking.serviceType}`, 'success', 4000)
         // Auto-refresh bookings to show the new booking
@@ -113,7 +114,7 @@ function DashboardContent() {
       }
     })
 
-    socket.on('booking-status-updated', (updatedBooking: any) => {
+    socket.on('booking-status-updated', (updatedBooking: Booking) => {
       if (updatedBooking.providerId === providerId) {
         showToast(`Booking status updated to ${updatedBooking.status}`, 'info', 3000)
         // Auto-refresh bookings to show the updated status
@@ -121,14 +122,14 @@ function DashboardContent() {
       }
     })
 
-    socket.on('provider-verified', (provider: any) => {
+    socket.on('provider-verified', (provider: Provider) => {
       if (provider.id === providerId) {
         showToast('Your account has been verified! 🎉', 'success', 5000)
         // Could refresh provider data here if needed
       }
     })
 
-    socket.on('provider-rejected', (provider: any) => {
+    socket.on('provider-rejected', (provider: Provider) => {
       if (provider.id === providerId) {
         showToast('Your verification request was rejected. Please contact support.', 'error', 5000)
       }
@@ -183,7 +184,7 @@ function DashboardContent() {
     }
   }, [myBookings])
 
-  const getCustomerInfo = (_userId: string): any => {
+  const getCustomerInfo = (_userId: string): { name: string; email: string; phone?: string } | null => {
     return null // TODO: Fetch from usersApi.getById(userId)
   }
 
@@ -284,7 +285,7 @@ function DashboardContent() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left",
                     activeTab === tab.id
@@ -620,53 +621,8 @@ function DashboardContent() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
               >
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                    Performance Metrics
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Completion Rate</p>
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                          <div
-                            className="bg-green-500 h-3 rounded-full"
-                            style={{ width: `${stats.completionRate * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {Math.round(stats.completionRate * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Average Rating</p>
-                      <div className="flex items-center gap-2">
-                        <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                          {stats.averageRating}
-                        </span>
-                        <span className="text-gray-600 dark:text-gray-400">
-                          ({stats.totalBookings} reviews)
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Monthly Revenue</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        GHS {stats.revenue.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">This Month's Bookings</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {stats.monthlyBookings}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <AnalyticsDashboard providerId={providerId} />
               </motion.div>
             )}
 
@@ -927,8 +883,8 @@ function ProfileEditForm() {
           description: provider.description || 'Expert in electrical appliances and home wiring.',
           phone: provider.phone || '+233241234567',
           whatsapp: provider.whatsapp || provider.phone || '+233241234567',
-          serviceAreas: (provider as any).serviceAreas || ['Cape Coast', 'Elmina', 'Saltpond'],
-          skills: (provider as any).skills || ['Wiring', 'Appliance Repair', 'Panel Installation']
+          serviceAreas: provider.serviceAreas || ['Cape Coast', 'Elmina', 'Saltpond'],
+          skills: provider.skills || ['Wiring', 'Appliance Repair', 'Panel Installation']
         })
         // Load existing avatar if available
         if (provider.avatar) {
@@ -967,9 +923,9 @@ function ProfileEditForm() {
       const result = await uploadApi.uploadImage(file, 'providers')
       setAvatarUrl(result.url)
       alert('Image uploaded successfully!')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload error:', error)
-      const errorMessage = error?.message || 'Failed to upload image. Please try again.'
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.'
       alert(errorMessage)
     } finally {
       setUploading(false)
@@ -1024,9 +980,9 @@ function ProfileEditForm() {
       setTimeout(() => {
         window.location.reload()
       }, 1500)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Profile update error:', error)
-      const errorMessage = error?.message || 'Failed to update profile. Please try again.'
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile. Please try again.'
       alert(errorMessage)
     }
   }

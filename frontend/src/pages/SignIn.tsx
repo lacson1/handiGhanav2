@@ -16,7 +16,7 @@ export default function SignIn() {
   const [clickCount, setClickCount] = useState(0)
   const [showDemoOptions, setShowDemoOptions] = useState(false)
 
-  // Check for success message from registration
+  // Check for success message from registration or error from OAuth
   useEffect(() => {
     if (location.state?.message) {
       setSuccess(location.state.message)
@@ -26,7 +26,16 @@ export default function SignIn() {
       // Clear state to prevent showing message on refresh
       window.history.replaceState({}, document.title)
     }
-  }, [location.state])
+    
+    // Check for error in URL query params (from OAuth failure)
+    const urlParams = new URLSearchParams(location.search)
+    const errorParam = urlParams.get('error')
+    if (errorParam) {
+      setError(errorParam)
+      // Clear error from URL
+      window.history.replaceState({}, document.title, location.pathname)
+    }
+  }, [location.state, location.search])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,8 +58,8 @@ export default function SignIn() {
       } else {
         navigate('/my-bookings')
       }
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -78,8 +87,8 @@ export default function SignIn() {
       } else {
         navigate('/my-bookings')
       }
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -88,49 +97,48 @@ export default function SignIn() {
   const handleSecretClick = () => {
     const newCount = clickCount + 1
     setClickCount(newCount)
-    
+
     if (newCount >= 5) {
       setShowDemoOptions(!showDemoOptions)
       setClickCount(0)
     }
-    
+
     // Reset click count after 2 seconds
     setTimeout(() => setClickCount(0), 2000)
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg relative">
+      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 sm:p-10 rounded-xl shadow-lg relative">
         {/* Hidden Demo Access - Click 5 times on the title area */}
-        <div 
+        <div
           onClick={handleSecretClick}
-          className="absolute top-0 left-0 right-0 h-24 cursor-default z-10"
-          title=""
-          style={{ pointerEvents: 'auto' }}
+          className="absolute top-0 left-0 right-0 h-24 cursor-default z-10 pointer-events-auto"
+          aria-label=""
         />
-        
-        <div className="relative z-20" style={{ pointerEvents: 'none' }}>
-          <h2 className="text-center text-3xl font-bold text-gray-900 dark:text-white">
+
+        <div className="relative z-20 pointer-events-none">
+          <h2 className="text-center text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4 tracking-tight">
             Sign In
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Sign in to your Handighana account
+          <p className="mt-3 text-center text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+            Sign in to your HandyGhana account
           </p>
         </div>
-        <form className="mt-8 space-y-6 relative z-20" onSubmit={handleSubmit} style={{ pointerEvents: 'auto' }}>
+        <form className="mt-8 space-y-6 relative z-20 pointer-events-auto" onSubmit={handleSubmit}>
           {success && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-green-50 dark:bg-green-900/30 border-2 border-green-400 dark:border-green-600 text-green-900 dark:text-green-100 px-5 py-4 rounded-xl text-base sm:text-lg font-medium leading-relaxed">
               {success}
             </div>
           )}
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-50 dark:bg-red-900/30 border-2 border-red-400 dark:border-red-600 text-red-900 dark:text-red-100 px-5 py-4 rounded-xl text-base sm:text-lg font-medium leading-relaxed">
               {error}
             </div>
           )}
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 tracking-tight">
                 Email address
               </label>
               <input
@@ -141,12 +149,12 @@ export default function SignIn() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-ghana-green focus:ring-2 focus:ring-ghana-green/20 transition-colors"
-                placeholder="Enter your email"
+                className="w-full px-5 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base sm:text-lg focus:outline-none focus:border-ghana-green focus:ring-4 focus:ring-ghana-green/20 transition-all placeholder:text-gray-500 dark:placeholder:text-gray-400 placeholder:text-base"
+                placeholder="Enter your email address"
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="password" className="block text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 tracking-tight">
                 Password
               </label>
               <input
@@ -157,14 +165,14 @@ export default function SignIn() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-ghana-green focus:ring-2 focus:ring-ghana-green/20 transition-colors"
+                className="w-full px-5 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base sm:text-lg focus:outline-none focus:border-ghana-green focus:ring-4 focus:ring-ghana-green/20 transition-all placeholder:text-gray-500 dark:placeholder:text-gray-400 placeholder:text-base"
                 placeholder="Enter your password"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end">
-            <a href="/forgot-password" className="text-sm font-medium text-ghana-green dark:text-ghana-green-light hover:text-ghana-green-dark transition-colors">
+          <div className="flex items-center justify-end pt-1">
+            <a href="/forgot-password" className="text-base sm:text-lg font-semibold text-ghana-green dark:text-ghana-green-light hover:text-ghana-green-dark transition-colors underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-ghana-green focus:ring-offset-2 rounded px-2 py-1">
               Forgot your password?
             </a>
           </div>
@@ -179,12 +187,12 @@ export default function SignIn() {
             </Button>
           </div>
 
-          <div className="relative">
+          <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+            <div className="relative flex justify-center">
+              <span className="px-3 bg-white dark:bg-gray-800 text-base text-gray-600 dark:text-gray-400 font-medium">
                 Or continue with
               </span>
             </div>
@@ -192,23 +200,23 @@ export default function SignIn() {
 
           <GoogleSignInButton />
 
-          <div className="text-center space-y-2">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-center space-y-4 pt-2">
+            <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
               Don't have an account?{' '}
               <button
                 type="button"
                 onClick={() => navigate('/signup')}
-                className="text-primary hover:underline font-medium"
+                className="text-ghana-green dark:text-ghana-green-light hover:text-ghana-green-dark hover:underline font-semibold underline-offset-4 focus:outline-none focus:ring-2 focus:ring-ghana-green focus:ring-offset-2 rounded px-1"
               >
                 Sign up
               </button>
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
               Want to offer services?{' '}
               <button
                 type="button"
                 onClick={() => navigate('/become-provider')}
-                className="text-primary hover:underline font-medium"
+                className="text-ghana-green dark:text-ghana-green-light hover:text-ghana-green-dark hover:underline font-semibold underline-offset-4 focus:outline-none focus:ring-2 focus:ring-ghana-green focus:ring-offset-2 rounded px-1"
               >
                 Become a Provider
               </button>

@@ -159,13 +159,13 @@ export default function Profile() {
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
           >
             {/* Cover Background */}
-            <div className="h-32 bg-linear-to-r from-ghana-red via-primary to-ghana-green"></div>
+            <div className="h-32 bg-gradient-to-r from-ghana-red via-primary to-ghana-green"></div>
             
             {/* Profile Info */}
             <div className="px-6 pb-6">
               <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-16 sm:-mt-12">
                 {/* Avatar */}
-                <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full bg-linear-to-br from-primary to-ghana-green flex items-center justify-center text-4xl font-bold text-black shadow-lg border-4 border-white dark:border-gray-800">
+                <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full bg-gradient-to-br from-primary to-ghana-green flex items-center justify-center text-4xl font-bold text-black shadow-lg border-4 border-white dark:border-gray-800">
                   {user?.avatar ? (
                     <img 
                       src={user.avatar} 
@@ -367,7 +367,7 @@ export default function Profile() {
 
               <div className="flex justify-center">
                 <div className="inline-block p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                  <div className="h-32 w-32 relative rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700 bg-linear-to-br from-primary to-ghana-green">
+                  <div className="h-32 w-32 relative rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700 bg-gradient-to-br from-primary to-ghana-green">
                     {user?.avatar ? (
                       <img 
                         src={user.avatar} 

@@ -1,17 +1,16 @@
 import { Request, Response } from 'express'
-import { PrismaClient, VerificationStatus } from '@prisma/client'
+import { VerificationStatus, Prisma, BookingStatus, PaymentStatus } from '@prisma/client'
 import { io } from '../server'
 import { sendProviderApprovalEmail } from '../services/emailService'
 import { sendSMS } from '../services/smsService'
-
-const prisma = new PrismaClient()
+import { prisma } from '../lib/prisma'
 
 // Get all providers (admin only)
 export const getAllProviders = async (req: Request, res: Response) => {
   try {
     const { status, verified, page = 1, limit = 20 } = req.query
 
-    const where: any = {}
+    const where: Prisma.ProviderWhereInput = {}
 
     if (status) {
       where.verificationStatus = status as VerificationStatus
@@ -65,9 +64,10 @@ export const getAllProviders = async (req: Request, res: Response) => {
         pages: Math.ceil(total / Number(limit)),
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching providers:', error)
-    res.status(500).json({ message: 'Failed to fetch providers', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch providers'
+    res.status(500).json({ message: 'Failed to fetch providers', error: errorMessage })
   }
 }
 
@@ -121,9 +121,10 @@ export const verifyProvider = async (req: Request, res: Response) => {
       message: `Provider ${approved ? 'approved' : 'rejected'} successfully`,
       provider: updatedProvider,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error verifying provider:', error)
-    res.status(500).json({ message: 'Failed to verify provider', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to verify provider'
+    res.status(500).json({ message: 'Failed to verify provider', error: errorMessage })
   }
 }
 
@@ -201,9 +202,10 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         providers: recentProviders,
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching dashboard stats:', error)
-    res.status(500).json({ message: 'Failed to fetch stats', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch stats'
+    res.status(500).json({ message: 'Failed to fetch stats', error: errorMessage })
   }
 }
 
@@ -250,9 +252,10 @@ export const toggleProviderSuspension = async (req: Request, res: Response) => {
       message: `Provider ${suspend ? 'suspended' : 'reactivated'} successfully`,
       provider: updatedProvider,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error toggling provider suspension:', error)
-    res.status(500).json({ message: 'Failed to update provider status', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update provider status'
+    res.status(500).json({ message: 'Failed to update provider status', error: errorMessage })
   }
 }
 
@@ -261,9 +264,9 @@ export const getAllBookings = async (req: Request, res: Response) => {
   try {
     const { status, page = 1, limit = 20 } = req.query
 
-    const where: any = {}
+    const where: Prisma.BookingWhereInput = {}
     if (status) {
-      where.status = status
+      where.status = status as BookingStatus
     }
 
     const bookings = await prisma.booking.findMany({
@@ -304,9 +307,10 @@ export const getAllBookings = async (req: Request, res: Response) => {
         pages: Math.ceil(total / Number(limit)),
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching bookings:', error)
-    res.status(500).json({ message: 'Failed to fetch bookings', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch bookings'
+    res.status(500).json({ message: 'Failed to fetch bookings', error: errorMessage })
   }
 }
 
@@ -315,17 +319,20 @@ export const getAnalytics = async (req: Request, res: Response) => {
   try {
     const { startDate, endDate } = req.query
 
-    const dateFilter: any = {}
+    const dateFilter: { gte?: Date; lte?: Date } = {}
     if (startDate) dateFilter.gte = new Date(startDate as string)
     if (endDate) dateFilter.lte = new Date(endDate as string)
 
-    const where = dateFilter.gte || dateFilter.lte ? { createdAt: dateFilter } : {}
+    const paymentWhere: Prisma.PaymentWhereInput = dateFilter.gte || dateFilter.lte ? { createdAt: dateFilter } : {}
+    const providerWhere: Prisma.ProviderWhereInput = dateFilter.gte || dateFilter.lte ? { createdAt: dateFilter } : {}
+    const userWhere: Prisma.UserWhereInput = dateFilter.gte || dateFilter.lte ? { createdAt: dateFilter } : {}
+    const bookingWhere: Prisma.BookingWhereInput = dateFilter.gte || dateFilter.lte ? { createdAt: dateFilter } : {}
 
     // Growth metrics
     const [newProviders, newUsers, newBookings] = await Promise.all([
-      prisma.provider.count({ where }),
-      prisma.user.count({ where }),
-      prisma.booking.count({ where }),
+      prisma.provider.count({ where: providerWhere }),
+      prisma.user.count({ where: userWhere }),
+      prisma.booking.count({ where: bookingWhere }),
     ])
 
     // Revenue by category
@@ -335,8 +342,8 @@ export const getAnalytics = async (req: Request, res: Response) => {
         amount: true,
       },
       where: {
-        status: 'completed',
-        ...(where.createdAt && { createdAt: where.createdAt }),
+        status: PaymentStatus.COMPLETED,
+        ...(paymentWhere.createdAt && { createdAt: paymentWhere.createdAt }),
       },
     })
 
@@ -362,22 +369,105 @@ export const getAnalytics = async (req: Request, res: Response) => {
         bookings: newBookings,
       },
       revenue: {
-        total: revenueByCategory.reduce((sum: number, item: any) => sum + (item._sum.amount || 0), 0),
+        total: revenueByCategory.reduce((sum, item) => sum + (item._sum?.amount || 0), 0),
         byCategory: revenueByCategory,
       },
-      topProviders: topProviders.map((p: any) => ({
+      topProviders: topProviders.map((p) => ({
         id: p.id,
         name: p.name,
         rating: p.rating,
         completedBookings: p.bookings.length,
         averageReview: p.reviews.length > 0
-          ? (p.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / p.reviews.length).toFixed(1)
+          ? (p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length).toFixed(1)
           : 0,
       })),
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching analytics:', error)
-    res.status(500).json({ message: 'Failed to fetch analytics', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch analytics'
+    res.status(500).json({ message: 'Failed to fetch analytics', error: errorMessage })
+  }
+}
+
+// Update user role (admin only)
+export const updateUserRole = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params
+    const { role } = req.body
+
+    if (!role || !['CUSTOMER', 'PROVIDER', 'ADMIN'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role. Must be CUSTOMER, PROVIDER, or ADMIN' })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    })
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { role: role as 'CUSTOMER' | 'PROVIDER' | 'ADMIN' }
+    })
+
+    res.json({
+      message: `User role updated to ${role}`,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role
+      }
+    })
+  } catch (error: unknown) {
+    console.error('Error updating user role:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update user role'
+    res.status(500).json({ message: 'Failed to update user role', error: errorMessage })
+  }
+}
+
+// Update user role by email (admin only)
+export const updateUserRoleByEmail = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body
+    const { role } = req.body
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' })
+    }
+
+    if (!role || !['CUSTOMER', 'PROVIDER', 'ADMIN'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role. Must be CUSTOMER, PROVIDER, or ADMIN' })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { email },
+      data: { role: role as 'CUSTOMER' | 'PROVIDER' | 'ADMIN' }
+    })
+
+    res.json({
+      message: `User role updated to ${role}`,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role
+      }
+    })
+  } catch (error: unknown) {
+    console.error('Error updating user role:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update user role'
+    res.status(500).json({ message: 'Failed to update user role', error: errorMessage })
   }
 }
 
@@ -437,17 +527,20 @@ export const deleteProvider = async (req: Request, res: Response) => {
         name: provider.name
       }
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting provider:', error)
     
-    // Handle foreign key constraint errors
-    if (error.code === 'P2003') {
-      return res.status(400).json({ 
-        message: 'Cannot delete provider due to existing relationships. Please contact support.' 
-      })
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // Handle foreign key constraint errors
+      if (error.code === 'P2003') {
+        return res.status(400).json({ 
+          message: 'Cannot delete provider due to existing relationships. Please contact support.' 
+        })
+      }
     }
     
-    res.status(500).json({ message: 'Failed to delete provider', error: error.message })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to delete provider'
+    res.status(500).json({ message: 'Failed to delete provider', error: errorMessage })
   }
 }
 

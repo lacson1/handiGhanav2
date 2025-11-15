@@ -1,0 +1,76 @@
+import { z } from 'zod'
+
+const serviceCategoryEnum = z.enum([
+  'Plumbing',
+  'Electrical',
+  'Carpentry',
+  'Cleaning',
+  'Painting',
+  'Gardening',
+  'Appliance Repair',
+  'HVAC',
+  'Roofing',
+  'Flooring',
+  'Tiling',
+  'Welding',
+  'Masonry',
+  'Locksmith',
+  'Pest Control',
+  'Moving',
+  'Photography',
+  'Catering',
+  'Event Planning',
+  'Beauty',
+  'Hair Styling',
+  'Nail Art',
+  'Massage',
+  'Fitness',
+  'Tutoring',
+  'IT Support',
+  'Graphic Design',
+  'Web Development',
+  'Legal',
+  'Accounting',
+  'Consulting',
+  'Delivery',
+  'Pet Care',
+  'Childcare',
+  'Elderly Care',
+  'Medical',
+  'Dental',
+  'Veterinary',
+  'Pharmacy',
+  'Other',
+])
+
+export const createProviderSchema = z.object({
+  body: z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    category: serviceCategoryEnum,
+    location: z.string().min(2, 'Location is required'),
+    description: z.string().min(10, 'Description must be at least 10 characters'),
+    phone: z.string().optional(),
+    whatsapp: z.string().optional(),
+    skills: z.array(z.string()).optional(),
+    serviceAreas: z.array(z.string()).optional(),
+  }),
+})
+
+export const updateProviderSchema = z.object({
+  params: z.object({
+    id: z.string().min(1, 'Provider ID is required'),
+  }),
+  body: z.object({
+    name: z.string().min(2).optional(),
+    category: serviceCategoryEnum.optional(),
+    location: z.string().min(2).optional(),
+    description: z.string().min(10).optional(),
+    phone: z.string().optional(),
+    whatsapp: z.string().optional(),
+    skills: z.array(z.string()).optional(),
+    serviceAreas: z.array(z.string()).optional(),
+    verified: z.boolean().optional(),
+  }),
+})
+

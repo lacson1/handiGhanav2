@@ -7,6 +7,7 @@ interface User {
   name: string
   avatar?: string
   role: 'CUSTOMER' | 'PROVIDER' | 'ADMIN'
+  authProvider?: 'local' | 'google' | 'facebook' | string
 }
 
 interface AuthContextType {
