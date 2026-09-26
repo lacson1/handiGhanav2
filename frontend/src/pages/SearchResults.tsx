@@ -10,8 +10,10 @@ import { providersApi } from '../lib/api'
 import { filterAndSortProviders, readSearchFilters, writeSearchFilters, SORT_OPTIONS } from '../lib/providerSearch'
 import type { SortOption } from '../lib/providerSearch'
 import './SearchResults.css'
+import { sampleProviders, sampleServices } from '../lib/sampleData'
+import SampleBooking from '../components/SampleBooking'
 
-export default function SearchResults() {
+export default function SearchResults({ sample = false }: { sample?: boolean }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const filters = useMemo(() => readSearchFilters(searchParams), [searchParams])
   const sortParam = searchParams.get('sort') || 'relevance'
@@ -24,13 +26,14 @@ export default function SearchResults() {
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
+    if (sample) { setProviders(sampleProviders); setStatus('success'); return }
     let cancelled = false
     setStatus('loading')
     providersApi.getAll().then(data => {
       if (!cancelled) { setProviders(Array.isArray(data) ? data : []); setStatus('success') }
     }).catch(() => { if (!cancelled) setStatus('error') })
     return () => { cancelled = true }
-  }, [attempt])
+  }, [attempt, sample])
 
   const results = useMemo(() => filterAndSortProviders(providers, filters, sortBy), [providers, filters, sortBy])
   const activeFilters = Object.values(filters).some(Boolean)
@@ -46,6 +49,7 @@ export default function SearchResults() {
       <div className="search-container">
         <Link to="/" className="search-back"><ArrowLeft size={16} aria-hidden="true" />Back to home</Link>
         <div className="search-heading"><h1>Find your next helping hand.</h1><p>Explore local professionals and find the right fit for your job.</p></div>
+        {sample ? <aside className="sample-banner"><strong>Try a sample booking</strong><p>These professionals, prices and time slots are fictional. Explore a profile, choose a service, then review a sample request. Nothing is sent or charged.</p><Link to="/search">Exit sample mode</Link></aside> : <Link className="sample-entry" to="/demo">New here? Try the sample booking flow →</Link>}
         <Filters filters={filters} onFilterChange={changeFilters} />
         <div className="search-results-toolbar">
           <p role="status" aria-live="polite">{status === 'loading' ? 'Finding professionals…' : status === 'error' ? 'Providers unavailable' : <><strong>{results.length}</strong> {results.length === 1 ? 'professional' : 'professionals'} found</>}</p>
@@ -60,10 +64,10 @@ export default function SearchResults() {
         {status === 'loading' ? <div className="search-loading" aria-label="Loading providers">{[0, 1, 2].map(index => <div key={index} className="search-skeleton" aria-hidden="true"><span /><span /><span /></div>)}</div>
           : status === 'error' ? <section className="search-empty" role="alert"><WifiOff size={32} aria-hidden="true" /><h2>We couldn’t load professionals</h2><p>Please try again in a moment. Your filters are saved.</p><button className="search-action" onClick={() => setAttempt(value => value + 1)}><RefreshCw size={17} aria-hidden="true" />Try again</button></section>
           : results.length === 0 ? <section className="search-empty"><Search size={32} aria-hidden="true" /><h2>{activeFilters ? 'No matches just yet' : 'No professionals listed yet'}</h2><p>{activeFilters ? 'Try a different service or location, or clear your filters to explore all professionals.' : 'Please check back soon as more professionals join Handighana.'}</p>{activeFilters && <button className="search-action" onClick={() => changeFilters({})}>Clear filters</button>}</section>
-          : <div className={`search-provider-results search-provider-results--${viewMode}`}>{results.map(provider => <ProviderCard key={provider.id} provider={provider} onBook={setSelectedProvider} onViewProfile={setDrawerProvider} />)}</div>}
+          : <div className={`search-provider-results search-provider-results--${viewMode}`}>{results.map(provider => <ProviderCard key={provider.id} provider={provider} sample={sample} onBook={setSelectedProvider} onViewProfile={setDrawerProvider} />)}</div>}
       </div>
-      <BookingModal provider={selectedProvider} isOpen={!!selectedProvider} onClose={() => setSelectedProvider(null)} onConfirm={() => setSelectedProvider(null)} />
-      <ProviderDetailsDrawer provider={drawerProvider} isOpen={!!drawerProvider} onClose={() => setDrawerProvider(null)} onBook={provider => { setDrawerProvider(null); setSelectedProvider(provider) }} />
+      {sample ? selectedProvider && <SampleBooking key={selectedProvider.id} provider={selectedProvider} onClose={() => setSelectedProvider(null)} /> : <BookingModal provider={selectedProvider} isOpen={!!selectedProvider} onClose={() => setSelectedProvider(null)} onConfirm={() => setSelectedProvider(null)} />}
+      <ProviderDetailsDrawer servicesOverride={sample ? sampleServices : undefined} provider={drawerProvider} isOpen={!!drawerProvider} onClose={() => setDrawerProvider(null)} onBook={provider => { setDrawerProvider(null); setSelectedProvider(provider) }} />
     </div>
   )
 }

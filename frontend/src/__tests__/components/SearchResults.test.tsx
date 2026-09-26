@@ -59,3 +59,11 @@ describe('Search results', () => {
     expect(screen.getByRole('dialog', { name: 'Professional profile' })).toHaveTextContent('Test Cleaning')
   })
 })
+
+it('keeps sample discovery isolated from the live provider API', async () => {
+  render(<MemoryRouter initialEntries={['/demo?category=Electrician']}><SearchResults sample /></MemoryRouter>)
+  expect(await screen.findByRole('article', { name: 'Sample Electrical' })).toBeInTheDocument()
+  expect(screen.getAllByRole('article')).toHaveLength(1)
+  expect(providersApi.getAll).not.toHaveBeenCalled()
+  expect(screen.queryByRole('button', { name: /Request a quote/ })).not.toBeInTheDocument()
+})

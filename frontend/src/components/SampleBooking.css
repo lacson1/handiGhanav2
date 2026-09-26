@@ -1,0 +1,25 @@
+.sample-banner { padding: 20px 24px; background: var(--site-soft); border: 1px solid var(--site-line); border-radius: 10px; margin-bottom: 24px; }
+.sample-banner strong { font-size: 18px; }
+.sample-banner p { color: var(--site-muted); line-height: 1.6; margin: 8px 0; max-width: 850px; }
+.sample-banner a, .sample-entry { color: var(--site-green); text-decoration: underline; text-underline-offset: 4px; font-size: 14px; }
+.sample-entry { display: inline-block; margin: -10px 0 24px; }
+.sample-dialog { margin: auto; width: min(560px, calc(100% - 24px)); max-height: calc(100dvh - 32px); overflow-y: auto; background: var(--site-surface); color: var(--site-ink); border: 1px solid var(--site-line); border-radius: 16px; padding: 28px; box-shadow: 0 24px 80px #0004; }
+.sample-dialog::backdrop { background: #0d211bc2; }
+.sample-dialog header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.sample-dialog header button { padding: 10px; cursor: pointer; }
+.sample-label { color: var(--site-green); font-size: 11px; font-weight: 700; letter-spacing: .09em; }
+.sample-dialog h2 { font-size: 27px; line-height: 1.2; letter-spacing: -.03em; font-weight: 650; }
+.sample-intro { color: var(--site-muted); margin: 10px 0 24px; }
+.sample-dialog label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.sample-dialog input, .sample-dialog select, .sample-dialog textarea { width: 100%; min-width: 0; padding: 12px; border: 1px solid var(--site-line); border-radius: 6px; background: var(--site-surface); color: var(--site-ink); font: inherit; }
+.sample-dialog :focus-visible { outline: 3px solid var(--site-green); outline-offset: 3px; }
+.sample-hint { color: var(--site-muted); font-size: 13px; line-height: 1.6; margin: 10px 0 20px; }
+.sample-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.sample-summary { border-block: 1px solid var(--site-line); padding: 10px 0; margin: 20px 0; }
+.sample-summary div { display: flex; justify-content: space-between; gap: 20px; padding: 10px 0; font-size: 14px; }
+.sample-summary dt { color: var(--site-muted); flex-shrink: 0; }
+.sample-summary dd { text-align: right; overflow-wrap: anywhere; }
+.sample-buttons { display: flex; justify-content: space-between; gap: 16px; }
+.sample-success { display: flex; gap: 12px; line-height: 1.6; padding: 16px; background: var(--site-soft); border-radius: 8px; }
+.sample-success svg { flex-shrink: 0; color: var(--site-green); margin-top: 3px; }
+@media(max-width: 480px) { .sample-dialog { padding: 20px; } .sample-dialog h2 { font-size: 24px; } .sample-fields { grid-template-columns: 1fr; } .sample-buttons { flex-direction: column; } }

@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
-import { ProviderProvider } from './context/ProviderContext'
 import { ToastProvider } from './context/ToastContext'
 import ToastContainer from './components/ui/Toast'
 import { useToast } from './context/ToastContext'
@@ -117,7 +116,8 @@ function AppContent() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/search" element={<SearchResults />} />
+              <Route path="/search" element={<SearchResults key="live" />} />
+              <Route path="/demo" element={<SearchResults key="sample" sample />} />
               <Route path="/provider/:id" element={<ProviderProfile />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<SignUp />} />
@@ -195,11 +195,9 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <AuthProvider>
-            <ProviderProvider>
               <ToastProvider>
                 <AppContent />
               </ToastProvider>
-            </ProviderProvider>
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>

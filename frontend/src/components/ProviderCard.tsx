@@ -5,12 +5,13 @@ import QuoteRequestModal from './QuoteRequestModal'
 import { formatAvailability, isAvailableNow } from '../lib/utils'
 
 interface ProviderCardProps {
+  sample?: boolean
   provider: Provider
   onBook: (provider: Provider) => void
   onViewProfile: (provider: Provider) => void
 }
 
-export default function ProviderCard({ provider, onBook, onViewProfile }: ProviderCardProps) {
+export default function ProviderCard({ provider, onBook, onViewProfile, sample = false }: ProviderCardProps) {
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false)
   const [failedAvatar, setFailedAvatar] = useState<string | undefined>()
   const initials = provider.name.split(/\s+/).filter(Boolean).slice(0, 2).map(name => name[0]).join('')
@@ -29,9 +30,9 @@ export default function ProviderCard({ provider, onBook, onViewProfile }: Provid
       <div className="professional-actions">
         <button className="search-action" onClick={() => onBook(provider)}>Book now</button>
         <button className="professional-profile" onClick={() => onViewProfile(provider)}>View profile<ArrowUpRight size={16} aria-hidden="true" /></button>
-        <div className="professional-contact"><button onClick={() => setIsQuoteModalOpen(true)} aria-label={`Request a quote from ${provider.name}`}>Request a quote</button>{provider.whatsapp && <a href={`https://wa.me/${provider.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" aria-label={`Contact ${provider.name} on WhatsApp`}><MessageCircle size={17} /></a>}{provider.phone && <a href={`tel:${provider.phone}`} aria-label={`Call ${provider.name}`}><Phone size={17} /></a>}</div>
+        {!sample && <div className="professional-contact"><button onClick={() => setIsQuoteModalOpen(true)} aria-label={`Request a quote from ${provider.name}`}>Request a quote</button>{provider.whatsapp && <a href={`https://wa.me/${provider.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" aria-label={`Contact ${provider.name} on WhatsApp`}><MessageCircle size={17} /></a>}{provider.phone && <a href={`tel:${provider.phone}`} aria-label={`Call ${provider.name}`}><Phone size={17} /></a>}</div>}
       </div>
-      <QuoteRequestModal isOpen={isQuoteModalOpen} onClose={() => setIsQuoteModalOpen(false)} providerId={provider.id} providerName={provider.name} category={provider.category} />
+      {!sample && <QuoteRequestModal isOpen={isQuoteModalOpen} onClose={() => setIsQuoteModalOpen(false)} providerId={provider.id} providerName={provider.name} category={provider.category} />}
     </article>
   )
 }

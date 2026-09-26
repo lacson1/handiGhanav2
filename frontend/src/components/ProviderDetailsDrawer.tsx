@@ -7,18 +7,20 @@ import { cn, formatAvailability, isAvailableNow } from '../lib/utils'
 import { servicesApi } from '../lib/api'
 
 interface ProviderDetailsDrawerProps {
+  servicesOverride?: Service[]
   provider: Provider | null
   isOpen: boolean
   onClose: () => void
   onBook: (provider: Provider) => void
 }
 
-export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBook }: ProviderDetailsDrawerProps) {
+export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBook, servicesOverride }: ProviderDetailsDrawerProps) {
   const [services, setServices] = useState<Service[]>([])
   const [loadingServices, setLoadingServices] = useState(false)
 
   const loadServices = useCallback(async () => {
     if (!provider?.id) return
+    if (servicesOverride) { setServices(servicesOverride.filter(service => service.providerId === provider.id)); return }
     setLoadingServices(true)
     try {
       const data = await servicesApi.getAll({ providerId: provider.id, isActive: true })
@@ -29,7 +31,7 @@ export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBoo
     } finally {
       setLoadingServices(false)
     }
-  }, [provider?.id])
+  }, [provider?.id, servicesOverride])
 
   useEffect(() => {
     if (isOpen && provider?.id) {
@@ -103,6 +105,7 @@ export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBoo
                   </div>
                 </div>
                 <button
+                  aria-label="Close profile"
                   onClick={onClose}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
