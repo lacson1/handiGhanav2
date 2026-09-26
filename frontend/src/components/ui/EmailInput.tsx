@@ -1,4 +1,4 @@
-import { forwardRef, useState, useEffect } from 'react'
+import { forwardRef, useId, useState, useEffect } from 'react'
 import { Mail } from 'lucide-react'
 import { validateEmail, suggestEmailDomain } from '../../utils/formHelpers'
 import { cn } from '../../lib/utils'
@@ -30,6 +30,7 @@ export const EmailInput = forwardRef<HTMLInputElement, EmailInputProps>(
     showValidation = true,
     showSuggestions = true
   }, ref) => {
+    const inputId = useId()
     const [focused, setFocused] = useState(false)
     const [suggestions, setSuggestions] = useState<string[]>([])
     const [isValid, setIsValid] = useState(false)
@@ -57,7 +58,7 @@ export const EmailInput = forwardRef<HTMLInputElement, EmailInputProps>(
     return (
       <div className="relative">
         {label && (
-          <label className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
+          <label htmlFor={inputId} className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
             {label}
             {required && <span className="text-red-600 dark:text-red-400 ml-1">*</span>}
           </label>
@@ -67,6 +68,8 @@ export const EmailInput = forwardRef<HTMLInputElement, EmailInputProps>(
           <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
 
           <input
+            id={inputId}
+            aria-invalid={!!error}
             ref={ref}
             type="email"
             value={value}

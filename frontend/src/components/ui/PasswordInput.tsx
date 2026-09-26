@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react'
+import { forwardRef, useId, useState } from 'react'
 import { Lock, Eye, EyeOff } from 'lucide-react'
 import { checkPasswordStrength } from '../../utils/formHelpers'
 import { cn } from '../../lib/utils'
@@ -14,6 +14,7 @@ interface PasswordInputProps {
   disabled?: boolean
   required?: boolean
   showStrength?: boolean
+  autoComplete?: string
   placeholder?: string
 }
 
@@ -28,9 +29,11 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     disabled,
     required,
     showStrength = false,
+    autoComplete = "current-password",
     placeholder = "Enter your password"
   }, ref) => {
     const [showPassword, setShowPassword] = useState(false)
+    const inputId = useId()
     const [focused, setFocused] = useState(false)
     const strength = showStrength ? checkPasswordStrength(value) : null
 
@@ -60,7 +63,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     return (
       <div className="relative">
         {label && (
-          <label className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
+          <label htmlFor={inputId} className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
             {label}
             {required && <span className="text-red-600 dark:text-red-400 ml-1">*</span>}
           </label>
@@ -70,6 +73,8 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
 
           <input
+            id={inputId}
+            aria-invalid={!!error}
             ref={ref}
             type={showPassword ? 'text' : 'password'}
             value={value}
@@ -78,7 +83,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             onBlur={() => setFocused(false)}
             placeholder={placeholder}
             disabled={disabled}
-            autoComplete="current-password"
+            autoComplete={autoComplete}
             className={cn(
               "w-full pl-12 pr-14 py-4 rounded-xl border-2 transition-all text-base",
               "bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
@@ -96,7 +101,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            tabIndex={-1}
+            aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (
               <EyeOff className="h-5 w-5" />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import { SERVICE_CATEGORIES, formatCategory } from '../lib/utils'
 import { providerService } from '../services/providerService'
@@ -61,6 +61,15 @@ export default function BecomeProvider() {
     })
   }
 
+  if (!isAuthenticated) {
+    return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4"><section className="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-xl p-8 space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Become a Provider</h1>
+      <p className="text-gray-600 dark:text-gray-300">First, create an account and choose your password. After signing in, add your service, location and professional details.</p>
+      <Link className="inline-flex bg-green-800 text-white px-5 py-3 rounded-lg font-semibold" to="/signup?redirect=%2Fbecome-provider">Create an account</Link>
+      <p className="text-gray-600 dark:text-gray-300">Already registered? <Link className="underline" to="/signin?redirect=%2Fbecome-provider">Sign in to continue</Link></p>
+    </section></div>
+  }
+
   if (showVerification && providerId) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -73,7 +82,7 @@ export default function BecomeProvider() {
                 navigate('/provider-dashboard')
               } else {
                 const message = formData.email 
-                  ? 'Provider profile created! Use "Forgot Password" on the sign-in page to set your password and access your account.'
+                  ? 'Provider profile created! Please sign in again to access your provider dashboard.'
                   : 'Provider profile created! Please sign in.'
                 navigate('/signin', { state: { message } })
               }

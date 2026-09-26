@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/ui/Button'
 import { EmailInput } from '../components/ui/EmailInput'
@@ -7,10 +7,14 @@ import { PasswordInput } from '../components/ui/PasswordInput'
 import { PhoneInput } from '../components/ui/PhoneInput'
 import { User } from 'lucide-react'
 import { validateEmail, validatePhoneNumber, checkPasswordStrength } from '../utils/formHelpers'
+import { safeReturnPath } from '../lib/authRedirect'
 import GoogleSignInButton from '../components/GoogleSignInButton'
 
 export default function SignUp() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const returnPath = safeReturnPath(params.get('redirect'))
+  const signInPath = '/signin' + (returnPath ? '?redirect=' + encodeURIComponent(returnPath) : '')
   const { register } = useAuth()
   const [formData, setFormData] = useState({
     name: '',
@@ -49,6 +53,8 @@ export default function SignUp() {
 
     if (!formData.password) {
       errors.password = 'Password is required'
+    } else if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters'
     } else {
       const strength = checkPasswordStrength(formData.password)
       if (strength.score < 2) {
@@ -85,17 +91,18 @@ export default function SignUp() {
 
     try {
       await register({
-        name: formData.name,
-        email: formData.email,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
         password: formData.password,
         phone: formData.phone,
         role: 'CUSTOMER',
+        consentPrivacy: formData.consentPrivacy,
+        consentTerms: formData.consentTerms,
+        consentMarketing: formData.consentMarketing,
       })
-      // Note: Consent fields (consentPrivacy, consentTerms, consentMarketing) 
-      // should be handled separately if needed for compliance
 
       // After successful registration, redirect to sign in
-      navigate('/signin', {
+      navigate(signInPath, {
         state: {
           message: 'Account created successfully! Please sign in.',
           email: formData.email
@@ -130,12 +137,12 @@ export default function SignUp() {
             Create Account
           </h2>
           <p className="mt-2 text-center text-base text-gray-700 dark:text-gray-300 leading-relaxed">
-            Sign up to start booking services
+            {returnPath === '/become-provider' ? 'Step 1 of 2: create your account, then sign in to set up your professional profile.' : 'Sign up to start booking services'}
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-700 text-red-800 dark:text-red-300 px-5 py-4 rounded-xl text-base font-medium leading-relaxed">
+            <div role="alert" className="bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-700 text-red-800 dark:text-red-300 px-5 py-4 rounded-xl text-base font-medium leading-relaxed">
               {error}
             </div>
           )}
@@ -183,6 +190,7 @@ export default function SignUp() {
             />
 
             <PasswordInput
+              autoComplete="new-password"
               value={formData.password}
               onChange={(value) => handleChange('password', value)}
               label="Password"
@@ -193,6 +201,7 @@ export default function SignUp() {
             />
 
             <PasswordInput
+              autoComplete="new-password"
               value={formData.confirmPassword}
               onChange={(value) => handleChange('confirmPassword', value)}
               label="Confirm Password"
@@ -297,7 +306,7 @@ export default function SignUp() {
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
               <Link
-                to="/signin"
+                to={signInPath}
                 className="text-primary hover:underline font-medium"
               >
                 Sign in
