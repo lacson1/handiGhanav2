@@ -11,7 +11,6 @@ import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
-import WhatsAppWidget from './components/WhatsAppWidget'
 import CookieConsent from './components/CookieConsent'
 import './index.css'
 
@@ -114,7 +113,7 @@ function AppContent() {
     <Router>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
         <Navbar />
-        <main className="flex-1">
+        <main id="main-content" tabIndex={-1} className="flex-1">
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -171,7 +170,6 @@ function AppContent() {
           </Suspense>
         </main>
         <Footer />
-        <WhatsAppWidget />
         <CookieConsent />
         <ToastContainer toasts={toasts} onClose={removeToast} />
       </div>
