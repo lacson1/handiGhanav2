@@ -62,3 +62,25 @@
   .site-cookie > div { justify-content: flex-end; }
   .site-cookie button { flex: 1; }
 }
+
+/* Ghana-inspired header: deep green, warm gold and a restrained flag accent. */
+.site-header { background: #103d30; color: #fffaf0; border-bottom-color: #ffffff1f; box-shadow: 0 4px 20px #103d3014; }
+.site-header::before { content: ''; display: block; height: 4px; background: linear-gradient(90deg, #ce1126 0 33.333%, #fcd116 33.333% 66.666%, #006b3f 66.666%); }
+.site-header .site-nav { min-height: 78px; }
+.site-header .site-brand { letter-spacing: -.035em; }
+.site-header .site-mark { position: relative; width: 42px; height: 44px; border-radius: 9px; background: #f3ce69; color: #103d30; box-shadow: inset 0 0 0 1px #ffe6a1; }
+.site-header .site-mark::after { content: '★'; position: absolute; right: -5px; bottom: -4px; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: #f3ce69; color: #171b18; border: 2px solid #103d30; font-size: 11px; line-height: 1; }
+.site-header .site-desktop-links a { min-height: 44px; color: #e4eee7; transition: color .15s ease; }
+.site-header .site-desktop-links a:hover, .site-header .site-signin:hover { color: #f3ce69; text-decoration-color: #f3ce69; }
+.site-header .site-icon-button { color: #e4eee7; width: 42px; height: 42px; }
+.site-header .site-icon-button:hover { background: #ffffff12; }
+.site-header .site-join { background: #f3ce69; color: #17382b; border: 1px solid #f8de99; border-radius: 8px; box-shadow: 0 2px 4px #00000014; }
+.site-header .site-join:hover { background: #ffe09a; color: #103d30; }
+.site-header .site-signin { min-height: 44px; }
+.site-header .site-account-links { color: var(--site-ink); }
+.site-header :focus-visible { outline-color: #f3ce69; }
+.site-header .site-account-links :focus-visible { outline-color: var(--site-green); }
+.site-header .site-mobile-menu, .site-header .site-mobile-account { border-color: #ffffff24; }
+.site-header .site-mobile-menu a:hover, .site-header .site-mobile-menu button:hover { background: #ffffff12; }
+.site-header .site-mobile-menu .site-join:hover { background: #ffe09a; }
+@media (max-width: 600px) { .site-header .site-nav { min-height: 72px; } .site-header .site-brand { font-size: 21px; gap: 14px; } }
