@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { providersApi } from '../lib/api'
+import { useState, useEffect } from 'react'
 import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
 import { Clock, CheckCircle, XCircle } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 interface AvailabilityCalendarProps {
+  serviceId?: string
   providerId: string
   selectedDate: Date | null
   onDateSelect: (date: Date) => void
@@ -23,6 +25,7 @@ interface TimeSlot {
 
 export default function AvailabilityCalendar({
   providerId,
+  serviceId,
   selectedDate,
   onDateSelect,
   onTimeSelect,
@@ -34,49 +37,20 @@ export default function AvailabilityCalendar({
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([])
   const [loading, setLoading] = useState(false)
 
-  // Default time slots (can be fetched from provider settings)
-  const defaultTimeSlots = useMemo(() => [
-    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
-    '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM',
-    '4:00 PM', '5:00 PM', '6:00 PM'
-  ], [])
-
-  const loadAvailability = useCallback(async (_date: Date) => {
-    setLoading(true)
-    try {
-      // TODO: Replace with actual API call
-      // const response = await availabilityApi.getSlots(providerId, _date)
-      // setAvailableSlots(response.slots)
-
-      // For now, simulate availability check
-      // In production, this would check against:
-      // 1. Provider's availability slots
-      // 2. Existing bookings for that date
-      // 3. Provider's working hours
-
-      const slots: TimeSlot[] = defaultTimeSlots.map(time => ({
-        time,
-        available: true, // Would be determined by API
-        booked: false // Would check against bookings
-      }))
-
-      setAvailableSlots(slots)
-    } catch (error) {
-      console.error('Failed to load availability:', error)
-      setAvailableSlots([])
-    } finally {
-      setLoading(false)
-    }
-  }, [defaultTimeSlots])
-
-  // Load availability for selected date
+  const [error, setError] = useState('')
+  const [attempt, setAttempt] = useState(0)
   useEffect(() => {
-    if (selectedDate && providerId) {
-      loadAvailability(selectedDate)
-    } else {
-      setAvailableSlots([])
-    }
-  }, [selectedDate, providerId, loadAvailability])
+    let cancelled = false
+    setAvailableSlots([])
+    setError('')
+    if (!selectedDate || !providerId) { setLoading(false); return }
+    setLoading(true)
+    const date = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
+    providersApi.getAvailability(providerId, date, serviceId).then(result => {
+      if (!cancelled) setAvailableSlots(result.slots)
+    }).catch(() => { if (!cancelled) setError('We couldn’t check availability. Please try again.') }).finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [selectedDate, providerId, serviceId, attempt])
 
   const isDateDisabled = (date: Date) => {
     const today = new Date()
@@ -323,11 +297,11 @@ export default function AvailabilityCalendar({
               Available Time Slots
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Selected: {selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              Ghana time (GMT). Selected: {selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
 
-          {loading ? (
+          {error ? <div role="alert"><p>{error}</p><button type="button" className="search-action" onClick={() => setAttempt(value => value + 1)}>Retry availability</button></div> : loading ? (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
               <p className="text-gray-600 dark:text-gray-400 font-medium">Loading availability...</p>
@@ -381,7 +355,7 @@ export default function AvailabilityCalendar({
           )}
 
           {/* Quick Book Button - Appears after time selection */}
-          {selectedTime && showQuickBook && onQuickBook && (
+          {!loading && !error && availableSlots.some(slot => slot.time === selectedTime && slot.available) && selectedTime && showQuickBook && onQuickBook && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={onQuickBook}

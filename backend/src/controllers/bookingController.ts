@@ -1,3 +1,4 @@
+import { slotsForDate } from '../utils/availability'
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { BookingStatus, Prisma } from '@prisma/client'
@@ -11,43 +12,18 @@ if (process.env.NODE_ENV !== 'production' && (!JWT_SECRET || JWT_SECRET === 'you
   console.warn('⚠️  WARNING: JWT_SECRET is not set or using default value. Please set a strong secret in production!')
 }
 
-export const createBooking = async (req: Request, res: Response) => {
+export const createBooking = async (req: AuthRequest, res: Response) => {
   try {
-    const { providerId, date, time, serviceType, notes } = req.body
+    const { providerId, date, time, serviceType, notes, serviceId } = req.body
 
-    // Get user ID from JWT token (if available)
-    const authHeader = req.headers.authorization
-    let userId: string | undefined
-
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      try {
-        if (!JWT_SECRET) {
-          console.error('JWT_SECRET not configured')
-          throw new Error('JWT_SECRET not configured')
-        }
-        const token = authHeader.substring(7)
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId?: string }
-        userId = decoded.userId
-        if (!userId) {
-          console.warn('JWT token decoded but userId is missing from payload')
-        }
-      } catch (err) {
-        // Log the error for debugging
-        console.error('JWT verification failed:', err instanceof Error ? err.message : 'Unknown error')
-        // Invalid token, use from body if provided
-        userId = req.body.userId
-      }
-    } else {
-      console.warn('No Authorization header found in booking request')
-      userId = req.body.userId
-    }
+    const userId = req.userId
 
     if (!providerId || !date || !time || !serviceType) {
       return res.status(400).json({ message: 'Provider ID, date, time, and service type are required' })
     }
 
     if (!userId) {
-      console.error('Booking creation failed: User ID is required. Auth header present:', !!authHeader)
+      console.error('Booking creation failed: authenticated user ID is required')
       return res.status(401).json({ 
         message: 'Authentication required. Please sign in to create a booking.',
         details: 'User ID is required. Please ensure you are signed in and your session is valid.'
@@ -74,11 +50,22 @@ export const createBooking = async (req: Request, res: Response) => {
     }
 
     // Create booking in database
-    const booking = await prisma.booking.create({
+    const booking = await prisma.$transaction(async tx => {
+      // Serialize bookings for this provider so concurrent requests cannot reserve the same time.
+      await tx.$queryRaw`SELECT id FROM providers WHERE id = ${providerId} FOR UPDATE`
+      const day = new Date(date.slice(0, 10) + 'T00:00:00.000Z')
+      const service = serviceId ? await tx.service.findFirst({ where: { id: serviceId, providerId, isActive: true } }) : null
+      if (serviceId && !service) throw new Error('SERVICE_UNAVAILABLE')
+      const duration = service?.duration || 60
+      const windows = await tx.availabilitySlot.findMany({ where: { providerId, OR: [{ date: day }, { isRecurring: true, date: { lte: day } }] } })
+      const busy = await tx.booking.findMany({ where: { providerId, date: { gte: day, lt: new Date(day.getTime() + 86400000) }, status: { in: ['PENDING', 'CONFIRMED'] } }, select: { time: true, estimatedDuration: true } })
+      if (!slotsForDate(date.slice(0, 10), windows, busy, duration).some(slot => slot.time === time && slot.available)) throw new Error('SLOT_UNAVAILABLE')
+      return tx.booking.create({
       data: {
         providerId,
         userId,
-        date: new Date(date),
+        date: day,
+        estimatedDuration: duration,
         time,
         serviceType,
         notes: notes || null,
@@ -102,6 +89,7 @@ export const createBooking = async (req: Request, res: Response) => {
         }
       }
     })
+    })
 
     // Send real-time notification via WebSocket
     io.to(`provider-${providerId}`).emit('new-booking', booking)
@@ -118,6 +106,8 @@ export const createBooking = async (req: Request, res: Response) => {
 
     res.status(201).json(booking)
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'SLOT_UNAVAILABLE') return res.status(409).json({ message: 'This time is no longer available. Choose another time.' })
+    if (error instanceof Error && error.message === 'SERVICE_UNAVAILABLE') return res.status(400).json({ message: 'This service is no longer available.' })
     const errorMessage = error instanceof Error ? error.message : 'Operation failed'
     console.error('Booking operation error:', error)
     res.status(500).json({ message: errorMessage })

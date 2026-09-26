@@ -1,3 +1,4 @@
+import { authenticateToken } from '../middleware/auth'
 import express from 'express'
 import { 
   createBooking, 
@@ -17,7 +18,7 @@ router.get('/', getBookings)
 router.get('/:id', getBookingById)
 
 // POST /api/bookings - Create new booking
-router.post('/', validate(createBookingSchema), createBooking)
+router.post('/', authenticateToken, validate(createBookingSchema), createBooking)
 
 // PUT /api/bookings/:id/status - Update booking status
 router.put('/:id/status', validate(updateBookingStatusSchema), updateBookingStatus)

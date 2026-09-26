@@ -1,3 +1,4 @@
+import { getAvailability, saveAvailability } from '../controllers/availabilityController'
 import express from 'express'
 import { getProviders, getProviderById, createProvider, updateProvider, getProviderCountsByCity } from '../controllers/providerController'
 import { 
@@ -16,10 +17,15 @@ const router = express.Router()
 router.get('/', getProviders)
 
 // GET /api/providers/counts/by-city - Get provider counts by city
+router.get('/me', authenticateToken, async (req: import('../middleware/auth').AuthRequest, res) => {
+  const { prisma } = await import('../lib/prisma')
+  if (!req.userId) return res.status(401).json({ message: 'Sign in required' })
+  try { const provider = await prisma.provider.findUnique({ where: { userId: req.userId } }); return provider ? res.json(provider) : res.status(404).json({ message: 'Provider not found' }) } catch { return res.status(500).json({ message: 'Unable to load your profile' }) }
+})
 router.get('/counts/by-city', getProviderCountsByCity)
 
 // POST /api/providers - Create new provider (authentication optional - handles both cases)
-router.post('/', optionalAuth, validate(createProviderSchema), createProvider)
+router.post('/', authenticateToken, validate(createProviderSchema), createProvider)
 
 // Earnings Analytics Routes (must come before /:id route)
 // GET /api/providers/:id/earnings/analytics?period=30d
@@ -35,10 +41,12 @@ router.get('/:id/earnings/categories', getEarningsByCategory)
 router.get('/:id/earnings/export', exportEarningsReport)
 
 // GET /api/providers/:id - Get provider by ID (must come after specific routes)
+router.get('/:id/availability', getAvailability)
+router.put('/:id/availability', authenticateToken, saveAvailability)
 router.get('/:id', getProviderById)
 
 // PUT /api/providers/:id - Update provider (protected)
-router.put('/:id', validate(updateProviderSchema), updateProvider)
+router.put('/:id', authenticateToken, validate(updateProviderSchema), updateProvider)
 
 export default router
 

@@ -1,52 +1,14 @@
 import { z } from 'zod'
 
-const serviceCategoryEnum = z.enum([
-  'Plumbing',
-  'Electrical',
-  'Carpentry',
-  'Cleaning',
-  'Painting',
-  'Gardening',
-  'Appliance Repair',
-  'HVAC',
-  'Roofing',
-  'Flooring',
-  'Tiling',
-  'Welding',
-  'Masonry',
-  'Locksmith',
-  'Pest Control',
-  'Moving',
-  'Photography',
-  'Catering',
-  'Event Planning',
-  'Beauty',
-  'Hair Styling',
-  'Nail Art',
-  'Massage',
-  'Fitness',
-  'Tutoring',
-  'IT Support',
-  'Graphic Design',
-  'Web Development',
-  'Legal',
-  'Accounting',
-  'Consulting',
-  'Delivery',
-  'Pet Care',
-  'Childcare',
-  'Elderly Care',
-  'Medical',
-  'Dental',
-  'Veterinary',
-  'Pharmacy',
-  'Other',
-])
+import { ServiceCategory } from '@prisma/client'
+const serviceCategoryEnum = z.nativeEnum(ServiceCategory)
 
 export const createProviderSchema = z.object({
   body: z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
-    email: z.string().email('Invalid email address'),
+    email: z.string().email('Invalid email address').optional(),
+    avatar: z.string().url().optional(),
+    firstService: z.object({ name: z.string().min(2), basePrice: z.number().positive(), duration: z.number().int().min(30).max(480) }).optional(),
     category: serviceCategoryEnum,
     location: z.string().min(2, 'Location is required'),
     description: z.string().min(10, 'Description must be at least 10 characters'),
@@ -70,7 +32,7 @@ export const updateProviderSchema = z.object({
     whatsapp: z.string().optional(),
     skills: z.array(z.string()).optional(),
     serviceAreas: z.array(z.string()).optional(),
-    verified: z.boolean().optional(),
+    avatar: z.string().url().optional(),
   }),
 })
 

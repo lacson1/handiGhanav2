@@ -153,14 +153,14 @@ export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBoo
                 <div className="flex items-center gap-2">
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   <span className="text-xl font-bold text-gray-900 dark:text-white">
-                    {provider.rating.toFixed(1)}
+                    {provider.reviewCount > 0 ? provider.rating.toFixed(1) : 'No reviews yet'}
                   </span>
                 </div>
                 <div className="h-6 w-px bg-gray-300 dark:bg-gray-600" />
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Reviews</p>
                   <p className="font-semibold text-gray-900 dark:text-white">
-                    {provider.reviewCount}
+                    {provider.reviewCount || 0}
                   </p>
                 </div>
                 {provider.completionRate && (

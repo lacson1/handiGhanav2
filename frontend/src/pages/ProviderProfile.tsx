@@ -258,10 +258,10 @@ export default function ProviderProfile() {
                       <Star className="h-6 w-6 fill-yellow-400 text-yellow-400 shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
-                          {(provider.rating ?? 0).toFixed(1)}
+                          {provider.reviewCount > 0 ? (provider.rating ?? 0).toFixed(1) : 'No reviews yet'}
                         </p>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 leading-tight">
-                          {provider.reviewCount} {provider.reviewCount === 1 ? 'review' : 'reviews'}
+                          {provider.reviewCount || 0} {provider.reviewCount === 1 ? 'review' : 'reviews'}
                         </p>
                       </div>
                     </div>
@@ -597,10 +597,10 @@ export default function ProviderProfile() {
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   <span className="text-lg font-bold text-gray-900 dark:text-white">
-                    {(provider.rating ?? 0).toFixed(1)}
+                    {provider.reviewCount > 0 ? (provider.rating ?? 0).toFixed(1) : 'No reviews yet'}
                   </span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    ({provider.reviewCount} {provider.reviewCount === 1 ? 'review' : 'reviews'})
+                    ({provider.reviewCount || 0} {provider.reviewCount === 1 ? 'review' : 'reviews'})
                   </span>
                 </div>
               </div>

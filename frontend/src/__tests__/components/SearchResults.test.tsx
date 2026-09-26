@@ -40,6 +40,7 @@ describe('Search results', () => {
     const user = setup('/search?location=East+Legon&view=list&sort=rating-high')
     expect(await screen.findByRole('article', { name: 'Test Plumbing' })).toBeInTheDocument()
     expect(screen.getByLabelText('Location')).toHaveValue('East Legon')
+    await user.click(screen.getByRole('button', { name: /More filters/ }))
     await user.selectOptions(screen.getByLabelText('Category'), 'Cleaner')
     expect(screen.getByText('No matches just yet')).toBeInTheDocument()
     expect(screen.getByLabelText('Current URL')).toHaveTextContent('category=Cleaner')

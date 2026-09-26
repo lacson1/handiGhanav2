@@ -17,6 +17,7 @@ interface AuthContextType {
   loginWithToken: (token: string, user: User) => void
   register: (data: { name: string; email: string; password: string; phone?: string; role?: string; consentPrivacy: boolean; consentTerms: boolean; consentMarketing?: boolean }) => Promise<void>
   logout: () => void
+  isLoading?: boolean
   isAuthenticated: boolean
   isProvider: boolean
 }
@@ -36,6 +37,7 @@ const defaultAuthContext: AuthContextType = {
 const AuthContext = createContext<AuthContextType>(defaultAuthContext)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
 
@@ -44,10 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedToken = localStorage.getItem('token')
     const storedUser = localStorage.getItem('user')
     
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
-    }
+    try {
+      if (storedToken && storedUser) {
+        setUser(JSON.parse(storedUser))
+        setToken(storedToken)
+      }
+    } catch { localStorage.removeItem('user'); localStorage.removeItem('token') }
+    finally { setIsLoading(false) }
   }, [])
 
   const login = async (email: string, password: string) => {
@@ -119,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithToken,
         register,
         logout,
+        isLoading,
         isAuthenticated: !!user && !!token,
         isProvider: user?.role === 'PROVIDER'
       }}

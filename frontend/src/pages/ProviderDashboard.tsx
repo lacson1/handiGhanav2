@@ -1,3 +1,5 @@
+import ProviderWorkingHours from '../components/ProviderWorkingHours'
+import './BecomeProvider.css'
 import { useState, useMemo, useEffect, useRef } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -51,10 +53,8 @@ function DashboardContent() {
       }
 
       try {
-        const { providerService } = await import('../services/providerService')
-        // Get all providers and find the one matching this user
-        const providers = await providerService.getAllProviders()
-        const provider = providers.find(p => p.userId === user.id)
+        const { providersApi } = await import('../lib/api')
+        const provider = await providersApi.getMine()
         
         if (provider) {
           setProviderId(provider.id) // Set the actual provider ID
@@ -578,6 +578,7 @@ function DashboardContent() {
                 animate={{ opacity: 1, y: 0 }}
               >
                 <ServicesManagement providerId={providerId} />
+                <ProviderWorkingHours providerId={providerId} />
               </motion.div>
             )}
 
@@ -838,14 +839,14 @@ function ProfileEditForm() {
   
   const [providerId, setProviderId] = useState<string>('')
   const [formData, setFormData] = useState({
-    name: 'Bis FagQ',
-    category: 'Electrician',
-    location: 'Cape Coast',
-    description: 'Expert in electrical appliances and home wiring.',
-    phone: '+233241234567',
-    whatsapp: '+233241234567',
-    serviceAreas: ['Cape Coast', 'Elmina', 'Saltpond'],
-    skills: ['Wiring', 'Appliance Repair', 'Panel Installation']
+    name: user?.name || '',
+    category: '',
+    location: '',
+    description: '',
+    phone: '',
+    whatsapp: '',
+    serviceAreas: [] as string[],
+    skills: [] as string[]
   })
   const [avatarUrl, setAvatarUrl] = useState<string>('')
   const [uploading, setUploading] = useState(false)
@@ -861,10 +862,8 @@ function ProfileEditForm() {
       }
 
       try {
-        const { providerService } = await import('../services/providerService')
-        // Get all providers and find the one matching this user
-        const providers = await providerService.getAllProviders()
-        const provider = providers.find(p => p.userId === user.id)
+        const { providersApi } = await import('../lib/api')
+        const provider = await providersApi.getMine()
         
         if (!provider) {
           console.error('No provider record found for user:', user.id)
@@ -877,14 +876,14 @@ function ProfileEditForm() {
         
         // Load form data from provider
         setFormData({
-          name: provider.name || 'Bis FagQ',
-          category: provider.category || 'Electrician',
-          location: provider.location || 'Cape Coast',
-          description: provider.description || 'Expert in electrical appliances and home wiring.',
-          phone: provider.phone || '+233241234567',
-          whatsapp: provider.whatsapp || provider.phone || '+233241234567',
-          serviceAreas: provider.serviceAreas || ['Cape Coast', 'Elmina', 'Saltpond'],
-          skills: provider.skills || ['Wiring', 'Appliance Repair', 'Panel Installation']
+          name: provider.name || '',
+          category: provider.category || '',
+          location: provider.location || '',
+          description: provider.description || '',
+          phone: provider.phone || '',
+          whatsapp: provider.whatsapp || provider.phone || '',
+          serviceAreas: provider.serviceAreas || [],
+          skills: provider.skills || []
         })
         // Load existing avatar if available
         if (provider.avatar) {
