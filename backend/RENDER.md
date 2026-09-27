@@ -12,9 +12,11 @@ Preserve the existing JWT_SECRET and SESSION_SECRET when migrating an existing a
 Enter production secrets directly into Render's protected environment settings; never commit them.
 
 The build installs development tools, generates Prisma, and compiles TypeScript.
-The start command is `npm start`, intentionally bypassing the existing Fly startup
-script's destructive `db push --accept-data-loss` fallback. Verify the existing schema
-before cutover. This repository has no checked-in Prisma migration history.
+The start command is `sh render-start.sh`, which requires database and authentication
+secrets before starting. With INITIALIZE_EMPTY_DATABASE=true, it creates the Prisma
+schema only when the public schema has no tables. It skips existing databases and
+never uses --accept-data-loss. This is for the user-approved fresh database; the Fly
+database remains untouched. This repository has no checked-in Prisma migration history.
 
 Configure these integrations separately using the existing credentials:
 - Google: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL. Add the new
