@@ -1,229 +1,54 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Button from '../components/ui/Button'
-import { SERVICE_CATEGORIES, formatCategory } from '../lib/utils'
-import { providerService } from '../services/providerService'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { SERVICE_CATEGORIES, GHANA_CITIES, formatCategory } from '../lib/utils'
+import { providersApi, uploadApi } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
+import type { ServiceCategory, GhanaCity } from '../types'
 import ProviderVerification from '../components/ProviderVerification'
-import { LocationInput } from '../components/ui/LocationInput'
-import { PhoneInput } from '../components/ui/PhoneInput'
-import { User, Mail } from 'lucide-react'
+import './BecomeProvider.css'
 
 export default function BecomeProvider() {
-  const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
-  const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    category: '',
-    location: '',
-    contact: '',
-    bio: '',
-  })
+  const [step, setStep] = useState(0)
+  const [form, setForm] = useState({ name: user?.name || '', category: '', location: '', phone: '', description: '', areas: '', avatar: '', service: '', price: '', duration: '60' })
+  useEffect(() => { if (user?.name) setForm(previous => previous.name ? previous : { ...previous, name: user.name }) }, [user?.name])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showVerification, setShowVerification] = useState(false)
-  const [providerId, setProviderId] = useState<string | undefined>()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+  const [uploading, setUploading] = useState(false)
+  const [providerId, setProviderId] = useState('')
+  const [complete, setComplete] = useState(false)
+  const field = (name: keyof typeof form, value: string) => setForm(previous => ({ ...previous, [name]: value }))
+  async function upload(file?: File) {
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) { setError('Choose a JPG, PNG or WebP image smaller than 2 MB.'); return }
+    setUploading(true); setError('')
+    try { const result = await uploadApi.uploadImage(file, 'providers'); field('avatar', result.url) }
+    catch { setError('Photo upload failed. Retry or continue without a photo.') }
+    finally { setUploading(false) }
+  }
+  async function submit(event: React.FormEvent) {
+    event.preventDefault(); setError('')
+    if (step < 2) { setStep(step + 1); return }
     setLoading(true)
-
     try {
-      const provider = await providerService.createProvider(formData)
-      if (!provider || !provider.id) {
-        throw new Error('Invalid response from server. Provider ID not found.')
-      }
-      setProviderId(provider.id)
-      setShowVerification(true)
-      setLoading(false) // Reset loading state on success
-      // Don't navigate yet - show verification first
-    } catch (err: unknown) {
-      console.error('Provider creation error:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create provider profile. Please try again.'
-      setError(errorMessage)
-      setLoading(false)
-    }
+      const result = await providersApi.create({ name: form.name.trim(), category: form.category as ServiceCategory, location: form.location as GhanaCity, description: form.description.trim(), phone: form.phone, whatsapp: form.phone, avatar: form.avatar || undefined, serviceAreas: form.areas.split(',').map(area => area.trim()).filter(Boolean), firstService: { name: form.service.trim(), basePrice: Number(form.price), duration: Number(form.duration) } })
+      setProviderId(result.id)
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Unable to create your profile. Please try again.') }
+    finally { setLoading(false) }
   }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
-  }
-
-  const handleFieldChange = (field: string, value: string) => {
-    setFormData({
-      ...formData,
-      [field]: value,
-    })
-  }
-
-  if (showVerification && providerId) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          <ProviderVerification
-            providerId={providerId}
-            onComplete={() => {
-              alert('Verification submitted! Your profile will be reviewed within 24-48 hours.')
-              if (isAuthenticated && user?.role === 'PROVIDER') {
-                navigate('/provider-dashboard')
-              } else {
-                const message = formData.email 
-                  ? 'Provider profile created! Use "Forgot Password" on the sign-in page to set your password and access your account.'
-                  : 'Provider profile created! Please sign in.'
-                navigate('/signin', { state: { message } })
-              }
-            }}
-          />
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-            Become a Provider
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-8">
-            Join Handighana and start offering your services to customers across Ghana.
-            {!isAuthenticated && (
-              <span className="block mt-2 text-sm">
-                You'll be prompted to sign in after creating your profile.
-              </span>
-            )}
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Full Name *
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Enter your full name"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address *
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={isAuthenticated}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="your.email@example.com"
-                />
-              </div>
-              {isAuthenticated && (
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Email is taken from your account
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Category *
-              </label>
-              <select
-                id="category"
-                name="category"
-                required
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="">Select a category</option>
-                {SERVICE_CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{formatCategory(cat)}</option>
-                ))}
-              </select>
-            </div>
-
-            <LocationInput
-              value={formData.location}
-              onChange={(value) => handleFieldChange('location', value)}
-              label="Location *"
-              hint="Select your primary service location"
-              required
-            />
-
-            <PhoneInput
-              value={formData.contact}
-              onChange={(value) => handleFieldChange('contact', value)}
-              label="Contact (Phone/WhatsApp) *"
-              hint="Your main contact number for customers"
-              required
-              showValidation
-            />
-
-            <div>
-              <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Bio/Description *
-              </label>
-              <textarea
-                id="bio"
-                name="bio"
-                required
-                rows={4}
-                value={formData.bio}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                placeholder="Tell us about your services and experience..."
-              />
-            </div>
-
-            <div className="flex gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/')}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? 'Creating...' : 'Create Profile'}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  )
+  if (!isAuthenticated) return <div className="onboarding-page"><section className="onboarding-panel"><h1>Become a Provider</h1><p>First, create an account and choose your password. After signing in, add your photo, services, prices and service areas.</p><Link className="onboarding-primary" to="/signup?redirect=%2Fbecome-provider">Create an account</Link><p>Already registered? <Link to="/signin?redirect=%2Fbecome-provider">Sign in to continue</Link></p></section></div>
+  if (providerId) return <div className="onboarding-page"><section className="onboarding-panel"><h1>Your professional profile is created</h1><p>Your first service and price are saved. Next, submit verification and set working hours in your dashboard so customers can request a visit.</p>{!complete && <ProviderVerification providerId={providerId} onComplete={() => setComplete(true)} />}<Link className="onboarding-primary" to="/signin?redirect=%2Fprovider-dashboard">Sign in again to open your provider dashboard</Link></section></div>
+  return <div className="onboarding-page"><section className="onboarding-panel"><Link to="/">← Back to home</Link><h1>Build your professional profile</h1><p>Help customers understand what you do, where you work and what a visit costs.</p><ol className="onboarding-progress" aria-label="Profile setup progress">{['Your profile', 'Services & prices', 'Preview'].map((label, index) => <li key={label} aria-current={step === index ? 'step' : undefined}>{index + 1}. {label}</li>)}</ol>
+    <form onSubmit={submit}>{error && <p role="alert" className="onboarding-error">{error}</p>}
+      {step === 0 && <><h2>Your profile</h2><div className="onboarding-photo">{form.avatar ? <img src={form.avatar} alt="Your professional profile preview" /> : <span aria-label="Photo placeholder">{(form.name || user?.name || 'You').slice(0, 1)}</span>}<label>Professional photo (optional)<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={event => { void upload(event.target.files?.[0]); event.target.value = '' }} /><small>{uploading ? 'Uploading photo…' : 'JPG, PNG or WebP · up to 2 MB'}</small></label></div>
+      <label>Professional name<input required minLength={2} value={form.name} onChange={event => field('name', event.target.value)} /></label>
+      <label>Category<select required value={form.category} onChange={event => field('category', event.target.value)}><option value="">Choose your main service</option>{SERVICE_CATEGORIES.map(category => <option key={category} value={category}>{formatCategory(category)}</option>)}</select></label>
+      <label>Based in<select required value={form.location} onChange={event => field('location', event.target.value)}><option value="">Choose a city</option>{GHANA_CITIES.map(city => <option key={city}>{city}</option>)}</select></label>
+      <label>Service areas<input value={form.areas} onChange={event => field('areas', event.target.value)} placeholder="East Legon, Tema" /><small>Separate neighbourhoods with commas.</small></label>
+      <label>Phone / WhatsApp<input type="tel" required value={form.phone} onChange={event => field('phone', event.target.value)} placeholder="+233…" /></label>
+      <label>About your work<textarea required minLength={10} rows={4} value={form.description} onChange={event => field('description', event.target.value)} placeholder="Describe your experience and the jobs you can help with." /></label></>}
+      {step === 1 && <><h2>Add your first service</h2><p>You can add more services in your dashboard.</p><label>Service name<input required minLength={2} value={form.service} onChange={event => field('service', event.target.value)} placeholder="For example: leaking tap inspection" /></label><label>Price per visit (GH₵)<input type="number" required min="0.01" step="0.01" value={form.price} onChange={event => field('price', event.target.value)} /></label><label>Visit duration<select value={form.duration} onChange={event => field('duration', event.target.value)}>{[30, 60, 90, 120, 180, 240, 480].map(minutes => <option key={minutes} value={minutes}>{minutes} minutes</option>)}</select></label><p>Explain any materials or extra charges in your profile description.</p></>}
+      {step === 2 && <><h2>Preview your profile</h2><article className="onboarding-preview">{form.avatar && <img src={form.avatar} alt={form.name} />}<h3>{form.name}</h3><p>{form.category} · {form.location}</p><p>{form.description}</p><p>Service areas: {form.areas || form.location}</p><p>{form.service} · <strong>GH₵{Number(form.price).toLocaleString('en-GH')}</strong> / visit · {form.duration} minutes</p><small>New profile · Verification pending · No reviews yet</small></article><p>After creation, complete verification and publish your working hours.</p></>}
+      <div className="onboarding-actions">{step > 0 && <button type="button" disabled={loading} onClick={() => setStep(step - 1)}>Back</button>}<button className="onboarding-primary" disabled={loading || uploading} type="submit">{loading ? 'Creating profile…' : step === 2 ? 'Create professional profile' : 'Continue'}</button></div>
+    </form></section></div>
 }
-

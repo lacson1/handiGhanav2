@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: handighana-backend
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: codex/clean-homepage
+    rootDir: backend
+    buildCommand: npm ci --include=dev && npx prisma generate && npm run build
+    # Existing database schema must be verified before switching traffic.
+    # Do not use start.sh: its fallback allows destructive schema changes.
+    startCommand: sh render-start.sh
+    healthCheckPath: /health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://handi-ghanav2.vercel.app
+      - key: INITIALIZE_EMPTY_DATABASE
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        sync: false

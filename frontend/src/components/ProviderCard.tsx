@@ -1,225 +1,41 @@
-import { Star, MapPin, CheckCircle, Clock, Phone, MessageCircle, MessageSquare } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
-import type { Provider, Review } from '../types'
-import Button from './ui/Button'
+import { Star, MapPin, BadgeCheck, Clock, Phone, MessageCircle, ArrowUpRight } from 'lucide-react'
+import { useState } from 'react'
+import type { Provider } from '../types'
 import QuoteRequestModal from './QuoteRequestModal'
-import ReviewSnippet from './ReviewSnippet'
-import { reviewsApi } from '../lib/api'
 import { formatAvailability, isAvailableNow } from '../lib/utils'
 
 interface ProviderCardProps {
+  sample?: boolean
+  startingPrice?: number
   provider: Provider
   onBook: (provider: Provider) => void
   onViewProfile: (provider: Provider) => void
 }
 
-export default function ProviderCard({ provider, onBook, onViewProfile }: ProviderCardProps) {
+export default function ProviderCard({ provider, onBook, onViewProfile, sample = false, startingPrice }: ProviderCardProps) {
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false)
-  const [recentReview, setRecentReview] = useState<Review | null>(null)
-  const [loadingReview, setLoadingReview] = useState(false)
-
-  // Load most recent review
-  useEffect(() => {
-    if (provider.id && provider.reviewCount > 0) {
-      setLoadingReview(true)
-      reviewsApi.getByProvider(provider.id, 1)
-        .then((response) => {
-          if (response.reviews && response.reviews.length > 0) {
-            setRecentReview(response.reviews[0] as Review)
-          }
-        })
-        .catch(() => {
-          // Silently fail - reviews are optional on cards
-        })
-        .finally(() => setLoadingReview(false))
-    }
-  }, [provider.id, provider.reviewCount])
-
-  const handleWhatsApp = () => {
-    if (provider.whatsapp) {
-      window.open(`https://wa.me/${provider.whatsapp.replace(/[^0-9]/g, '')}`, '_blank')
-    }
-  }
-
-  const handleCall = () => {
-    if (provider.phone) {
-      window.location.href = `tel:${provider.phone}`
-    }
-  }
+  const [failedAvatar, setFailedAvatar] = useState<string | undefined>()
+  const portrait = provider.avatar || provider.image
+  const initials = provider.name.split(/\s+/).filter(Boolean).slice(0, 2).map(name => name[0]).join('')
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-ghana-yellow/40"
-    >
-      {/* Header with Image/Avatar */}
-      <div className="relative h-48 bg-linear-to-br from-ghana-yellow-subtle via-primary/20 to-ghana-green-subtle">
-        {provider.avatar ? (
-          <img
-            src={provider.avatar}
-            alt={provider.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="h-24 w-24 rounded-full bg-primary flex items-center justify-center text-3xl font-bold text-black">
-              {provider.name.charAt(0)}
-            </div>
-          </div>
-        )}
-        {provider.verified && (
-          <div className="absolute top-3 right-3">
-            <div className="bg-white dark:bg-gray-800 rounded-full p-1.5 shadow-lg">
-              <CheckCircle className="h-5 w-5 text-primary animate-pulse" />
-            </div>
-          </div>
-        )}
-        {isAvailableNow(provider.availability) && (
-          <div className="absolute top-3 left-3">
-            <span className="bg-ghana-green text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
-              <Clock className="h-3 w-3" />
-              Available Now
-            </span>
-          </div>
-        )}
+    <article className="professional-card" aria-label={provider.name}>
+      <div className="professional-main">
+        <div className="professional-header">
+          <div className="professional-avatar" aria-hidden="true">{portrait && failedAvatar !== portrait ? <img src={portrait} alt="" loading="lazy" onError={() => setFailedAvatar(portrait)} /> : initials}</div>
+          <div><p className="professional-category">{provider.category.replace(/([a-z])([A-Z])/g, '$1 $2')}</p><h2><button onClick={() => onViewProfile(provider)}>{provider.name}</button></h2></div>
+        </div>
+        <div className="professional-meta"><span><MapPin size={15} aria-hidden="true" />{provider.location}</span>{provider.verified && <span className="professional-verified"><BadgeCheck size={16} aria-hidden="true" />Verified</span>}</div>
+        <p className="professional-description">{provider.description}</p>
+        <div className="professional-proof">{provider.reviewCount > 0 ? <span><Star size={16} aria-hidden="true" /><strong>{provider.rating.toFixed(1)}</strong><span>({provider.reviewCount} {provider.reviewCount === 1 ? 'review' : 'reviews'})</span></span> : <span>No reviews yet</span>}<span className={isAvailableNow(provider.availability) ? 'professional-available' : ''}><Clock size={15} aria-hidden="true" />{formatAvailability(provider.availability)}</span></div>
       </div>
-
-      {/* Content */}
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 leading-tight">
-              {provider.name}
-            </h3>
-            <p className="text-base text-gray-800 dark:text-gray-200 font-semibold mb-3">
-              {provider.category}
-            </p>
-          </div>
-        </div>
-
-        {/* Rating */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex items-center">
-            <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
-            <span className="ml-1.5 text-lg font-bold text-gray-900 dark:text-white">
-              {provider.rating.toFixed(1)}
-            </span>
-          </div>
-          <span className="text-base text-gray-700 dark:text-gray-300 font-semibold">
-            ({provider.reviewCount} reviews)
-          </span>
-          {provider.completionRate && (
-            <span className="text-base text-gray-800 dark:text-gray-200 font-semibold">
-              • {Math.round(provider.completionRate * 100)}% completion
-            </span>
-          )}
-        </div>
-
-        {/* Location */}
-        <div className="flex items-center text-base text-gray-800 dark:text-gray-200 mb-4 font-semibold">
-          <MapPin className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
-          {provider.location}
-        </div>
-
-        {/* Description */}
-        <p className="text-base text-gray-800 dark:text-gray-200 line-clamp-2 mb-5 leading-relaxed font-medium">
-          {provider.description}
-        </p>
-
-        {/* Recent Review Snippet */}
-        {recentReview && !loadingReview && (
-          <div className="mb-4">
-            <ReviewSnippet review={recentReview} />
-          </div>
-        )}
-
-        {/* Quick Slots */}
-        {provider.quickSlots && provider.quickSlots.length > 0 && (
-          <div className="mb-4">
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Quick Book:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {provider.quickSlots.slice(0, 3).map((slot, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => onBook(provider)}
-                  className="text-xs px-2 py-1 rounded-lg bg-ghana-yellow-subtle hover:bg-ghana-yellow-light text-gray-700 dark:text-gray-300 transition-colors border border-ghana-yellow/20"
-                >
-                  {slot}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 mt-5">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => onBook(provider)}
-            className="flex-1 min-h-[44px]"
-          >
-            Book Now
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsQuoteModalOpen(true)}
-            className="px-3 min-h-[44px] min-w-[44px]"
-            title="Request Quote"
-            aria-label={`Request quote from ${provider.name}`}
-          >
-            <MessageSquare className="h-5 w-5" />
-          </Button>
-          {provider.whatsapp && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleWhatsApp}
-              className="px-3 min-h-[44px] min-w-[44px]"
-              title="WhatsApp"
-              aria-label={`Contact ${provider.name} on WhatsApp`}
-            >
-              <MessageCircle className="h-5 w-5" />
-            </Button>
-          )}
-          {provider.phone && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCall}
-              className="px-3 min-h-[44px] min-w-[44px]"
-              title="Call"
-              aria-label={`Call ${provider.name}`}
-            >
-              <Phone className="h-5 w-5" />
-            </Button>
-          )}
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onViewProfile(provider)}
-          className="w-full mt-3 min-h-[44px]"
-        >
-          View Profile
-        </Button>
+      {startingPrice !== undefined && Number.isFinite(startingPrice) && startingPrice >= 0 && <p className="professional-price"><span>From <strong>GH₵{startingPrice.toLocaleString('en-GH')}</strong></span><span>{sample ? 'Sample price' : 'Starting price'}</span></p>}
+      <div className={`professional-actions${sample ? ' professional-actions--sample' : ''}`}>
+        <button className="search-action" onClick={() => onBook(provider)}>{sample ? 'Try sample booking' : 'Book now'}</button>
+        <button className="professional-profile" onClick={() => onViewProfile(provider)}>View profile<ArrowUpRight size={16} aria-hidden="true" /></button>
+        {!sample && <div className="professional-contact"><button onClick={() => setIsQuoteModalOpen(true)} aria-label={`Request a quote from ${provider.name}`}>Request a quote</button>{provider.whatsapp && <a href={`https://wa.me/${provider.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" aria-label={`Contact ${provider.name} on WhatsApp`}><MessageCircle size={17} /></a>}{provider.phone && <a href={`tel:${provider.phone}`} aria-label={`Call ${provider.name}`}><Phone size={17} /></a>}</div>}
       </div>
-
-      {/* Quote Request Modal */}
-      <QuoteRequestModal
-        isOpen={isQuoteModalOpen}
-        onClose={() => setIsQuoteModalOpen(false)}
-        providerId={provider.id}
-        providerName={provider.name}
-        category={provider.category}
-      />
-    </motion.div>
+      {!sample && <QuoteRequestModal isOpen={isQuoteModalOpen} onClose={() => setIsQuoteModalOpen(false)} providerId={provider.id} providerName={provider.name} category={provider.category} />}
+    </article>
   )
 }
-

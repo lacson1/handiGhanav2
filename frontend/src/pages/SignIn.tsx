@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { safeReturnPath } from '../lib/authRedirect'
 import Button from '../components/ui/Button'
 import GoogleSignInButton from '../components/GoogleSignInButton'
 
@@ -8,6 +9,7 @@ export default function SignIn() {
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
+  const returnPath = safeReturnPath(new URLSearchParams(location.search).get('redirect'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -35,7 +37,7 @@ export default function SignIn() {
       // Clear error from URL
       window.history.replaceState({}, document.title, location.pathname)
     }
-  }, [location.state, location.search])
+  }, [location.state, location.search, location.pathname])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,6 +46,7 @@ export default function SignIn() {
 
     try {
       await login(email, password)
+      if (returnPath) { navigate(returnPath); return }
       // Redirect based on user role
       const storedUser = localStorage.getItem('user')
       if (storedUser) {
@@ -73,6 +76,7 @@ export default function SignIn() {
 
     try {
       await login(demoEmail, demoPassword)
+      if (returnPath) { navigate(returnPath); return }
       // Redirect based on user role
       const storedUser = localStorage.getItem('user')
       if (storedUser) {
@@ -205,7 +209,7 @@ export default function SignIn() {
               Don't have an account?{' '}
               <button
                 type="button"
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate('/signup' + (returnPath ? '?redirect=' + encodeURIComponent(returnPath) : ''))}
                 className="text-ghana-green dark:text-ghana-green-light hover:text-ghana-green-dark hover:underline font-semibold underline-offset-4 focus:outline-none focus:ring-2 focus:ring-ghana-green focus:ring-offset-2 rounded px-1"
               >
                 Sign up

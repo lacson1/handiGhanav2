@@ -1,3 +1,4 @@
+import { safeReturnPath } from '../lib/authRedirect'
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -26,7 +27,7 @@ export default function OAuthCallback() {
 
       try {
         // Parse user data
-        const userData = JSON.parse(decodeURIComponent(userStr))
+        const userData = JSON.parse(userStr)
 
         // Validate required fields
         if (!userData || !userData.id || !userData.email || !userData.name || !userData.role) {
@@ -46,7 +47,9 @@ export default function OAuthCallback() {
         loginWithToken(token, user)
 
         // Redirect based on role
-        if (user.role === 'PROVIDER') {
+        const returnPath = safeReturnPath(sessionStorage.getItem('oauthReturnPath'))
+        sessionStorage.removeItem('oauthReturnPath')
+        if (returnPath) { navigate(returnPath, { replace: true }) } else if (user.role === 'PROVIDER') {
           navigate('/provider-dashboard')
         } else if (user.role === 'ADMIN') {
           navigate('/admin')

@@ -7,18 +7,20 @@ import { cn, formatAvailability, isAvailableNow } from '../lib/utils'
 import { servicesApi } from '../lib/api'
 
 interface ProviderDetailsDrawerProps {
+  servicesOverride?: Service[]
   provider: Provider | null
   isOpen: boolean
   onClose: () => void
   onBook: (provider: Provider) => void
 }
 
-export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBook }: ProviderDetailsDrawerProps) {
+export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBook, servicesOverride }: ProviderDetailsDrawerProps) {
   const [services, setServices] = useState<Service[]>([])
   const [loadingServices, setLoadingServices] = useState(false)
 
   const loadServices = useCallback(async () => {
     if (!provider?.id) return
+    if (servicesOverride) { setServices(servicesOverride.filter(service => service.providerId === provider.id)); return }
     setLoadingServices(true)
     try {
       const data = await servicesApi.getAll({ providerId: provider.id, isActive: true })
@@ -29,7 +31,7 @@ export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBoo
     } finally {
       setLoadingServices(false)
     }
-  }, [provider?.id])
+  }, [provider?.id, servicesOverride])
 
   useEffect(() => {
     if (isOpen && provider?.id) {
@@ -103,6 +105,7 @@ export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBoo
                   </div>
                 </div>
                 <button
+                  aria-label="Close profile"
                   onClick={onClose}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
@@ -150,14 +153,14 @@ export default function ProviderDetailsDrawer({ provider, isOpen, onClose, onBoo
                 <div className="flex items-center gap-2">
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   <span className="text-xl font-bold text-gray-900 dark:text-white">
-                    {provider.rating.toFixed(1)}
+                    {provider.reviewCount > 0 ? provider.rating.toFixed(1) : 'No reviews yet'}
                   </span>
                 </div>
                 <div className="h-6 w-px bg-gray-300 dark:bg-gray-600" />
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Reviews</p>
                   <p className="font-semibold text-gray-900 dark:text-white">
-                    {provider.reviewCount}
+                    {provider.reviewCount || 0}
                   </p>
                 </div>
                 {provider.completionRate && (

@@ -72,6 +72,11 @@ export const getProviders = async (req: Request, res: Response) => {
           category: true,
           location: true,
           rating: true,
+          userId: true,
+          availability: true,
+          serviceAreas: true,
+          skills: true,
+          reviews: { select: { rating: true } },
           verified: true,
           description: true,
           phone: true,
@@ -85,7 +90,7 @@ export const getProviders = async (req: Request, res: Response) => {
     ])
 
     res.json({
-      data: providers,
+      data: providers.map(({ reviews, ...provider }) => ({ ...provider, reviewCount: reviews.length, rating: reviews.length ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0 })),
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -124,7 +129,7 @@ export const getProviderById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Provider not found' })
     }
 
-    res.json(provider)
+    res.json({ ...provider, reviewCount: provider.reviews.length, rating: provider.reviews.length ? provider.reviews.reduce((sum, review) => sum + review.rating, 0) / provider.reviews.length : 0 })
   } catch (error: unknown) {
     console.error('Error fetching provider:', error)
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch provider'
@@ -134,99 +139,19 @@ export const getProviderById = async (req: Request, res: Response) => {
 
 export const createProvider = async (req: AuthRequest, res: Response) => {
   try {
-    const {
-      name,
-      email,
-      category,
-      location,
-      description,
-      phone,
-      whatsapp,
-      skills,
-      serviceAreas
-    } = req.body
-
-    // Validate required fields
-    if (!name || !category || !location || !description) {
-      return res.status(400).json({ message: 'Missing required fields' })
-    }
-
-    let userId = req.userId
-
-    // If user is not authenticated, we need to handle email
-    if (!userId) {
-      if (!email) {
-        return res.status(400).json({ message: 'Email is required for non-authenticated users' })
-      }
-
-      // Check if user exists with this email
-      let user = await prisma.user.findUnique({
-        where: { email }
-      })
-
-      if (user) {
-        // User exists, check if they already have a provider profile
-        const existingProvider = await prisma.provider.findUnique({
-          where: { userId: user.id }
-        })
-
-        if (existingProvider) {
-          return res.status(400).json({ 
-            message: 'A provider profile already exists for this email. Please sign in to manage your profile.' 
-          })
-        }
-
-        userId = user.id
-      } else {
-        // Create new user account with a temporary password
-        const tempPassword = crypto.randomBytes(16).toString('hex')
-        const hashedPassword = await bcrypt.hash(tempPassword, 10)
-
-        user = await prisma.user.create({
-          data: {
-            email,
-            name,
-            phone,
-            password: hashedPassword,
-            role: 'PROVIDER'
-          }
-        })
-
-        userId = user.id
-
-        // TODO: Send email with temporary credentials or password reset link
-        console.log(`New provider account created for ${email}. Temporary password: ${tempPassword}`)
-      }
-    } else {
-      // User is authenticated, check if they already have a provider profile
-      const existingProvider = await prisma.provider.findUnique({
-        where: { userId }
-      })
-
-      if (existingProvider) {
-        return res.status(400).json({ message: 'User already has a provider profile' })
-      }
-    }
-
-    // Create provider profile
-    const provider = await prisma.provider.create({
-      data: {
-        userId,
-        name,
-        category,
-        location,
-        description,
-        phone: phone || null,
-        whatsapp: whatsapp || null,
-        skills: skills || [],
-        serviceAreas: serviceAreas || [],
-      }
-    })
-
-    // Update user role to PROVIDER
-    await prisma.user.update({
-      where: { id: userId },
-      data: { role: 'PROVIDER' }
+    const { name, category, location, description, phone, whatsapp, skills, serviceAreas, avatar, firstService } = req.body
+    const userId = req.userId
+    if (!userId) return res.status(401).json({ message: 'Sign in before creating a professional profile.' })
+    const existing = await prisma.provider.findUnique({ where: { userId } })
+    if (existing) return res.status(409).json({ message: 'You already have a provider profile. Open your dashboard to edit it.' })
+    const provider = await prisma.$transaction(async tx => {
+      const created = await tx.provider.create({ data: {
+        userId, name, category, location, description, phone: phone || null, whatsapp: whatsapp || null,
+        skills: skills || [], serviceAreas: serviceAreas || [], avatar: avatar || null,
+        ...(firstService ? { services: { create: { name: firstService.name, category, description, basePrice: firstService.basePrice, duration: firstService.duration, subscriptionFeatures: [] } } } : {})
+      } })
+      await tx.user.update({ where: { id: userId }, data: { role: 'PROVIDER' } })
+      return created
     })
 
     // Emit real-time update
@@ -235,7 +160,7 @@ export const createProvider = async (req: AuthRequest, res: Response) => {
     res.status(201).json({ 
       message: 'Provider created successfully', 
       provider,
-      requiresPasswordSetup: !req.userId && !email ? false : true
+      requiresPasswordSetup: false
     })
   } catch (error: unknown) {
     console.error('Error creating provider:', error)
@@ -249,10 +174,13 @@ export const createProvider = async (req: AuthRequest, res: Response) => {
   }
 }
 
-export const updateProvider = async (req: Request, res: Response) => {
+export const updateProvider = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params
-    const updates = req.body
+    const owner = await prisma.provider.findUnique({ where: { id } })
+    if (!req.userId || owner?.userId !== req.userId) return res.status(403).json({ message: 'Only the profile owner can edit this profile.' })
+    const { name, category, location, description, phone, whatsapp, skills, serviceAreas, avatar } = req.body
+    const updates = { name, category, location, description, phone, whatsapp, skills, serviceAreas, avatar }
 
     const provider = await prisma.provider.update({
       where: { id },

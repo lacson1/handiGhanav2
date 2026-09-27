@@ -1,4 +1,4 @@
-import { forwardRef, useState, useEffect } from 'react'
+import { forwardRef, useId, useState, useEffect } from 'react'
 import { Phone } from 'lucide-react'
 import { formatPhoneNumber, validatePhoneNumber, ghanaPhonePrefixes } from '../../utils/formHelpers'
 import { cn } from '../../lib/utils'
@@ -28,6 +28,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
     required,
     showValidation = true
   }, ref) => {
+    const inputId = useId()
     const [focused, setFocused] = useState(false)
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [isValid, setIsValid] = useState(false)
@@ -62,7 +63,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
     return (
       <div className="relative">
         {label && (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -72,6 +73,8 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
           <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           
           <input
+            id={inputId}
+            aria-invalid={!!error}
             ref={ref}
             type="tel"
             value={formattedValue}

@@ -15,8 +15,9 @@ interface AuthContextType {
   token: string | null
   login: (email: string, password: string) => Promise<void>
   loginWithToken: (token: string, user: User) => void
-  register: (data: { name: string; email: string; password: string; phone?: string; role?: string }) => Promise<void>
+  register: (data: { name: string; email: string; password: string; phone?: string; role?: string; consentPrivacy: boolean; consentTerms: boolean; consentMarketing?: boolean }) => Promise<void>
   logout: () => void
+  isLoading?: boolean
   isAuthenticated: boolean
   isProvider: boolean
 }
@@ -36,6 +37,7 @@ const defaultAuthContext: AuthContextType = {
 const AuthContext = createContext<AuthContextType>(defaultAuthContext)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
 
@@ -44,10 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedToken = localStorage.getItem('token')
     const storedUser = localStorage.getItem('user')
     
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
-    }
+    try {
+      if (storedToken && storedUser) {
+        setUser(JSON.parse(storedUser))
+        setToken(storedToken)
+      }
+    } catch { localStorage.removeItem('user'); localStorage.removeItem('token') }
+    finally { setIsLoading(false) }
   }, [])
 
   const login = async (email: string, password: string) => {
@@ -80,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('user', JSON.stringify(user))
   }
 
-  const register = async (data: { name: string; email: string; password: string; phone?: string; role?: string }): Promise<void> => {
+  const register = async (data: { name: string; email: string; password: string; phone?: string; role?: string; consentPrivacy: boolean; consentTerms: boolean; consentMarketing?: boolean }): Promise<void> => {
     try {
       const { authApi } = await import('../lib/api')
       const result = await authApi.register({
@@ -88,7 +93,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password: data.password,
         name: data.name,
         phone: data.phone,
-        role: data.role || 'CUSTOMER'
+        role: data.role || 'CUSTOMER',
+        consentPrivacy: data.consentPrivacy,
+        consentTerms: data.consentTerms,
+        consentMarketing: data.consentMarketing
       })
       
       // Registration successful - user will need to sign in
@@ -116,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithToken,
         register,
         logout,
+        isLoading,
         isAuthenticated: !!user && !!token,
         isProvider: user?.role === 'PROVIDER'
       }}

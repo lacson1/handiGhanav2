@@ -24,9 +24,10 @@ export default function ResetPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    if (!token) { setError('Invalid reset link. Please request a new password reset.'); return }
 
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long')
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters long')
       return
     }
 
@@ -109,7 +110,7 @@ export default function ResetPassword() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
@@ -126,7 +127,7 @@ export default function ResetPassword() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                   className="w-full pl-10 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-ghana-green focus:outline-none transition-colors"
                   placeholder="Enter new password"
                 />
@@ -138,7 +139,7 @@ export default function ResetPassword() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
+              <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
             </div>
 
             <div>
@@ -153,7 +154,7 @@ export default function ResetPassword() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                   className="w-full pl-10 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-ghana-green focus:outline-none transition-colors"
                   placeholder="Confirm new password"
                 />

@@ -1,262 +1,82 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
-import { ArrowUpDown, Grid3x3, List } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Grid2x2, List, Search, RefreshCw, ArrowLeft, WifiOff } from 'lucide-react'
 import Filters from '../components/Filters'
 import ProviderCard from '../components/ProviderCard'
 import BookingModal from '../components/BookingModal'
 import ProviderDetailsDrawer from '../components/ProviderDetailsDrawer'
-import SearchBar from '../components/SearchBar'
 import type { Provider, FilterState } from '../types'
 import { providersApi } from '../lib/api'
+import { filterAndSortProviders, readSearchFilters, writeSearchFilters, SORT_OPTIONS } from '../lib/providerSearch'
+import type { SortOption } from '../lib/providerSearch'
+import './SearchResults.css'
+import { sampleProviders, sampleServices } from '../lib/sampleData'
+import SampleBooking from '../components/SampleBooking'
 
-type SortOption = 'relevance' | 'rating-high' | 'rating-low' | 'name-asc' | 'name-desc' | 'reviews-high'
-type ViewMode = 'grid' | 'list'
-
-export default function SearchResults() {
-  const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
-  const [filters, setFilters] = useState<FilterState>({})
-  const [sortBy, setSortBy] = useState<SortOption>('relevance')
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+export default function SearchResults({ sample = false }: { sample?: boolean }) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filters = useMemo(() => readSearchFilters(searchParams), [searchParams])
+  const sortParam = searchParams.get('sort') || 'relevance'
+  const sortBy: SortOption = Object.hasOwn(SORT_OPTIONS, sortParam) ? sortParam as SortOption : 'relevance'
+  const viewMode = searchParams.get('view') === 'list' ? 'list' : 'grid'
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null)
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [drawerProvider, setDrawerProvider] = useState<Provider | null>(null)
   const [providers, setProviders] = useState<Provider[]>([])
-
-  // Fetch providers on mount
-  useEffect(() => {
-    const fetchProviders = async () => {
-      try {
-        const data = await providersApi.getAll()
-        // Ensure data is always an array
-        setProviders(Array.isArray(data) ? data : [])
-      } catch {
-        // Error fetching providers - show empty state
-        setProviders([])
-      }
-    }
-    fetchProviders()
-  }, [])
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    // Initialize filters from URL params
-    const category = searchParams.get('category') || undefined
-    const location = searchParams.get('location') || undefined
-    const query = searchParams.get('q') || undefined
+    if (sample) { setProviders(sampleProviders); setStatus('success'); return }
+    let cancelled = false
+    setStatus('loading')
+    providersApi.getAll().then(data => {
+      if (!cancelled) { setProviders(Array.isArray(data) ? data : []); setStatus('success') }
+    }).catch(() => { if (!cancelled) setStatus('error') })
+    return () => { cancelled = true }
+  }, [attempt, sample])
 
-    setFilters({
-      category: category as any,
-      location: location as any,
-      searchQuery: query,
-    })
-  }, [searchParams])
-
-  const filteredProviders = useMemo(() => {
-    let result: Provider[] = providers
-
-    if (filters.category) {
-      result = result.filter(p => p.category === filters.category)
+  const bookingId = searchParams.get('book')
+  useEffect(() => {
+    if (!sample && bookingId && status === 'success') {
+      const provider = providers.find(item => item.id === bookingId)
+      if (provider) setSelectedProvider(provider)
+      else { let cancelled = false; providersApi.getById(bookingId).then(item => { if (!cancelled) setSelectedProvider(item) }).catch(() => {}); return () => { cancelled = true } }
     }
+  }, [bookingId, status, providers, sample])
 
-    if (filters.location) {
-      result = result.filter(p => p.location === filters.location)
-    }
-
-    if (filters.verified === true) {
-      result = result.filter(p => p.verified)
-    }
-
-    if (filters.availableNow === true) {
-      result = result.filter(p => p.availability === "Available Now")
-    }
-
-    if (filters.minRating) {
-      result = result.filter(p => p.rating >= filters.minRating!)
-    }
-
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase()
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query)
-      )
-    }
-
-    // Apply sorting
-    switch (sortBy) {
-      case 'rating-high':
-        result = [...result].sort((a, b) => b.rating - a.rating)
-        break
-      case 'rating-low':
-        result = [...result].sort((a, b) => a.rating - b.rating)
-        break
-      case 'name-asc':
-        result = [...result].sort((a, b) => a.name.localeCompare(b.name))
-        break
-      case 'name-desc':
-        result = [...result].sort((a, b) => b.name.localeCompare(a.name))
-        break
-      case 'reviews-high':
-        result = [...result].sort((a, b) => b.reviewCount - a.reviewCount)
-        break
-      case 'relevance':
-      default:
-        // Keep original order (relevance/default)
-        // You could add custom relevance logic here
-        break
-    }
-
-    return result
-  }, [providers, filters, sortBy])
-
-  const handleBook = (provider: Provider) => {
-    setSelectedProvider(provider)
-    setIsBookingModalOpen(true)
-  }
-
-  const handleViewProfile = (provider: Provider) => {
-    setDrawerProvider(provider)
-    setIsDrawerOpen(true)
-  }
-
-  const handleBookingConfirm = (booking: { date: string; time: string; notes: string }) => {
-    // Booking confirmed - modal will show success message
-    setIsBookingModalOpen(false)
-  }
-
-  const handleSearch = (newFilters: { category?: string; location?: string; query?: string }) => {
-    const params = new URLSearchParams()
-    if (newFilters.query) params.append('q', newFilters.query)
-    if (newFilters.category) params.append('category', newFilters.category)
-    if (newFilters.location) params.append('location', newFilters.location)
-    navigate(`/search?${params.toString()}`)
+  const results = useMemo(() => filterAndSortProviders(providers, filters, sortBy), [providers, filters, sortBy])
+  const activeFilters = Object.values(filters).some(Boolean)
+  const changeFilters = (next: FilterState) => setSearchParams(writeSearchFilters(next, searchParams), { replace: true })
+  const changePreference = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams)
+    params.set(key, value)
+    setSearchParams(params, { replace: true })
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">
-          Search Results
-        </h1>
-
-        {/* Search Bar for refinement */}
-        <div className="mb-6">
-          <SearchBar
-            onSearch={handleSearch}
-            providers={providers}
-            onProviderSelect={(provider) => {
-              setDrawerProvider(provider)
-              setIsDrawerOpen(true)
-            }}
-          />
-        </div>
-
-        <div className="mb-6">
-          <Filters filters={filters} onFilterChange={setFilters} />
-        </div>
-
-        {/* Results Count, Sort, and View Toggle */}
-        <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-gray-600 dark:text-gray-400 font-medium">
-            Found {filteredProviders.length} provider{filteredProviders.length !== 1 ? 's' : ''}
-          </p>
-
-          <div className="flex items-center gap-4">
-            {/* View Toggle */}
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-colors ${viewMode === 'grid'
-                    ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                aria-label="Grid view"
-              >
-                <Grid3x3 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-colors ${viewMode === 'list'
-                    ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                aria-label="List view"
-              >
-                <List className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="h-4 w-4 text-gray-500" />
-              <label htmlFor="sort-select" className="text-sm text-gray-600 dark:text-gray-400 hidden sm:inline">
-                Sort by:
-              </label>
-              <select
-                id="sort-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
-              >
-                <option value="relevance">Relevance</option>
-                <option value="rating-high">Rating: High to Low</option>
-                <option value="rating-low">Rating: Low to High</option>
-                <option value="reviews-high">Most Reviews</option>
-                <option value="name-asc">Name: A to Z</option>
-                <option value="name-desc">Name: Z to A</option>
-              </select>
+    <div className="search-page">
+      <div className="search-container">
+        <Link to="/" className="search-back"><ArrowLeft size={16} aria-hidden="true" />Back to home</Link>
+        <div className="search-heading"><h1>Find your next helping hand.</h1><p>Explore local professionals and find the right fit for your job.</p></div>
+        {sample ? <aside className="sample-banner"><div><strong>Explore a sample booking</strong><p>Fictional profiles and prices. Nothing is sent or charged.</p></div><Link to="/search">Exit sample mode</Link></aside> : <Link className="sample-entry" to="/demo">New here? Try the sample booking flow →</Link>}
+        <Filters filters={filters} onFilterChange={changeFilters} />
+        <div className="search-results-toolbar">
+          <p role="status" aria-live="polite">{status === 'loading' ? 'Finding professionals…' : status === 'error' ? 'Providers unavailable' : <><strong>{results.length}</strong> {results.length === 1 ? 'professional' : 'professionals'} found</>}</p>
+          <div className="search-results-options">
+            <label className="search-sort" htmlFor="sort-select">Sort by<select id="sort-select" value={sortBy} onChange={e => changePreference('sort', e.target.value)}>{Object.entries(SORT_OPTIONS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+            <div className="search-view-toggle" role="group" aria-label="Results layout">
+              <button aria-label="Grid view" aria-pressed={viewMode === 'grid'} onClick={() => changePreference('view', 'grid')}><Grid2x2 size={18} /></button>
+              <button aria-label="List view" aria-pressed={viewMode === 'list'} onClick={() => changePreference('view', 'list')}><List size={18} /></button>
             </div>
           </div>
         </div>
-
-        {filteredProviders.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-gray-500 dark:text-gray-400 text-lg">
-              No providers found matching your criteria.
-            </p>
-          </div>
-        ) : (
-          <div className={
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'
-              : 'flex flex-col gap-4'
-          }>
-            {filteredProviders.map((provider) => (
-              <ProviderCard
-                key={provider.id}
-                provider={provider}
-                onBook={handleBook}
-                onViewProfile={handleViewProfile}
-              />
-            ))}
-          </div>
-        )}
-
-        <BookingModal
-          provider={selectedProvider}
-          isOpen={isBookingModalOpen}
-          onClose={() => setIsBookingModalOpen(false)}
-          onConfirm={handleBookingConfirm}
-        />
-
-        {/* Provider Details Drawer */}
-        <ProviderDetailsDrawer
-          provider={drawerProvider}
-          isOpen={isDrawerOpen}
-          onClose={() => {
-            setIsDrawerOpen(false)
-            setDrawerProvider(null)
-          }}
-          onBook={(provider) => {
-            setDrawerProvider(null)
-            setIsDrawerOpen(false)
-            setSelectedProvider(provider)
-            setIsBookingModalOpen(true)
-          }}
-        />
+        {status === 'loading' ? <div className="search-loading" aria-label="Loading providers">{[0, 1, 2].map(index => <div key={index} className="search-skeleton" aria-hidden="true"><span /><span /><span /></div>)}</div>
+          : status === 'error' ? <section className="search-empty" role="alert"><WifiOff size={32} aria-hidden="true" /><h2>We couldn’t load professionals</h2><p>Please try again in a moment. Your filters are saved.</p><button className="search-action" onClick={() => setAttempt(value => value + 1)}><RefreshCw size={17} aria-hidden="true" />Try again</button></section>
+          : results.length === 0 ? <section className="search-empty"><Search size={32} aria-hidden="true" /><h2>{activeFilters ? 'No matches just yet' : 'No professionals listed yet'}</h2><p>{activeFilters ? 'Try a different service or location, or clear your filters to explore all professionals.' : 'Please check back soon as more professionals join Handighana.'}</p>{activeFilters && <button className="search-action" onClick={() => changeFilters({})}>Clear filters</button>}</section>
+          : <div className={`search-provider-results search-provider-results--${viewMode}`}>{results.map(provider => <ProviderCard key={provider.id} provider={provider} sample={sample} startingPrice={sample ? Math.min(...sampleServices.filter(service => service.providerId === provider.id && service.isActive).map(service => service.basePrice)) : undefined} onBook={setSelectedProvider} onViewProfile={setDrawerProvider} />)}</div>}
       </div>
+      {sample ? selectedProvider && <SampleBooking key={selectedProvider.id} provider={selectedProvider} onClose={() => setSelectedProvider(null)} /> : <BookingModal provider={selectedProvider} isOpen={!!selectedProvider} onClose={() => setSelectedProvider(null)} onConfirm={() => setSelectedProvider(null)} />}
+      <ProviderDetailsDrawer servicesOverride={sample ? sampleServices : undefined} provider={drawerProvider} isOpen={!!drawerProvider} onClose={() => setDrawerProvider(null)} onBook={provider => { setDrawerProvider(null); setSelectedProvider(provider) }} />
     </div>
   )
 }

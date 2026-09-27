@@ -1,7 +1,11 @@
+import { safeReturnPath } from '../lib/authRedirect'
 export default function GoogleSignInButton() {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
   const handleGoogleSignIn = () => {
+    const redirect = safeReturnPath(new URLSearchParams(window.location.search).get('redirect'))
+    if (redirect) sessionStorage.setItem('oauthReturnPath', redirect)
+    else sessionStorage.removeItem('oauthReturnPath')
     // Redirect to backend Google OAuth endpoint
     window.location.href = `${API_URL}/auth/google`
   }

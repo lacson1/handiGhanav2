@@ -130,6 +130,9 @@ export const authApi = {
 
 // Providers API
 export const providersApi = {
+  getMine: () => apiRequest<Provider>('/providers/me'),
+  getAvailability: (id: string, date: string, serviceId?: string) => apiRequest<{ slots: { time: string; available: boolean; booked: boolean }[] }>(`/providers/${encodeURIComponent(id)}/availability?${new URLSearchParams({ date, ...(serviceId ? { serviceId } : {}) })}`),
+  saveAvailability: (id: string, data: { date: string; startTime: string; endTime: string; isAvailable: boolean }) => apiRequest(`/providers/${encodeURIComponent(id)}/availability`, { method: 'PUT', body: JSON.stringify(data) }),
   getAll: async (filters?: {
     category?: string
     location?: string
@@ -154,17 +157,19 @@ export const providersApi = {
   getById: async (id: string) => {
     return apiRequest<Provider>(`/providers/${id}`)
   },
-  create: async (data: Partial<Provider>) => {
-    return apiRequest<Provider>('/providers', {
+  create: async (data: Partial<Provider> & { firstService?: { name: string; basePrice: number; duration: number } }) => {
+    const response = await apiRequest<Provider | { provider: Provider }>('/providers', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    return 'provider' in response ? response.provider : response
   },
   update: async (id: string, data: Partial<Provider>) => {
-    return apiRequest<Provider>(`/providers/${id}`, {
+    const response = await apiRequest<Provider | { provider: Provider }>(`/providers/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    return 'provider' in response ? response.provider : response
   },
   getCountsByCity: async () => {
     return apiRequest<Record<string, number>>('/providers/counts/by-city')

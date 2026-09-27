@@ -99,7 +99,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
   // Update date string when date changes
   useEffect(() => {
     if (selectedDate) {
-      setSelectedDateString(selectedDate.toISOString().split('T')[0])
+      setSelectedDateString(`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`)
     } else {
       setSelectedDateString('')
     }
@@ -123,7 +123,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
     // Check if user is authenticated
     if (!isAuthenticated || !user) {
       alert('Please sign in to create a booking. You will be redirected to the sign in page.')
-      window.location.href = '/signin?redirect=' + encodeURIComponent(window.location.pathname)
+      window.location.href = '/signin?redirect=' + encodeURIComponent(provider ? `/search?book=${provider.id}` : window.location.pathname + window.location.search)
       return
     }
 
@@ -132,7 +132,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
       const booking = await bookingsApi.create({
         providerId: provider.id,
         serviceId: selectedService?.id || 'custom',
-        date: selectedDateString,
+        date: `${selectedDateString}T00:00:00.000Z`,
         time: selectedTime,
         serviceType: selectedService?.name || `${provider.category} - Custom Quote`,
         notes: notes.trim() || 'Quick booking'
@@ -144,7 +144,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
         setIsPaymentOpen(true)
       } else {
         onConfirm({
-          date: selectedDateString,
+          date: `${selectedDateString}T00:00:00.000Z`,
           time: selectedTime,
           notes: notes.trim() || 'Quick booking'
         })
@@ -171,7 +171,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
       const statusCode = err?.statusCode
       if (statusCode === 401 || errorMessage.toLowerCase().includes('authentication') || errorMessage.toLowerCase().includes('sign in')) {
         alert(errorMessage + '\n\nYou will be redirected to the sign in page.')
-        window.location.href = '/signin?redirect=' + encodeURIComponent(window.location.pathname)
+        window.location.href = '/signin?redirect=' + encodeURIComponent(provider ? `/search?book=${provider.id}` : window.location.pathname + window.location.search)
       } else {
         alert(errorMessage)
       }
@@ -184,7 +184,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
     // Check if user is authenticated
     if (!isAuthenticated || !user) {
       alert('Please sign in to create a booking. You will be redirected to the sign in page.')
-      window.location.href = '/signin?redirect=' + encodeURIComponent(window.location.pathname)
+      window.location.href = '/signin?redirect=' + encodeURIComponent(provider ? `/search?book=${provider.id}` : window.location.pathname + window.location.search)
       return
     }
 
@@ -195,7 +195,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
         const booking = await bookingsApi.create({
           providerId: provider.id,
           serviceId: selectedService?.id || 'custom',
-          date: selectedDateString,
+          date: `${selectedDateString}T00:00:00.000Z`,
           time: selectedTime,
           serviceType: selectedService?.name || `${provider.category} - Custom Quote`,
           notes: notes.trim()
@@ -207,7 +207,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
           setIsPaymentOpen(true)
         } else {
           onConfirm({
-            date: selectedDateString,
+            date: `${selectedDateString}T00:00:00.000Z`,
             time: selectedTime,
             notes: notes.trim()
           })
@@ -236,7 +236,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
         const statusCode = err?.statusCode
         if (statusCode === 401 || errorMessage.toLowerCase().includes('authentication') || errorMessage.toLowerCase().includes('sign in')) {
           alert(errorMessage + '\n\nYou will be redirected to the sign in page.')
-          window.location.href = '/signin?redirect=' + encodeURIComponent(window.location.pathname)
+          window.location.href = '/signin?redirect=' + encodeURIComponent(provider ? `/search?book=${provider.id}` : window.location.pathname + window.location.search)
         } else {
           alert(errorMessage)
         }
@@ -271,7 +271,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
 
   const handlePaymentSuccess = () => {
     onConfirm({
-      date: selectedDateString,
+      date: `${selectedDateString}T00:00:00.000Z`,
       time: selectedTime,
       notes: notes.trim()
     })
@@ -340,7 +340,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
                         <button
                           key={service.id}
                           type="button"
-                          onClick={() => setSelectedService(service)}
+                          onClick={() => { setSelectedService(service); setSelectedTime('') }}
                           className={cn(
                             "w-full p-4 rounded-xl border-2 transition-all text-left",
                             selectedService?.id === service.id
@@ -422,6 +422,7 @@ export default function BookingModal({ provider, isOpen, onClose, onConfirm, sho
                 {provider && (
                   <AvailabilityCalendar
                     providerId={provider.id}
+                  serviceId={selectedService?.id}
                     selectedDate={selectedDate}
                     onDateSelect={handleDateSelect}
                     onTimeSelect={handleTimeSelect}
