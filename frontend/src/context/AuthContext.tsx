@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 
 interface User {
@@ -35,20 +35,26 @@ const defaultAuthContext: AuthContextType = {
 
 const AuthContext = createContext<AuthContextType>(defaultAuthContext)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
-
-  useEffect(() => {
-    // Check for stored auth data
+function readStoredSession(): { token: string; user: User } | null {
+  try {
     const storedToken = localStorage.getItem('token')
     const storedUser = localStorage.getItem('user')
-    
     if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+      return { token: storedToken, user: JSON.parse(storedUser) as User }
     }
-  }, [])
+  } catch {
+    // Storage unavailable or corrupt user data: treat as signed out
+  }
+  return null
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  // Restore the stored session synchronously so the first render already
+  // knows the user is signed in. Restoring it in an effect let ProtectedRoute
+  // redirect to "/" before the effect ran, whenever a protected page was loaded.
+  const [storedSession] = useState(readStoredSession)
+  const [user, setUser] = useState<User | null>(storedSession?.user ?? null)
+  const [token, setToken] = useState<string | null>(storedSession?.token ?? null)
 
   const login = async (email: string, password: string) => {
     try {

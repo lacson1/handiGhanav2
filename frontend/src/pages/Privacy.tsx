@@ -134,7 +134,7 @@ export default function Privacy() {
               <ul className="list-disc list-inside space-y-2 ml-4">
                 <li><strong>Right to Access:</strong> You can request and receive a copy of all your personal data we hold. You can export your data from your account settings.</li>
                 <li><strong>Right to Rectification:</strong> You can correct inaccurate or incomplete information by updating your profile in account settings.</li>
-                <li><strong>Right to Erasure:</strong> You can request deletion of your personal data at any time. You can delete your account from your account settings, which will permanently remove all your data.</li>
+                <li><strong>Right to Erasure:</strong> You can request deletion of your personal data at any time. You can delete your account from your account settings, which will permanently remove your personal data. Records of past bookings and payments are kept in anonymised form for legal and accounting purposes.</li>
                 <li><strong>Right to Object:</strong> You can object to certain processing activities, such as marketing communications.</li>
                 <li><strong>Right to Data Portability:</strong> You can export your data in a structured, commonly used format (JSON) from your account settings.</li>
                 <li><strong>Right to Withdraw Consent:</strong> You can withdraw your consent at any time by updating your preferences in account settings.</li>

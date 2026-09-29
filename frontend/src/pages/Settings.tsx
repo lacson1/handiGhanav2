@@ -685,14 +685,14 @@ export default function Settings() {
                         Delete My Account
                       </h4>
                       <p className="text-xs text-red-700 dark:text-red-300">
-                        Permanently delete your account and all associated data. This action cannot be undone.
+                        Permanently delete your account and personal data. Records of past bookings and payments are kept in anonymised form. This action cannot be undone.
                       </p>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={async () => {
-                        if (!confirm('Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.')) {
+                        if (!confirm('Are you sure you want to delete your account? This action cannot be undone. Your personal data will be removed; records of past bookings and payments are kept in anonymised form.')) {
                           return
                         }
                         

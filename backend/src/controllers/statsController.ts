@@ -14,25 +14,28 @@ export const getPlatformStats = async (req: Request, res: Response) => {
       activeUsers,
       serviceCategories
     ] = await Promise.all([
-      prisma.provider.count(),
-      prisma.provider.count({ where: { verified: true } }),
+      prisma.provider.count({ where: { user: { deletedAt: null } } }),
+      prisma.provider.count({ where: { verified: true, user: { deletedAt: null } } }),
       prisma.booking.count(),
       prisma.booking.count({ where: { status: 'COMPLETED' } }),
       prisma.review.count(),
-      prisma.user.count(),
+      prisma.user.count({ where: { deletedAt: null } }),
       prisma.provider.groupBy({
         by: ['category'],
+        where: { user: { deletedAt: null } },
         _count: true
       })
     ])
 
     // Calculate average rating across all providers
     const providerRatings = await prisma.provider.aggregate({
+      where: { user: { deletedAt: null } },
       _avg: { rating: true }
     })
 
     // Get unique service locations
     const locations = await prisma.provider.findMany({
+      where: { user: { deletedAt: null } },
       select: { location: true },
       distinct: ['location']
     })

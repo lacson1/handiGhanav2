@@ -6,6 +6,7 @@ import crypto from 'crypto'
 import { sendPasswordResetEmail } from '../services/emailService'
 import { PrismaError } from '../types/controller.types'
 import { prisma } from '../lib/prisma'
+import { softDeleteUser } from '../services/userDeletionService'
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 
 // Existing login function
@@ -410,22 +411,15 @@ export const deleteUserAccount = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Unauthorized' })
     }
 
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    })
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' })
+    // Anonymise rather than hard-delete, so records of past bookings and
+    // payments are kept (the same soft delete admins use)
+    const result = await softDeleteUser(userId)
+    if (!result.ok) {
+      return res.status(result.status).json({ message: result.message })
     }
 
-    // Delete user (cascade will handle related records based on schema)
-    await prisma.user.delete({
-      where: { id: userId }
-    })
-
-    res.json({ 
-      message: 'Account deleted successfully. All your data has been permanently removed.' 
+    res.json({
+      message: 'Account deleted successfully. Your personal data has been removed; records of past bookings and payments are kept in anonymised form.'
     })
   } catch (error: unknown) {
     console.error('Account deletion error:', error)

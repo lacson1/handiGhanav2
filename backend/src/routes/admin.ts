@@ -1,12 +1,14 @@
 import express from 'express'
 import {
   getAllProviders,
+  getAllUsers,
   verifyProvider,
   getDashboardStats,
   toggleProviderSuspension,
   getAllBookings,
   getAnalytics,
   deleteProvider,
+  deleteUser,
   updateUserRole,
   updateUserRoleByEmail,
 } from '../controllers/adminController'
@@ -18,7 +20,7 @@ const router = express.Router()
 router.use(authenticateToken)
 router.use((req, res, next) => {
   const authReq = req as { userRole?: string }
-  if (authReq.userRole !== 'admin') {
+  if (authReq.userRole?.toUpperCase() !== 'ADMIN') {
     return res.status(403).json({ message: 'Admin access required' })
   }
   next()
@@ -40,8 +42,10 @@ router.delete('/providers/:id', deleteProvider)
 router.get('/bookings', getAllBookings)
 
 // User management
+router.get('/users', getAllUsers)
 router.put('/users/:userId/role', updateUserRole)
 router.put('/users/role', updateUserRoleByEmail)
+router.delete('/users/:userId', deleteUser)
 
 export default router
 

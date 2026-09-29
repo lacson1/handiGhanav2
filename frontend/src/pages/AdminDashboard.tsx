@@ -35,6 +35,7 @@ function AdminDashboardContent() {
   const [providers, setProviders] = useState<Provider[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [users, setUsers] = useState<AdminUser[]>([])
+  const [userCount, setUserCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -90,14 +91,23 @@ function AdminDashboardContent() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [providersData, bookingsData] = await Promise.all([
+      const [providersData, bookingsData, statsData, usersData] = await Promise.all([
         providersApi.getAll().catch(() => []),
-        bookingsApi.getAll().catch(() => [])
+        bookingsApi.getAll().catch(() => []),
+        adminApi.getStats().catch(() => null),
+        adminApi.getUsers({ limit: 100 }).catch(() => null)
       ])
       // Ensure both are always arrays
       setProviders(Array.isArray(providersData) ? providersData : [])
       setBookings(Array.isArray(bookingsData) ? bookingsData : [])
-      setUsers([]) // TODO: Fetch users from API when endpoint is ready
+      setUserCount(statsData?.stats?.users?.total ?? null)
+      setUsers(
+        (usersData?.users ?? []).map(u => ({
+          ...u,
+          phone: u.phone ?? undefined,
+          avatar: u.avatar ?? undefined
+        }))
+      )
     } catch (error) {
       console.error('Failed to load data:', error)
       // Fallback to mock data
@@ -116,7 +126,7 @@ function AdminDashboardContent() {
     const safeProviders = Array.isArray(providers) ? providers : []
     const safeBookings = Array.isArray(bookings) ? bookings : []
     
-    const totalUsers = safeUsers.length
+    const totalUsers = userCount ?? safeUsers.length
     const totalProviders = safeProviders.length
     const pendingVerifications = safeProviders.filter(p => !p.verified).length
     const totalBookings = safeBookings.length
@@ -143,7 +153,7 @@ function AdminDashboardContent() {
       openDisputes,
       urgentDisputes
     }
-  }, [users, providers, bookings])
+  }, [users, userCount, providers, bookings])
 
   // Generate recent activity from real data
   const recentActivity = useMemo(() => {
@@ -357,11 +367,15 @@ function AdminDashboardContent() {
   const handleDeleteUser = async (userId: string) => {
     const safeUsers = Array.isArray(users) ? users : []
     const userToDelete = safeUsers.find(u => u.id === userId)
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      // In a real app, this would call an API
-      setUsers(safeUsers.filter(u => u.id !== userId))
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return
+    try {
+      await adminApi.deleteUser(userId)
+      setUsers(prev => prev.filter(u => u.id !== userId))
+      setUserCount(prev => (prev === null ? prev : Math.max(0, prev - 1)))
       showToast(`${userToDelete?.name || 'User'} deleted successfully`, 'success')
-      // TODO: Send audit log to backend service
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete user'
+      showToast(message, 'error')
     }
   }
 

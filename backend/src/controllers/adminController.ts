@@ -1,16 +1,18 @@
 import { Request, Response } from 'express'
-import { VerificationStatus, Prisma, BookingStatus, PaymentStatus } from '@prisma/client'
+import { VerificationStatus, Prisma, BookingStatus, PaymentStatus, UserRole } from '@prisma/client'
 import { io } from '../server'
 import { sendProviderApprovalEmail } from '../services/emailService'
 import { sendSMS } from '../services/smsService'
 import { prisma } from '../lib/prisma'
+import { AuthRequest } from '../middleware/auth'
+import { softDeleteUser } from '../services/userDeletionService'
 
 // Get all providers (admin only)
 export const getAllProviders = async (req: Request, res: Response) => {
   try {
     const { status, verified, page = 1, limit = 20 } = req.query
 
-    const where: Prisma.ProviderWhereInput = {}
+    const where: Prisma.ProviderWhereInput = { user: { deletedAt: null } }
 
     if (status) {
       where.verificationStatus = status as VerificationStatus
@@ -68,6 +70,67 @@ export const getAllProviders = async (req: Request, res: Response) => {
     console.error('Error fetching providers:', error)
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch providers'
     res.status(500).json({ message: 'Failed to fetch providers', error: errorMessage })
+  }
+}
+
+// Get all users (admin only)
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const { role, search } = req.query
+    const page = Math.max(1, Number(req.query.page) || 1)
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20))
+
+    const where: Prisma.UserWhereInput = { deletedAt: null }
+
+    if (typeof role === 'string' && role) {
+      const upperRole = role.toUpperCase()
+      if (!Object.values(UserRole).includes(upperRole as UserRole)) {
+        return res.status(400).json({ message: `Invalid role: ${role}` })
+      }
+      where.role = upperRole as UserRole
+    }
+    if (typeof search === 'string' && search.trim()) {
+      where.OR = [
+        { name: { contains: search.trim(), mode: 'insensitive' } },
+        { email: { contains: search.trim(), mode: 'insensitive' } },
+      ]
+    }
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          avatar: true,
+          role: true,
+          authProvider: true,
+          createdAt: true,
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      prisma.user.count({ where }),
+    ])
+
+    res.json({
+      users,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    })
+  } catch (error: unknown) {
+    console.error('Error fetching users:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch users'
+    res.status(500).json({ message: 'Failed to fetch users', error: errorMessage })
   }
 }
 
@@ -140,16 +203,16 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       totalRevenue,
       totalUsers,
     ] = await Promise.all([
-      prisma.provider.count(),
-      prisma.provider.count({ where: { verified: true } }),
-      prisma.provider.count({ where: { verificationStatus: VerificationStatus.PENDING } }),
+      prisma.provider.count({ where: { user: { deletedAt: null } } }),
+      prisma.provider.count({ where: { verified: true, user: { deletedAt: null } } }),
+      prisma.provider.count({ where: { verificationStatus: VerificationStatus.PENDING, user: { deletedAt: null } } }),
       prisma.booking.count(),
       prisma.booking.count({ where: { status: 'COMPLETED' } }),
       prisma.payment.aggregate({
         _sum: { amount: true },
         where: { status: 'COMPLETED' },
       }),
-      prisma.user.count(),
+      prisma.user.count({ where: { deletedAt: null } }),
     ])
 
     // Get recent activity
@@ -167,6 +230,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     })
 
     const recentProviders = await prisma.provider.findMany({
+      where: { user: { deletedAt: null } },
       take: 5,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -541,6 +605,39 @@ export const deleteProvider = async (req: Request, res: Response) => {
     
     const errorMessage = error instanceof Error ? error.message : 'Failed to delete provider'
     res.status(500).json({ message: 'Failed to delete provider', error: errorMessage })
+  }
+}
+
+// Soft-delete user (admin only)
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params
+    const adminId = (req as AuthRequest).userId
+
+    if (userId === adminId) {
+      return res.status(400).json({ message: 'You cannot delete your own account' })
+    }
+
+    const result = await softDeleteUser(userId)
+    if (!result.ok) {
+      return res.status(result.status).json({ message: result.message })
+    }
+
+    res.json({
+      message: 'User deleted successfully',
+      deletedUser: result.user,
+    })
+  } catch (error: unknown) {
+    console.error('Error deleting user:', error)
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        return res.status(404).json({ message: 'User not found' })
+      }
+    }
+
+    const errorMessage = error instanceof Error ? error.message : 'Failed to delete user'
+    res.status(500).json({ message: 'Failed to delete user', error: errorMessage })
   }
 }
 
