@@ -47,6 +47,10 @@ model User {
   consentTermsAt      DateTime?
   consentMarketingAt  DateTime?
 
+  // Soft delete: set when an admin deletes the account. Personal fields are
+  // anonymised but the row is kept so bookings, payments and reviews survive.
+  deletedAt DateTime?
+
   bookings      Booking[]
   reviews       Review[]
   subscriptions Subscription[]
@@ -59,6 +63,7 @@ model User {
   sentMessages  Message[]       @relation("SentMessages")
   receivedMessages Message[]    @relation("ReceivedMessages")
 
+  @@index([deletedAt])
   @@map("users")
 }
 

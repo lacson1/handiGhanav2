@@ -60,7 +60,7 @@ export const createBooking = async (req: Request, res: Response) => {
       include: { user: true }
     })
 
-    if (!provider) {
+    if (!provider || provider.user.deletedAt) {
       return res.status(404).json({ message: 'Provider not found' })
     }
 
@@ -69,7 +69,7 @@ export const createBooking = async (req: Request, res: Response) => {
       where: { id: userId }
     })
 
-    if (!user) {
+    if (!user || user.deletedAt) {
       return res.status(404).json({ message: 'User not found' })
     }
 

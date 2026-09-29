@@ -26,8 +26,8 @@ export const getProviders = async (req: Request, res: Response) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10) || 20)) // Max 100 per page
     const skip = (pageNum - 1) * limitNum
 
-    // Build filter object for Prisma
-    const where: Prisma.ProviderWhereInput = {}
+    // Build filter object for Prisma (never list providers whose account was deleted)
+    const where: Prisma.ProviderWhereInput = { user: { deletedAt: null } }
 
     if (category) {
       where.category = category as ServiceCategory
@@ -106,8 +106,8 @@ export const getProviderById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     
-    const provider = await prisma.provider.findUnique({
-      where: { id },
+    const provider = await prisma.provider.findFirst({
+      where: { id, user: { deletedAt: null } },
       include: {
         services: true,
         reviews: {
@@ -317,6 +317,7 @@ export const getProviderCountsByCity = async (req: Request, res: Response) => {
   try {
     // Get all providers with their locations
     const providers = await prisma.provider.findMany({
+      where: { user: { deletedAt: null } },
       select: { location: true }
     })
 

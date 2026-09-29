@@ -11,7 +11,7 @@ export const getAllProviders = async (req: Request, res: Response) => {
   try {
     const { status, verified, page = 1, limit = 20 } = req.query
 
-    const where: Prisma.ProviderWhereInput = {}
+    const where: Prisma.ProviderWhereInput = { user: { deletedAt: null } }
 
     if (status) {
       where.verificationStatus = status as VerificationStatus
@@ -79,7 +79,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const page = Math.max(1, Number(req.query.page) || 1)
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20))
 
-    const where: Prisma.UserWhereInput = {}
+    const where: Prisma.UserWhereInput = { deletedAt: null }
 
     if (typeof role === 'string' && role) {
       const upperRole = role.toUpperCase()
@@ -202,16 +202,16 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       totalRevenue,
       totalUsers,
     ] = await Promise.all([
-      prisma.provider.count(),
-      prisma.provider.count({ where: { verified: true } }),
-      prisma.provider.count({ where: { verificationStatus: VerificationStatus.PENDING } }),
+      prisma.provider.count({ where: { user: { deletedAt: null } } }),
+      prisma.provider.count({ where: { verified: true, user: { deletedAt: null } } }),
+      prisma.provider.count({ where: { verificationStatus: VerificationStatus.PENDING, user: { deletedAt: null } } }),
       prisma.booking.count(),
       prisma.booking.count({ where: { status: 'COMPLETED' } }),
       prisma.payment.aggregate({
         _sum: { amount: true },
         where: { status: 'COMPLETED' },
       }),
-      prisma.user.count(),
+      prisma.user.count({ where: { deletedAt: null } }),
     ])
 
     // Get recent activity
@@ -229,6 +229,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     })
 
     const recentProviders = await prisma.provider.findMany({
+      where: { user: { deletedAt: null } },
       take: 5,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -606,7 +607,7 @@ export const deleteProvider = async (req: Request, res: Response) => {
   }
 }
 
-// Delete user (admin only)
+// Soft-delete user (admin only)
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params
@@ -616,8 +617,8 @@ export const deleteUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'You cannot delete your own account' })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    const user = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
       select: {
         id: true,
         name: true,
@@ -632,7 +633,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     }
 
     if (user.role === UserRole.ADMIN) {
-      const adminCount = await prisma.user.count({ where: { role: UserRole.ADMIN } })
+      const adminCount = await prisma.user.count({ where: { role: UserRole.ADMIN, deletedAt: null } })
       if (adminCount <= 1) {
         return res.status(400).json({ message: 'Cannot delete the last admin account' })
       }
@@ -656,10 +657,50 @@ export const deleteUser = async (req: Request, res: Response) => {
       })
     }
 
-    // Delete user (cascades to provider profile, bookings, reviews, chats, etc. via Prisma schema)
-    await prisma.user.delete({
-      where: { id: user.id },
-    })
+    // Soft delete: keep the rows so bookings, payments, payouts and reviews stay
+    // intact, but anonymise personal data and clear every way to sign in.
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          deletedAt: new Date(),
+          name: 'Deleted user',
+          email: `deleted-${user.id}@deleted.invalid`,
+          phone: null,
+          avatar: null,
+          password: null,
+          googleId: null,
+          authProvider: null,
+          resetToken: null,
+          resetTokenExpiry: null,
+          consentMarketing: false,
+        },
+      }),
+      ...(user.provider
+        ? [
+            prisma.provider.update({
+              where: { id: user.provider.id },
+              data: {
+                name: 'Deleted provider',
+                description: '',
+                phone: null,
+                whatsapp: null,
+                avatar: null,
+                image: null,
+                idDocumentUrl: null,
+                references: [],
+                workPhotos: [],
+                workVideos: [],
+                bankAccount: null,
+                mobileMoneyNumber: null,
+                mobileMoneyProvider: null,
+                verified: false,
+                availability: 'NOT_AVAILABLE',
+              },
+            }),
+          ]
+        : []),
+    ])
 
     // Emit real-time update
     io.emit('user:deleted', { id: user.id, name: user.name })
@@ -681,11 +722,6 @@ export const deleteUser = async (req: Request, res: Response) => {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2025') {
         return res.status(404).json({ message: 'User not found' })
-      }
-      if (error.code === 'P2003') {
-        return res.status(400).json({
-          message: 'Cannot delete user due to existing relationships. Please contact support.',
-        })
       }
     }
 
