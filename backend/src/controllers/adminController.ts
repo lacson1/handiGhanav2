@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { VerificationStatus, Prisma, BookingStatus, PaymentStatus } from '@prisma/client'
+import { VerificationStatus, Prisma, BookingStatus, PaymentStatus, UserRole } from '@prisma/client'
 import { io } from '../server'
 import { sendProviderApprovalEmail } from '../services/emailService'
 import { sendSMS } from '../services/smsService'
@@ -68,6 +68,67 @@ export const getAllProviders = async (req: Request, res: Response) => {
     console.error('Error fetching providers:', error)
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch providers'
     res.status(500).json({ message: 'Failed to fetch providers', error: errorMessage })
+  }
+}
+
+// Get all users (admin only)
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const { role, search } = req.query
+    const page = Math.max(1, Number(req.query.page) || 1)
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20))
+
+    const where: Prisma.UserWhereInput = {}
+
+    if (typeof role === 'string' && role) {
+      const upperRole = role.toUpperCase()
+      if (!Object.values(UserRole).includes(upperRole as UserRole)) {
+        return res.status(400).json({ message: `Invalid role: ${role}` })
+      }
+      where.role = upperRole as UserRole
+    }
+    if (typeof search === 'string' && search.trim()) {
+      where.OR = [
+        { name: { contains: search.trim(), mode: 'insensitive' } },
+        { email: { contains: search.trim(), mode: 'insensitive' } },
+      ]
+    }
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          avatar: true,
+          role: true,
+          authProvider: true,
+          createdAt: true,
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      prisma.user.count({ where }),
+    ])
+
+    res.json({
+      users,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    })
+  } catch (error: unknown) {
+    console.error('Error fetching users:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch users'
+    res.status(500).json({ message: 'Failed to fetch users', error: errorMessage })
   }
 }
 

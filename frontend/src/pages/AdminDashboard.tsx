@@ -91,16 +91,23 @@ function AdminDashboardContent() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [providersData, bookingsData, statsData] = await Promise.all([
+      const [providersData, bookingsData, statsData, usersData] = await Promise.all([
         providersApi.getAll().catch(() => []),
         bookingsApi.getAll().catch(() => []),
-        adminApi.getStats().catch(() => null)
+        adminApi.getStats().catch(() => null),
+        adminApi.getUsers({ limit: 100 }).catch(() => null)
       ])
       // Ensure both are always arrays
       setProviders(Array.isArray(providersData) ? providersData : [])
       setBookings(Array.isArray(bookingsData) ? bookingsData : [])
       setUserCount(statsData?.stats?.users?.total ?? null)
-      setUsers([]) // TODO: Fetch users from API when endpoint is ready
+      setUsers(
+        (usersData?.users ?? []).map(u => ({
+          ...u,
+          phone: u.phone ?? undefined,
+          avatar: u.avatar ?? undefined
+        }))
+      )
     } catch (error) {
       console.error('Failed to load data:', error)
       // Fallback to mock data

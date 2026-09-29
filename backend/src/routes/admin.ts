@@ -1,6 +1,7 @@
 import express from 'express'
 import {
   getAllProviders,
+  getAllUsers,
   verifyProvider,
   getDashboardStats,
   toggleProviderSuspension,
@@ -40,6 +41,7 @@ router.delete('/providers/:id', deleteProvider)
 router.get('/bookings', getAllBookings)
 
 // User management
+router.get('/users', getAllUsers)
 router.put('/users/:userId/role', updateUserRole)
 router.put('/users/role', updateUserRoleByEmail)
 

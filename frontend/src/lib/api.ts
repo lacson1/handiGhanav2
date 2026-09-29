@@ -576,6 +576,30 @@ export const adminApi = {
     const query = params.toString()
     return apiRequest<{ bookings: Booking[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/bookings${query ? `?${query}` : ''}`)
   },
+  getUsers: async (filters?: { role?: string; search?: string; page?: number; limit?: number }) => {
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value))
+        }
+      })
+    }
+    const query = params.toString()
+    return apiRequest<{
+      users: Array<{
+        id: string
+        name: string
+        email: string
+        phone?: string | null
+        avatar?: string | null
+        role: 'CUSTOMER' | 'PROVIDER' | 'ADMIN'
+        authProvider?: string | null
+        createdAt: string
+      }>
+      pagination: { page: number; limit: number; total: number; pages: number }
+    }>(`/admin/users${query ? `?${query}` : ''}`)
+  },
   getStats: async () => {
     return apiRequest<{
       stats: {
