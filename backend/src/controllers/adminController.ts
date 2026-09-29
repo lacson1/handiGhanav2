@@ -5,6 +5,7 @@ import { sendProviderApprovalEmail } from '../services/emailService'
 import { sendSMS } from '../services/smsService'
 import { prisma } from '../lib/prisma'
 import { AuthRequest } from '../middleware/auth'
+import { softDeleteUser } from '../services/userDeletionService'
 
 // Get all providers (admin only)
 export const getAllProviders = async (req: Request, res: Response) => {
@@ -617,104 +618,14 @@ export const deleteUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'You cannot delete your own account' })
     }
 
-    const user = await prisma.user.findFirst({
-      where: { id: userId, deletedAt: null },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        provider: { select: { id: true } },
-      },
-    })
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' })
-    }
-
-    if (user.role === UserRole.ADMIN) {
-      const adminCount = await prisma.user.count({ where: { role: UserRole.ADMIN, deletedAt: null } })
-      if (adminCount <= 1) {
-        return res.status(400).json({ message: 'Cannot delete the last admin account' })
-      }
-    }
-
-    // Block deletion while the user has active bookings, as a customer or as a provider
-    const activeStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED]
-    const activeBookings = await prisma.booking.count({
-      where: {
-        status: { in: activeStatuses },
-        OR: [
-          { userId: user.id },
-          ...(user.provider ? [{ providerId: user.provider.id }] : []),
-        ],
-      },
-    })
-
-    if (activeBookings > 0) {
-      return res.status(400).json({
-        message: `Cannot delete user with ${activeBookings} active booking(s). Please cancel or complete bookings first.`,
-      })
-    }
-
-    // Soft delete: keep the rows so bookings, payments, payouts and reviews stay
-    // intact, but anonymise personal data and clear every way to sign in.
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: user.id },
-        data: {
-          deletedAt: new Date(),
-          name: 'Deleted user',
-          email: `deleted-${user.id}@deleted.invalid`,
-          phone: null,
-          avatar: null,
-          password: null,
-          googleId: null,
-          authProvider: null,
-          resetToken: null,
-          resetTokenExpiry: null,
-          consentMarketing: false,
-        },
-      }),
-      ...(user.provider
-        ? [
-            prisma.provider.update({
-              where: { id: user.provider.id },
-              data: {
-                name: 'Deleted provider',
-                description: '',
-                phone: null,
-                whatsapp: null,
-                avatar: null,
-                image: null,
-                idDocumentUrl: null,
-                references: [],
-                workPhotos: [],
-                workVideos: [],
-                bankAccount: null,
-                mobileMoneyNumber: null,
-                mobileMoneyProvider: null,
-                verified: false,
-                availability: 'NOT_AVAILABLE',
-              },
-            }),
-          ]
-        : []),
-    ])
-
-    // Emit real-time update
-    io.emit('user:deleted', { id: user.id, name: user.name })
-    if (user.provider) {
-      io.emit('provider:deleted', { id: user.provider.id, name: user.name })
+    const result = await softDeleteUser(userId)
+    if (!result.ok) {
+      return res.status(result.status).json({ message: result.message })
     }
 
     res.json({
       message: 'User deleted successfully',
-      deletedUser: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
+      deletedUser: result.user,
     })
   } catch (error: unknown) {
     console.error('Error deleting user:', error)
