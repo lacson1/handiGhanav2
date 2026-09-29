@@ -600,6 +600,11 @@ export const adminApi = {
       pagination: { page: number; limit: number; total: number; pages: number }
     }>(`/admin/users${query ? `?${query}` : ''}`)
   },
+  deleteUser: async (userId: string) => {
+    return apiRequest<{ message: string; deletedUser: { id: string; name: string; email: string } }>(`/admin/users/${userId}`, {
+      method: 'DELETE',
+    })
+  },
   getStats: async () => {
     return apiRequest<{
       stats: {

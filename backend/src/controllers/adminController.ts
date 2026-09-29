@@ -4,6 +4,7 @@ import { io } from '../server'
 import { sendProviderApprovalEmail } from '../services/emailService'
 import { sendSMS } from '../services/smsService'
 import { prisma } from '../lib/prisma'
+import { AuthRequest } from '../middleware/auth'
 
 // Get all providers (admin only)
 export const getAllProviders = async (req: Request, res: Response) => {
@@ -602,6 +603,94 @@ export const deleteProvider = async (req: Request, res: Response) => {
     
     const errorMessage = error instanceof Error ? error.message : 'Failed to delete provider'
     res.status(500).json({ message: 'Failed to delete provider', error: errorMessage })
+  }
+}
+
+// Delete user (admin only)
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params
+    const adminId = (req as AuthRequest).userId
+
+    if (userId === adminId) {
+      return res.status(400).json({ message: 'You cannot delete your own account' })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        provider: { select: { id: true } },
+      },
+    })
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+
+    if (user.role === UserRole.ADMIN) {
+      const adminCount = await prisma.user.count({ where: { role: UserRole.ADMIN } })
+      if (adminCount <= 1) {
+        return res.status(400).json({ message: 'Cannot delete the last admin account' })
+      }
+    }
+
+    // Block deletion while the user has active bookings, as a customer or as a provider
+    const activeStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED]
+    const activeBookings = await prisma.booking.count({
+      where: {
+        status: { in: activeStatuses },
+        OR: [
+          { userId: user.id },
+          ...(user.provider ? [{ providerId: user.provider.id }] : []),
+        ],
+      },
+    })
+
+    if (activeBookings > 0) {
+      return res.status(400).json({
+        message: `Cannot delete user with ${activeBookings} active booking(s). Please cancel or complete bookings first.`,
+      })
+    }
+
+    // Delete user (cascades to provider profile, bookings, reviews, chats, etc. via Prisma schema)
+    await prisma.user.delete({
+      where: { id: user.id },
+    })
+
+    // Emit real-time update
+    io.emit('user:deleted', { id: user.id, name: user.name })
+    if (user.provider) {
+      io.emit('provider:deleted', { id: user.provider.id, name: user.name })
+    }
+
+    res.json({
+      message: 'User deleted successfully',
+      deletedUser: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+    })
+  } catch (error: unknown) {
+    console.error('Error deleting user:', error)
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        return res.status(404).json({ message: 'User not found' })
+      }
+      if (error.code === 'P2003') {
+        return res.status(400).json({
+          message: 'Cannot delete user due to existing relationships. Please contact support.',
+        })
+      }
+    }
+
+    const errorMessage = error instanceof Error ? error.message : 'Failed to delete user'
+    res.status(500).json({ message: 'Failed to delete user', error: errorMessage })
   }
 }
 

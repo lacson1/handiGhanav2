@@ -8,6 +8,7 @@ import {
   getAllBookings,
   getAnalytics,
   deleteProvider,
+  deleteUser,
   updateUserRole,
   updateUserRoleByEmail,
 } from '../controllers/adminController'
@@ -44,6 +45,7 @@ router.get('/bookings', getAllBookings)
 router.get('/users', getAllUsers)
 router.put('/users/:userId/role', updateUserRole)
 router.put('/users/role', updateUserRoleByEmail)
+router.delete('/users/:userId', deleteUser)
 
 export default router
 

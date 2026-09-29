@@ -367,11 +367,15 @@ function AdminDashboardContent() {
   const handleDeleteUser = async (userId: string) => {
     const safeUsers = Array.isArray(users) ? users : []
     const userToDelete = safeUsers.find(u => u.id === userId)
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      // In a real app, this would call an API
-      setUsers(safeUsers.filter(u => u.id !== userId))
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return
+    try {
+      await adminApi.deleteUser(userId)
+      setUsers(prev => prev.filter(u => u.id !== userId))
+      setUserCount(prev => (prev === null ? prev : Math.max(0, prev - 1)))
       showToast(`${userToDelete?.name || 'User'} deleted successfully`, 'success')
-      // TODO: Send audit log to backend service
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete user'
+      showToast(message, 'error')
     }
   }
 
