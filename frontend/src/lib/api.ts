@@ -578,12 +578,12 @@ export const adminApi = {
   },
   getStats: async () => {
     return apiRequest<{
-      totalProviders: number
-      totalCustomers: number
-      totalBookings: number
-      totalRevenue: number
-      pendingVerifications: number
-      activeDisputes: number
+      stats: {
+        providers: { total: number; verified: number; pending: number }
+        bookings: { total: number; completed: number }
+        revenue: { total: number }
+        users: { total: number }
+      }
     }>('/admin/stats')
   },
   getAnalytics: async (filters?: { startDate?: string; endDate?: string }) => {

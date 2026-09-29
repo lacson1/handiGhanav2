@@ -18,7 +18,7 @@ const router = express.Router()
 router.use(authenticateToken)
 router.use((req, res, next) => {
   const authReq = req as { userRole?: string }
-  if (authReq.userRole !== 'admin') {
+  if (authReq.userRole?.toUpperCase() !== 'ADMIN') {
     return res.status(403).json({ message: 'Admin access required' })
   }
   next()

@@ -66,7 +66,7 @@ export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction
 }
 
 export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (req.userRole !== 'admin') {
+  if (req.userRole?.toUpperCase() !== 'ADMIN') {
     return res.status(403).json({ message: 'Admin access required' })
   }
   next()

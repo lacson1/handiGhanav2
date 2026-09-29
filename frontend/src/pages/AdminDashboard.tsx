@@ -35,6 +35,7 @@ function AdminDashboardContent() {
   const [providers, setProviders] = useState<Provider[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [users, setUsers] = useState<AdminUser[]>([])
+  const [userCount, setUserCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -90,13 +91,15 @@ function AdminDashboardContent() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [providersData, bookingsData] = await Promise.all([
+      const [providersData, bookingsData, statsData] = await Promise.all([
         providersApi.getAll().catch(() => []),
-        bookingsApi.getAll().catch(() => [])
+        bookingsApi.getAll().catch(() => []),
+        adminApi.getStats().catch(() => null)
       ])
       // Ensure both are always arrays
       setProviders(Array.isArray(providersData) ? providersData : [])
       setBookings(Array.isArray(bookingsData) ? bookingsData : [])
+      setUserCount(statsData?.stats?.users?.total ?? null)
       setUsers([]) // TODO: Fetch users from API when endpoint is ready
     } catch (error) {
       console.error('Failed to load data:', error)
@@ -116,7 +119,7 @@ function AdminDashboardContent() {
     const safeProviders = Array.isArray(providers) ? providers : []
     const safeBookings = Array.isArray(bookings) ? bookings : []
     
-    const totalUsers = safeUsers.length
+    const totalUsers = userCount ?? safeUsers.length
     const totalProviders = safeProviders.length
     const pendingVerifications = safeProviders.filter(p => !p.verified).length
     const totalBookings = safeBookings.length
@@ -143,7 +146,7 @@ function AdminDashboardContent() {
       openDisputes,
       urgentDisputes
     }
-  }, [users, providers, bookings])
+  }, [users, userCount, providers, bookings])
 
   // Generate recent activity from real data
   const recentActivity = useMemo(() => {
